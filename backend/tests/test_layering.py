@@ -66,9 +66,13 @@ def test_用例层只依赖提取引擎抽象() -> None:
     assert "input_drawing_id" in extraction
     assert "quality_grade" in extraction
     upload = (SRC / "usecase" / "upload_part_drawings.py").read_text(encoding="utf-8")
+    extract = (SRC / "usecase" / "extract_part_drawing.py").read_text(encoding="utf-8")
     assert "ExtractionEngine" in upload
+    assert "ExtractionEngine" in extract
     assert "FixtureExtractionEngine" not in upload
+    assert "FixtureExtractionEngine" not in extract
     assert "quote_assistant.adapter.extraction" not in upload
+    assert "quote_assistant.adapter.extraction" not in extract
 
 
 def test_用例层不依赖框架与适配器() -> None:

@@ -25,7 +25,7 @@ QA_LOCAL_OBJECT_DIR=/tmp/quote-assistant-objects \
 
 对象存储：用例层只依赖 `ObjectStorage` 窄接口（存 / 取 / 签发临时 URL / 删）。`QA_OBJECT_STORE_BACKEND=local` 时写入本地目录；`oss` 时走阿里云 OSS，put 时带 `x-oss-server-side-encryption: AES256` 与 private ACL，Bucket 本身不得公共读。
 
-提取引擎：用例层只依赖 `ExtractionEngine` Port（输入图像/PDF 页 + 零件族标识 + 输入图标识，输出结构化提取与图纸质量分级）。当前接入 fixture 驱动的假实现，按文件名中的 fixture id（如 `FX-TP-01`）返回预置结果；生产实现见票 17。
+提取引擎：用例层只依赖 `ExtractionEngine` Port（输入图像/PDF 页 + 零件族标识 + 输入图标识，输出结构化提取与图纸质量分级）。当前接入 fixture 驱动的假实现，按文件名中的 fixture id（如 `FX-TP-01`）返回预置结果；生产实现见票 17。引擎原始输出在适配器边界用 Pydantic 严格校验，校验失败按提取失败处理，脏数据不进领域层。
 
 ## 缝 1 测试
 

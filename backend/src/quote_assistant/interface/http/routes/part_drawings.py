@@ -9,6 +9,7 @@ from quote_assistant.domain.entities import IncomingDrawing
 from quote_assistant.domain.errors import IllegalPartDrawingTransition, PartDrawingNotFound
 from quote_assistant.interface.http.deps import (
     get_continue_despite_poor_quality,
+    get_extract_part_drawing,
     get_get_part_drawing,
     get_issue_original_access_url,
     get_list_part_drawing_events,
@@ -26,6 +27,7 @@ from quote_assistant.interface.http.schemas import (
     to_part_drawing_response,
 )
 from quote_assistant.usecase.continue_despite_poor_quality import ContinueDespitePoorQuality
+from quote_assistant.usecase.extract_part_drawing import ExtractPartDrawing
 from quote_assistant.usecase.get_part_drawing import GetPartDrawing
 from quote_assistant.usecase.issue_original_access_url import IssueOriginalAccessUrl
 from quote_assistant.usecase.list_part_drawing_events import ListPartDrawingEvents
@@ -129,6 +131,20 @@ def list_part_drawing_events(
 def continue_despite_poor_quality(
     drawing_id: UUID,
     use_case: ContinueDespitePoorQuality = Depends(get_continue_despite_poor_quality),
+) -> PartDrawingResponse:
+    try:
+        drawing = use_case.execute(drawing_id)
+    except PartDrawingNotFound as exc:
+        raise HTTPException(status_code=404, detail="零件图不存在") from exc
+    except IllegalPartDrawingTransition as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return to_part_drawing_response(drawing)
+
+
+@router.post("/{drawing_id}/extract", response_model=PartDrawingResponse)
+def extract_part_drawing(
+    drawing_id: UUID,
+    use_case: ExtractPartDrawing = Depends(get_extract_part_drawing),
 ) -> PartDrawingResponse:
     try:
         drawing = use_case.execute(drawing_id)

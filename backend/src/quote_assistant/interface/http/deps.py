@@ -19,6 +19,7 @@ from quote_assistant.domain.entities import Actor
 from quote_assistant.domain.errors import Unauthenticated
 from quote_assistant.adapter.pdf.page_counter import PypdfPageCounter
 from quote_assistant.usecase.continue_despite_poor_quality import ContinueDespitePoorQuality
+from quote_assistant.usecase.extract_part_drawing import ExtractPartDrawing
 from quote_assistant.usecase.get_current_actor import GetCurrentActor
 from quote_assistant.usecase.get_part_drawing import GetPartDrawing
 from quote_assistant.usecase.issue_original_access_url import IssueOriginalAccessUrl
@@ -106,6 +107,7 @@ def get_upload_part_drawings(
 
 
 def get_continue_despite_poor_quality(
+    request: Request,
     actor: Actor = Depends(require_actor),
     session: Session = Depends(get_db),
 ) -> ContinueDespitePoorQuality:
@@ -113,6 +115,23 @@ def get_continue_despite_poor_quality(
         actor=actor,
         drawings=SqlPartDrawingRepository(session),
         events=SqlPartDrawingEventRepository(session),
+        storage=request.app.state.object_storage,
+        engine=request.app.state.extraction_engine,
+        uow=SqlAlchemyUnitOfWork(session),
+    )
+
+
+def get_extract_part_drawing(
+    request: Request,
+    actor: Actor = Depends(require_actor),
+    session: Session = Depends(get_db),
+) -> ExtractPartDrawing:
+    return ExtractPartDrawing(
+        actor=actor,
+        drawings=SqlPartDrawingRepository(session),
+        events=SqlPartDrawingEventRepository(session),
+        storage=request.app.state.object_storage,
+        engine=request.app.state.extraction_engine,
         uow=SqlAlchemyUnitOfWork(session),
     )
 

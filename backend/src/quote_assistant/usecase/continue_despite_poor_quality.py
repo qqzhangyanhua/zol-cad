@@ -7,7 +7,14 @@ from quote_assistant.domain.entities import Actor, PartDrawing, PartDrawingStatu
 from quote_assistant.domain.errors import IllegalPartDrawingTransition, PartDrawingNotFound
 from quote_assistant.domain.part_drawing_state import record_transition
 from quote_assistant.domain.quality import QualityGrade
-from quote_assistant.usecase.ports import PartDrawingEventRepository, PartDrawingRepository, UnitOfWork
+from quote_assistant.usecase.extract_part_drawing import apply_extraction
+from quote_assistant.usecase.ports import (
+    ExtractionEngine,
+    ObjectStorage,
+    PartDrawingEventRepository,
+    PartDrawingRepository,
+    UnitOfWork,
+)
 from quote_assistant.usecase.tenant import TenantBoundUseCase
 
 
@@ -19,11 +26,15 @@ class ContinueDespitePoorQuality(TenantBoundUseCase):
         actor: Actor,
         drawings: PartDrawingRepository,
         events: PartDrawingEventRepository,
+        storage: ObjectStorage,
+        engine: ExtractionEngine,
         uow: UnitOfWork,
     ) -> None:
         super().__init__(actor)
         self._drawings = drawings
         self._events = events
+        self._storage = storage
+        self._engine = engine
         self._uow = uow
 
     def execute(self, drawing_id: UUID) -> PartDrawing:
@@ -48,5 +59,13 @@ class ContinueDespitePoorQuality(TenantBoundUseCase):
         )
         self._drawings.save(updated)
         self._events.add(event)
+        updated = apply_extraction(
+            updated,
+            actor_user_id=self.actor.user_id,
+            drawings=self._drawings,
+            events=self._events,
+            storage=self._storage,
+            engine=self._engine,
+        )
         self._uow.commit()
         return updated

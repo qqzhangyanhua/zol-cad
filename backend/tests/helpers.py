@@ -48,6 +48,8 @@ def insert_part_drawing(session: Session, factory_id: UUID, filename: str) -> UU
         quality_grade=None,
         is_assembly_or_exploded=False,
         low_quality_unreliable=False,
+        extracted_fields=[],
+        extraction_failure_reason=None,
     )
     session.add(row)
     session.flush()

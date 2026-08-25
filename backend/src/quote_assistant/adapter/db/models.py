@@ -4,6 +4,7 @@ from datetime import datetime
 from uuid import UUID, uuid4
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -54,6 +55,10 @@ class PartDrawingRow(Base):
     quality_grade: Mapped[str | None] = mapped_column(String(10), nullable=True)
     is_assembly_or_exploded: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     low_quality_unreliable: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    extracted_fields: Mapped[list[dict[str, str | None]]] = mapped_column(
+        JSONB, nullable=False, default=list
+    )
+    extraction_failure_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
 class PartDrawingEventRow(Base):

@@ -15,6 +15,7 @@ from quote_assistant.domain.quality import (
     QUALITY_GRADE_DISCLAIMER,
 )
 from quote_assistant.usecase.continue_despite_poor_quality import ContinueDespitePoorQuality
+from quote_assistant.usecase.extract_part_drawing import ExtractPartDrawing
 from quote_assistant.usecase.list_part_drawing_events import ListPartDrawingEvents
 from quote_assistant.usecase.upload_part_drawings import UploadPartDrawings
 
@@ -34,7 +35,12 @@ def _login_quoter(client: TestClient, db_session: Session) -> None:
 
 
 def test_分级用例不接受工厂标识参数() -> None:
-    for cls in (UploadPartDrawings, ContinueDespitePoorQuality, ListPartDrawingEvents):
+    for cls in (
+        UploadPartDrawings,
+        ContinueDespitePoorQuality,
+        ExtractPartDrawing,
+        ListPartDrawingEvents,
+    ):
         names = list(inspect.signature(cls.execute).parameters)
         assert "factory_id" not in names
         assert "tenant_id" not in names
@@ -48,12 +54,12 @@ def test_上传后零件图自动分级为清晰或一般或差(client: TestClie
     poor = _upload(client, "FX-TP-01.png").json()["items"][0]
 
     assert clear["quality_grade"] == "清晰"
-    assert clear["status"] == "已分级"
+    assert clear["status"] == "已提取"
     assert clear["auto_prefill_allowed"] is True
     assert clear["quality_grade_disclaimer"] == QUALITY_GRADE_DISCLAIMER
 
     assert average["quality_grade"] == "一般"
-    assert average["status"] == "已分级"
+    assert average["status"] == "已提取"
     assert average["auto_prefill_allowed"] is True
 
     assert poor["quality_grade"] == "差"
@@ -90,7 +96,7 @@ def test_显式仍然继续后结果永久携带低质量标记(
     continued = client.post(f"/part-drawings/{drawing_id}/continue-despite-quality")
     assert continued.status_code == 200
     body = continued.json()
-    assert body["status"] == "已分级"
+    assert body["status"] == "已提取"
     assert body["quality_grade"] == "差"
     assert body["low_quality_unreliable"] is True
     assert body["low_quality_mark"] == LOW_QUALITY_MARK_TEXT
@@ -143,9 +149,18 @@ def test_每次状态迁移都写入可按零件图查询的带时间戳事件(
 
     client.post(f"/part-drawings/{drawing_id}/continue-despite-quality")
     after = client.get(f"/part-drawings/{drawing_id}/events").json()["items"]
-    assert [row["to_status"] for row in after] == ["已上传", "分级中", "建议人工", "已分级"]
-    assert after[-1]["from_status"] == "建议人工"
-    assert after[-1]["sequence_no"] == 4
+    assert [row["to_status"] for row in after] == [
+        "已上传",
+        "分级中",
+        "建议人工",
+        "已分级",
+        "提取中",
+        "已提取",
+    ]
+    assert after[3]["from_status"] == "建议人工"
+    assert after[3]["sequence_no"] == 4
+    assert after[-1]["to_status"] == "已提取"
+    assert after[-1]["sequence_no"] == 6
 
 
 def test_假引擎按输入图标识返回预置分级(client: TestClient, db_session: Session) -> None:
@@ -154,4 +169,4 @@ def test_假引擎按输入图标识返回预置分级(client: TestClient, db_se
     unknown = _upload(client, "随机零件.png").json()["items"][0]
     assert named["quality_grade"] == "一般"
     assert unknown["quality_grade"] == "清晰"
-    assert unknown["status"] == "已分级"
+    assert unknown["status"] == "已提取"
