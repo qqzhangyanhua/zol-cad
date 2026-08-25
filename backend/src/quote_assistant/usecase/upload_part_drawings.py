@@ -20,6 +20,7 @@ from quote_assistant.domain.entities import (
 )
 from quote_assistant.domain.errors import PdfUnreadable
 from quote_assistant.domain.extraction import ExtractionRequest
+from quote_assistant.domain.part_family import classify_part_family
 from quote_assistant.domain.part_drawing_state import (
     birth_uploaded,
     record_transition,
@@ -125,6 +126,7 @@ class UploadPartDrawings(TenantBoundUseCase):
                 self._storage.store(storage_key, assessed.content, assessed.media_type)
                 stored_keys.append(storage_key)
                 now = datetime.now(UTC)
+                part_family_id = classify_part_family(assessed.original_filename)
                 drawing = PartDrawing(
                     id=drawing_id,
                     factory_id=self.tenant.factory_id,
@@ -142,6 +144,7 @@ class UploadPartDrawings(TenantBoundUseCase):
                     low_quality_unreliable=False,
                     extracted_fields=(),
                     extraction_failure_reason=None,
+                    part_family_id=part_family_id,
                 )
                 drawing, born = birth_uploaded(
                     drawing, occurred_at=now, actor_user_id=self.actor.user_id
@@ -163,7 +166,7 @@ class UploadPartDrawings(TenantBoundUseCase):
                     ExtractionRequest(
                         page_content=page_content,
                         media_type=assessed.media_type,
-                        part_family_id=None,
+                        part_family_id=part_family_id,
                         input_drawing_id=assessed.original_filename,
                     )
                 )

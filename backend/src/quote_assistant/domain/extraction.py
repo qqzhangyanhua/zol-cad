@@ -64,7 +64,7 @@ class ExtractionRequest:
 
     page_content: bytes
     media_type: str
-    part_family_id: str | None
+    part_family_id: str
     input_drawing_id: str
 
 

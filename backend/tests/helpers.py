@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from quote_assistant.adapter.db.models import FactoryRow, PartDrawingEventRow, PartDrawingRow, UserRow
 from quote_assistant.adapter.security.passwords import hash_password
 from quote_assistant.domain.entities import PartDrawingStatus, Role
+from quote_assistant.domain.part_family import UNKNOWN_PART_FAMILY_ID
 
 
 def create_factory(session: Session, name: str) -> UUID:
@@ -66,6 +67,7 @@ def insert_part_drawing(
         low_quality_unreliable=False,
         extracted_fields=[],
         extraction_failure_reason=None,
+        part_family_id=UNKNOWN_PART_FAMILY_ID,
     )
     session.add(row)
     session.flush()

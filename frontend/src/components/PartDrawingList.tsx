@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { ExperimentalMark } from "@/components/ExperimentalMark";
 import { LowQualityMark } from "@/components/LowQualityMark";
 import { QualityGradeBadge } from "@/components/QualityGradeBadge";
 import type { PartDrawing } from "@/lib/types";
@@ -30,9 +31,10 @@ export function PartDrawingList({ items }: PartDrawingListProps) {
                   </span>
                 ) : null}
               </span>
-              {item.low_quality_mark ? (
-                <span className="mt-2 block">
-                  <LowQualityMark text={item.low_quality_mark} />
+              {item.experimental_mark || item.low_quality_mark ? (
+                <span className="mt-2 flex flex-wrap items-center gap-2">
+                  {item.experimental_mark ? <ExperimentalMark text={item.experimental_mark} /> : null}
+                  {item.low_quality_mark ? <LowQualityMark text={item.low_quality_mark} /> : null}
                 </span>
               ) : null}
             </span>

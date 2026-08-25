@@ -59,6 +59,7 @@ class PartDrawingRow(Base):
         JSONB, nullable=False, default=list
     )
     extraction_failure_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    part_family_id: Mapped[str] = mapped_column(String(80), nullable=False)
 
 
 class PartDrawingEventRow(Base):

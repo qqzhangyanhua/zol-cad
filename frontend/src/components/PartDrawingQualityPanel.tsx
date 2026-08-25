@@ -1,4 +1,5 @@
 import { AssemblyOutOfScopeNotice } from "@/components/AssemblyOutOfScopeNotice";
+import { ExperimentalMark } from "@/components/ExperimentalMark";
 import { LowQualityMark } from "@/components/LowQualityMark";
 import { PoorDrawingAdvise } from "@/components/PoorDrawingAdvise";
 import { QualityGradeBadge } from "@/components/QualityGradeBadge";
@@ -18,6 +19,7 @@ export function PartDrawingQualityPanel({ drawing }: PartDrawingQualityPanelProp
         <span className="text-xs text-stone-400">{drawing.status}</span>
       </div>
       <QualityGradeDisclaimer text={drawing.quality_grade_disclaimer} />
+      {drawing.experimental_mark ? <ExperimentalMark text={drawing.experimental_mark} /> : null}
       {drawing.low_quality_mark ? <LowQualityMark text={drawing.low_quality_mark} /> : null}
       {drawing.out_of_scope_message ? (
         <AssemblyOutOfScopeNotice text={drawing.out_of_scope_message} />

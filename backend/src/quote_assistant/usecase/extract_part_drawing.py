@@ -63,7 +63,7 @@ def apply_extraction(
             ExtractionRequest(
                 page_content=page_content,
                 media_type=drawing.content_type,
-                part_family_id=None,
+                part_family_id=drawing.part_family_id,
                 input_drawing_id=drawing.original_filename,
             )
         )

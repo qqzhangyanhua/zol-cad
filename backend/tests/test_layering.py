@@ -64,15 +64,26 @@ def test_用例层只依赖提取引擎抽象() -> None:
     assert "ExtractionResult" in ports
     extraction = (SRC / "domain" / "extraction.py").read_text(encoding="utf-8")
     assert "input_drawing_id" in extraction
+    assert "part_family_id" in extraction
     assert "quality_grade" in extraction
+    prompts = (SRC / "domain" / "prompt_templates.py").read_text(encoding="utf-8")
+    assert "def prompt_template_for" in prompts
     upload = (SRC / "usecase" / "upload_part_drawings.py").read_text(encoding="utf-8")
     extract = (SRC / "usecase" / "extract_part_drawing.py").read_text(encoding="utf-8")
     assert "ExtractionEngine" in upload
     assert "ExtractionEngine" in extract
+    assert "part_family_id" in upload
+    assert "part_family_id" in extract
     assert "FixtureExtractionEngine" not in upload
     assert "FixtureExtractionEngine" not in extract
     assert "quote_assistant.adapter.extraction" not in upload
     assert "quote_assistant.adapter.extraction" not in extract
+    assert "prompt_template_for" not in upload
+    assert "prompt_template_for" not in extract
+    assert "【专用模板" not in upload
+    assert "【专用模板" not in extract
+    assert "【通用模板" not in upload
+    assert "【通用模板" not in extract
 
 
 def test_高风险字段判定表只活在领域层() -> None:
