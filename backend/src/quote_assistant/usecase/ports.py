@@ -6,6 +6,7 @@ from uuid import UUID
 
 from quote_assistant.domain.correction import CorrectionRecord
 from quote_assistant.domain.entities import IssuedSession, ManualBaseline, PartDrawing, User
+from quote_assistant.domain.quote_sheet import QuoteSheetFileFormat, QuoteSheetTemplate
 from quote_assistant.domain.quote_task import QuoteTask
 from quote_assistant.domain.extraction import ExtractionRequest, ExtractionResult
 from quote_assistant.domain.part_drawing_state import PartDrawingEvent
@@ -120,6 +121,26 @@ class QuoteTaskRepository(Protocol):
         created_to: datetime | None = None,
     ) -> list[QuoteTask]:
         """报价任务 of the Actor's factory, newest first. Optional customer/time filters."""
+
+
+class QuoteSheetTemplateRepository(Protocol):
+    """Per-factory 报价底稿 column template. Onboarding writes this; no product UI."""
+
+    def get_for_tenant(self, tenant: TenantScope) -> QuoteSheetTemplate | None:
+        """Load the Actor's factory template, or None to use the backend default."""
+
+    def save_for_tenant(self, tenant: TenantScope, template: QuoteSheetTemplate) -> None:
+        """Upsert the Actor's factory template. Used by onboarding / tests, not HTTP."""
+
+
+class QuoteSheetFileWriter(Protocol):
+    def write(
+        self,
+        headers: tuple[str, ...],
+        rows: tuple[tuple[str, ...], ...],
+        file_format: QuoteSheetFileFormat,
+    ) -> bytes:
+        """Turn a finished table into xlsx or csv bytes. No domain decisions."""
 
 
 class ExtractionEngine(Protocol):

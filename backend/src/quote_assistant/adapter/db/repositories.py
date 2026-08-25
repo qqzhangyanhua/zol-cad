@@ -12,6 +12,7 @@ from quote_assistant.adapter.db.models import (
     ManualBaselineRow,
     PartDrawingEventRow,
     PartDrawingRow,
+    QuoteSheetTemplateRow,
     QuoteTaskRow,
     SessionRow,
     UserRow,
@@ -29,6 +30,7 @@ from quote_assistant.domain.entities import (
 from quote_assistant.domain.extraction import ExtractedField, FieldCategory, FieldSource
 from quote_assistant.domain.part_drawing_state import PartDrawingEvent
 from quote_assistant.domain.quality import QualityGrade
+from quote_assistant.domain.quote_sheet import QuoteSheetTemplate, parse_quote_sheet_columns
 from quote_assistant.domain.quote_task import QuoteTask
 from quote_assistant.usecase.tenant import TenantScope
 
@@ -493,3 +495,37 @@ class SqlQuoteTaskRepository:
             stmt = stmt.where(QuoteTaskRow.created_at <= created_to)
         rows = self._session.execute(stmt.order_by(QuoteTaskRow.created_at.desc())).scalars()
         return [_to_quote_task(row) for row in rows]
+
+
+def _to_quote_sheet_template(row: QuoteSheetTemplateRow) -> QuoteSheetTemplate:
+    columns = parse_quote_sheet_columns(row.columns)
+    return QuoteSheetTemplate(columns=columns)
+
+
+class SqlQuoteSheetTemplateRepository:
+    def __init__(self, session: Session) -> None:
+        self._session = session
+
+    def get_for_tenant(self, tenant: TenantScope) -> QuoteSheetTemplate | None:
+        row = self._session.execute(
+            select(QuoteSheetTemplateRow).where(
+                QuoteSheetTemplateRow.factory_id == tenant.factory_id
+            )
+        ).scalar_one_or_none()
+        if row is None:
+            return None
+        return _to_quote_sheet_template(row)
+
+    def save_for_tenant(self, tenant: TenantScope, template: QuoteSheetTemplate) -> None:
+        payload = [
+            {"source_key": column.source_key, "header": column.header}
+            for column in template.columns
+        ]
+        row = self._session.get(QuoteSheetTemplateRow, tenant.factory_id)
+        if row is None:
+            self._session.add(
+                QuoteSheetTemplateRow(factory_id=tenant.factory_id, columns=payload)
+            )
+        else:
+            row.columns = payload
+        self._session.flush()

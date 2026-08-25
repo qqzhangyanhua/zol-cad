@@ -8,7 +8,7 @@
 
 **Blocked by:** 13, 09, 07, 12
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] **报价员**能一键导出整个**报价任务**的**报价底稿**
 - [ ] 导出为表格文件（xlsx / csv），每个零件一行

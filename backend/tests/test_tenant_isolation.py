@@ -12,6 +12,7 @@ from quote_assistant.usecase.assign_part_drawing_to_quote_task import (
 from quote_assistant.usecase.compare_processing_time import CompareProcessingTime
 from quote_assistant.usecase.continue_despite_poor_quality import ContinueDespitePoorQuality
 from quote_assistant.usecase.create_quote_task import CreateQuoteTask
+from quote_assistant.usecase.export_quote_sheet import ExportQuoteSheet
 from quote_assistant.usecase.get_quote_task import GetQuoteTask
 from quote_assistant.usecase.list_quote_tasks import ListQuoteTasks
 from quote_assistant.usecase.extract_part_drawing import ExtractPartDrawing
@@ -107,6 +108,7 @@ def test_上传与查看原图用例不接受工厂标识参数() -> None:
         GetQuoteTask,
         AssignPartDrawingToQuoteTask,
         RemovePartDrawingFromQuoteTask,
+        ExportQuoteSheet,
     ):
         names = list(inspect.signature(cls.execute).parameters)
         assert "factory_id" not in names
@@ -185,6 +187,7 @@ def test_甲厂报价员看不到乙厂的报价任务也不能归入乙厂零�
     assert listed.status_code == 200
     assert listed.json() == {"items": []}
     assert client.get(f"/quote-tasks/{task_b}").status_code == 404
+    assert client.get(f"/quote-tasks/{task_b}/quote-sheet").status_code == 404
     assert (
         client.post(
             f"/quote-tasks/{task_b}/part-drawings",

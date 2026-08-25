@@ -112,6 +112,15 @@ class QuoteTaskRow(Base):
     created_by_user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
 
 
+class QuoteSheetTemplateRow(Base):
+    """Backend-maintained 报价底稿 column template. One row per factory; no admin UI."""
+
+    __tablename__ = "quote_sheet_templates"
+
+    factory_id: Mapped[UUID] = mapped_column(ForeignKey("factories.id"), primary_key=True)
+    columns: Mapped[list[dict[str, object]]] = mapped_column(JSONB, nullable=False)
+
+
 class ManualBaselineRow(Base):
     __tablename__ = "manual_baselines"
 

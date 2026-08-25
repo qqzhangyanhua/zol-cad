@@ -14,6 +14,7 @@ FORBIDDEN_IN_DOMAIN = (
     "pwdlib",
     "oss2",
     "pypdf",
+    "openpyxl",
     "quote_assistant.adapter",
     "quote_assistant.interface",
 )
@@ -28,6 +29,7 @@ FORBIDDEN_IN_USECASE = (
     "pwdlib",
     "oss2",
     "pypdf",
+    "openpyxl",
     "quote_assistant.adapter",
     "quote_assistant.interface",
 )
@@ -129,6 +131,32 @@ def test_风险规则引擎在领域层且用例不自行判断() -> None:
         source = path.read_text(encoding="utf-8")
         assert "高精度" not in source
         assert "evaluate_risk_labels" not in source
+
+
+def test_报价底稿导出规则在领域层且管理员界面没有字段映射() -> None:
+    quote_sheet = (SRC / "domain" / "quote_sheet.py").read_text(encoding="utf-8")
+    assert "def build_quote_sheet_table" in quote_sheet
+    assert "def unreviewed_drawings_for_export" in quote_sheet
+    assert "REQUIRED_QUOTE_SHEET_SOURCE_KEYS" in quote_sheet
+    assert "risk_labels" in quote_sheet
+    assert "experimental_mark" in quote_sheet
+    assert "low_quality_mark" in quote_sheet
+    export_use_case = (SRC / "usecase" / "export_quote_sheet.py").read_text(encoding="utf-8")
+    assert "openpyxl" not in export_use_case
+    assert "evaluate_risk_labels" not in export_use_case
+    http_src = "".join(path.read_text(encoding="utf-8") for path in (SRC / "interface" / "http").rglob("*.py"))
+    assert "quote-sheet-templates" not in http_src
+    assert "class QuoteSheetTemplateRequest" not in http_src
+
+    frontend = SRC.parents[2] / "frontend" / "src"
+    offenders: list[str] = []
+    needles = ("字段映射", "导出模板", "source_key", "quote-sheet-template", "QuoteSheetTemplate")
+    for path in list(frontend.rglob("*.ts")) + list(frontend.rglob("*.tsx")):
+        source = path.read_text(encoding="utf-8")
+        for needle in needles:
+            if needle in source:
+                offenders.append(f"{path.relative_to(frontend)} 含有 {needle}")
+    assert offenders == []
 
 
 def test_报价任务归集逻辑在领域层且不含金额审批字段() -> None:
