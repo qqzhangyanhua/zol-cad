@@ -8,7 +8,7 @@
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] **报价员**能用账号密码登录，未登录访问受保护页面被挡回登录页
 - [ ] 登录后看到空的**零件图**列表页，文案说明还没有内容

@@ -1,0 +1,29 @@
+[project]
+name = "quote-assistant"
+version = "0.1.0"
+description = "机加工报价辅助 — 后端"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.32",
+  "sqlalchemy>=2.0.36",
+  "alembic>=1.14",
+  "psycopg[binary]>=3.2",
+  "pwdlib[argon2]>=0.2",
+  "pydantic-settings>=2.6",
+]
+
+[dependency-groups]
+dev = [
+  "pytest>=8.3",
+  "httpx>=0.28",
+  "testcontainers[postgres]>=4.9",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "-q"
