@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import { Noto_Sans_SC } from "next/font/google";
 
 import "./globals.css";
@@ -14,7 +15,11 @@ export const metadata: Metadata = {
   description: "报价员登录后查看本厂零件图",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: ReactNode;
+}>) {
   return (
     <html lang="zh-CN" className={`${notoSansSc.variable} h-full`}>
       <body className="min-h-full bg-stone-100 font-sans text-stone-900 antialiased">
