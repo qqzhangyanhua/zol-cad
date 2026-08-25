@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { AppHeader } from "@/components/AppHeader";
+import { QuoteSheetExportButton } from "@/components/QuoteSheetExportButton";
 import { QuoteTaskDrawingManager } from "@/components/QuoteTaskDrawingManager";
 import { fetchBackend } from "@/lib/backend";
 import { parseCurrentUser, parsePartDrawingList, parseQuoteTaskDetail, parseQuoteTaskList } from "@/lib/types";
@@ -55,6 +56,7 @@ export default async function QuoteTaskDetailPage({ params }: QuoteTaskDetailPag
             {new Date(task.created_at).toLocaleString("zh-CN")}
           </p>
         </div>
+        <QuoteSheetExportButton task={task} />
         <QuoteTaskDrawingManager
           task={task}
           otherTasks={otherTasks}

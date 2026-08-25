@@ -48,3 +48,11 @@ class InvalidQuoteTask(DomainError):
 
 class QuoteTaskNotFound(DomainError):
     pass
+
+
+class IncompleteQuoteTaskReview(DomainError):
+    """导出报价底稿被拒绝，因为任务里还有未完成复核的零件图。"""
+
+
+class InvalidQuoteSheetTemplate(DomainError):
+    """工厂报价底稿模板配置不合法。后台 onboarding 配置，不进管理员界面。"""

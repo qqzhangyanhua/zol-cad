@@ -1,15 +1,25 @@
 from __future__ import annotations
 
 from datetime import UTC, date, datetime, time
+from urllib.parse import quote
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import Response
 
-from quote_assistant.domain.errors import InvalidQuoteTask, PartDrawingNotFound, QuoteTaskNotFound
+from quote_assistant.domain.errors import (
+    IncompleteQuoteTaskReview,
+    InvalidQuoteSheetTemplate,
+    InvalidQuoteTask,
+    PartDrawingNotFound,
+    QuoteTaskNotFound,
+)
+from quote_assistant.domain.quote_sheet import QuoteSheetFileFormat
 from quote_assistant.domain.quote_task import QuoteTaskReviewStatus
 from quote_assistant.interface.http.deps import (
     get_assign_part_drawing_to_quote_task,
     get_create_quote_task,
+    get_export_quote_sheet,
     get_get_quote_task,
     get_list_quote_tasks,
     get_remove_part_drawing_from_quote_task,
@@ -27,6 +37,7 @@ from quote_assistant.usecase.assign_part_drawing_to_quote_task import (
     RemovePartDrawingFromQuoteTask,
 )
 from quote_assistant.usecase.create_quote_task import CreateQuoteTask
+from quote_assistant.usecase.export_quote_sheet import ExportQuoteSheet
 from quote_assistant.usecase.get_quote_task import GetQuoteTask
 from quote_assistant.usecase.list_quote_tasks import ListQuoteTasks
 
@@ -135,3 +146,29 @@ def remove_part_drawing(
     except PartDrawingNotFound as exc:
         raise HTTPException(status_code=404, detail="零件图不存在") from exc
     return to_quote_task_detail_response(view)
+
+
+@router.get("/{quote_task_id}/quote-sheet")
+def export_quote_sheet(
+    quote_task_id: UUID,
+    file_format: str = Query(default="xlsx", alias="format"),
+    use_case: ExportQuoteSheet = Depends(get_export_quote_sheet),
+) -> Response:
+    try:
+        resolved_format = QuoteSheetFileFormat(file_format)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="导出格式只支持 xlsx 或 csv") from exc
+    try:
+        sheet = use_case.execute(quote_task_id, resolved_format)
+    except QuoteTaskNotFound as exc:
+        raise HTTPException(status_code=404, detail="报价任务不存在") from exc
+    except IncompleteQuoteTaskReview as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except InvalidQuoteSheetTemplate as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    encoded = quote(sheet.filename)
+    return Response(
+        content=sheet.content,
+        media_type=sheet.media_type,
+        headers={"Content-Disposition": f"attachment; filename*=UTF-8''{encoded}"},
+    )

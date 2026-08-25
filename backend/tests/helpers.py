@@ -9,6 +9,7 @@ from quote_assistant.adapter.db.models import (
     FactoryRow,
     PartDrawingEventRow,
     PartDrawingRow,
+    QuoteSheetTemplateRow,
     QuoteTaskRow,
     UserRow,
 )
@@ -128,6 +129,21 @@ def insert_quote_task(
     session.add(row)
     session.flush()
     return row.id
+
+
+def insert_quote_sheet_template(
+    session: Session,
+    factory_id: UUID,
+    columns: list[tuple[str, str]],
+) -> None:
+    """Onboarding-style write of a factory 报价底稿 template. No HTTP path."""
+    session.add(
+        QuoteSheetTemplateRow(
+            factory_id=factory_id,
+            columns=[{"source_key": source_key, "header": header} for source_key, header in columns],
+        )
+    )
+    session.flush()
 
 
 def login(client, username: str, password: str):

@@ -12,10 +12,12 @@ from quote_assistant.adapter.db.repositories import (
     SqlPartDrawingEventRepository,
     SqlPartDrawingRepository,
     SqlPasswordAuthenticator,
+    SqlQuoteSheetTemplateRepository,
     SqlQuoteTaskRepository,
     SqlSessionRepository,
     SqlUserRepository,
 )
+from quote_assistant.adapter.export.quote_sheet_writer import OpenpyxlQuoteSheetFileWriter
 from quote_assistant.adapter.db.session import SqlAlchemyUnitOfWork
 from quote_assistant.config import Settings
 from quote_assistant.domain.entities import Actor
@@ -27,6 +29,7 @@ from quote_assistant.usecase.assign_part_drawing_to_quote_task import (
 )
 from quote_assistant.usecase.compare_processing_time import CompareProcessingTime
 from quote_assistant.usecase.create_quote_task import CreateQuoteTask
+from quote_assistant.usecase.export_quote_sheet import ExportQuoteSheet
 from quote_assistant.usecase.get_quote_task import GetQuoteTask
 from quote_assistant.usecase.list_quote_tasks import ListQuoteTasks
 from quote_assistant.usecase.continue_despite_poor_quality import ContinueDespitePoorQuality
@@ -363,6 +366,20 @@ def get_remove_part_drawing_from_quote_task(
     quote_tasks, drawings, uow = _quote_task_repos(session)
     return RemovePartDrawingFromQuoteTask(
         actor=actor, quote_tasks=quote_tasks, drawings=drawings, uow=uow
+    )
+
+
+def get_export_quote_sheet(
+    actor: Actor = Depends(require_actor),
+    session: Session = Depends(get_db),
+) -> ExportQuoteSheet:
+    quote_tasks, drawings, _uow = _quote_task_repos(session)
+    return ExportQuoteSheet(
+        actor=actor,
+        quote_tasks=quote_tasks,
+        drawings=drawings,
+        templates=SqlQuoteSheetTemplateRepository(session),
+        writer=OpenpyxlQuoteSheetFileWriter(),
     )
 
 

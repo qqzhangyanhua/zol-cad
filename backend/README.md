@@ -35,6 +35,8 @@ QA_LOCAL_OBJECT_DIR=/tmp/quote-assistant-objects \
 
 报价任务：轻量归集层，字段只有名称、客户名称、创建时间与创建人。零件图通过可空的 `quote_task_id` 归入，一张图同时最多属于一个任务，也可以不属于任何任务。历史检索按客户名称、创建时间、以及由成员零件图复核状态推导的进度（无零件图 / 复核未完成 / 已复核）。任务本身没有金额字段，也没有审批或状态流转。
 
+报价底稿导出：`GET /quote-tasks/{id}/quote-sheet?format=xlsx|csv`。每个零件一行。列与顺序读该工厂 `quote_sheet_templates` 行（没有则用默认底稿）。模板是 onboarding 后台配置，没有 HTTP 写入入口，管理员界面也没有字段映射。导出必须带风险标签、非目标族的「实验性、不保证」、以及票 05 的低质量图标记。任务里还有未复核零件图时返回 409，并点名还差哪几张。
+
 ## 缝 1 测试
 
 pytest + FastAPI ASGI 测试客户端（不起端口）。启动时对真实 Postgres 执行 Alembic。

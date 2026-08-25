@@ -31,6 +31,10 @@ export async function proxyToBackend(
   if (contentType) {
     response.headers.set("content-type", contentType);
   }
+  const contentDisposition = upstream.headers.get("content-disposition");
+  if (contentDisposition) {
+    response.headers.set("content-disposition", contentDisposition);
+  }
   for (const cookie of upstream.headers.getSetCookie()) {
     response.headers.append("set-cookie", cookie);
   }
