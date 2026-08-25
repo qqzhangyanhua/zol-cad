@@ -7,10 +7,17 @@ from quote_assistant.usecase.list_part_drawing_events import ListPartDrawingEven
 from quote_assistant.usecase.list_part_drawings import ListPartDrawings
 from quote_assistant.usecase.login import Login
 from quote_assistant.usecase.logout import Logout
+from quote_assistant.usecase.review_part_drawing import (
+    CompleteReview,
+    ConfirmExtractedField,
+    UpdateExtractedField,
+)
 from quote_assistant.usecase.tenant import TenantBoundUseCase, TenantScope
 from quote_assistant.usecase.upload_part_drawings import UploadPartDrawings
 
 __all__ = [
+    "CompleteReview",
+    "ConfirmExtractedField",
     "ContinueDespitePoorQuality",
     "ExtractPartDrawing",
     "GetCurrentActor",
@@ -22,5 +29,6 @@ __all__ = [
     "Logout",
     "TenantBoundUseCase",
     "TenantScope",
+    "UpdateExtractedField",
     "UploadPartDrawings",
 ]

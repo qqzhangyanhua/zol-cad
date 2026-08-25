@@ -27,6 +27,11 @@ from quote_assistant.usecase.list_part_drawing_events import ListPartDrawingEven
 from quote_assistant.usecase.list_part_drawings import ListPartDrawings
 from quote_assistant.usecase.login import Login
 from quote_assistant.usecase.logout import Logout
+from quote_assistant.usecase.review_part_drawing import (
+    CompleteReview,
+    ConfirmExtractedField,
+    UpdateExtractedField,
+)
 from quote_assistant.usecase.upload_part_drawings import UploadPartDrawings
 
 SESSION_COOKIE = "qa_session"
@@ -159,6 +164,40 @@ def get_issue_original_access_url(
         storage=request.app.state.object_storage,
         ttl=timedelta(seconds=settings.signed_url_ttl_seconds),
     )
+
+
+def _review_deps(
+    session: Session,
+) -> tuple[SqlPartDrawingRepository, SqlPartDrawingEventRepository, SqlAlchemyUnitOfWork]:
+    return (
+        SqlPartDrawingRepository(session),
+        SqlPartDrawingEventRepository(session),
+        SqlAlchemyUnitOfWork(session),
+    )
+
+
+def get_confirm_extracted_field(
+    actor: Actor = Depends(require_actor),
+    session: Session = Depends(get_db),
+) -> ConfirmExtractedField:
+    drawings, events, uow = _review_deps(session)
+    return ConfirmExtractedField(actor=actor, drawings=drawings, events=events, uow=uow)
+
+
+def get_update_extracted_field(
+    actor: Actor = Depends(require_actor),
+    session: Session = Depends(get_db),
+) -> UpdateExtractedField:
+    drawings, events, uow = _review_deps(session)
+    return UpdateExtractedField(actor=actor, drawings=drawings, events=events, uow=uow)
+
+
+def get_complete_review(
+    actor: Actor = Depends(require_actor),
+    session: Session = Depends(get_db),
+) -> CompleteReview:
+    drawings, events, uow = _review_deps(session)
+    return CompleteReview(actor=actor, drawings=drawings, events=events, uow=uow)
 
 
 def get_current_actor_use_case(

@@ -24,3 +24,11 @@ class IllegalPartDrawingTransition(DomainError):
 
 class ExtractionValidationFailed(DomainError):
     """Adapter-boundary schema rejected the engine payload. Dirty data must not enter the domain."""
+
+
+class ExtractedFieldNotFound(DomainError):
+    pass
+
+
+class IncompleteReview(DomainError):
+    """标记已复核 was refused because 需确认 items are still unfinished."""

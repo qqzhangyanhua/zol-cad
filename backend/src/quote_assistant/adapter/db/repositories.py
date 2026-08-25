@@ -16,30 +16,35 @@ from quote_assistant.domain.quality import QualityGrade
 from quote_assistant.usecase.tenant import TenantScope
 
 
-def _fields_to_json(fields: tuple[ExtractedField, ...]) -> list[dict[str, str | None]]:
+def _fields_to_json(fields: tuple[ExtractedField, ...]) -> list[dict[str, object]]:
     return [
         {
             "key": field.key,
             "label": field.label,
             "value": field.value,
             "category": field.category.value,
+            "confirmed": field.confirmed,
         }
         for field in fields
     ]
 
 
-def _fields_from_json(raw: list[dict[str, str | None]] | None) -> tuple[ExtractedField, ...]:
+def _fields_from_json(raw: list[dict[str, object]] | None) -> tuple[ExtractedField, ...]:
     if not raw:
         return ()
-    return tuple(
-        ExtractedField(
-            key=item["key"],
-            label=item["label"],
-            value=item.get("value"),
-            category=FieldCategory(item["category"]),
+    parsed: list[ExtractedField] = []
+    for item in raw:
+        value = item.get("value")
+        parsed.append(
+            ExtractedField(
+                key=str(item["key"]),
+                label=str(item["label"]),
+                value=value if isinstance(value, str) else None,
+                category=FieldCategory(str(item["category"])),
+                confirmed=bool(item.get("confirmed", False)),
+            )
         )
-        for item in raw
-    )
+    return tuple(parsed)
 
 
 def _to_part_drawing(row: PartDrawingRow) -> PartDrawing:

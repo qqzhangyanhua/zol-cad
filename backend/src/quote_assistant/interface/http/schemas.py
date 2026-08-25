@@ -19,6 +19,7 @@ from quote_assistant.domain.quality import (
     QUALITY_GRADE_DISCLAIMER,
     QualityGrade,
 )
+from quote_assistant.domain.review import review_fields_for, unfinished_confirmation_items
 from quote_assistant.domain.risk_labels import (
     NO_JUDGABLE_RISK_ITEMS_MESSAGE,
     RiskLabelName,
@@ -46,6 +47,12 @@ class ExtractedFieldResponse(BaseModel):
     label: str
     value: str | None
     category: FieldCategory
+    requires_confirmation: bool
+    confirmed: bool
+
+
+class UpdateExtractedFieldRequest(BaseModel):
+    value: str | None = Field(default=None, max_length=200)
 
 
 class RiskLabelResponse(BaseModel):
@@ -77,6 +84,8 @@ class PartDrawingResponse(BaseModel):
     look_at_drawing_disclaimer: str
     risk_labels: list[RiskLabelResponse]
     no_judgable_risk_message: str
+    pending_confirmation_count: int
+    pending_confirmation_labels: list[str]
 
 
 class PartDrawingListResponse(BaseModel):
@@ -123,6 +132,8 @@ def to_part_drawing_response(item: PartDrawing) -> PartDrawingResponse:
     out_of_scope = ASSEMBLY_OUT_OF_SCOPE_TEXT if item.is_assembly_or_exploded else None
     mark = LOW_QUALITY_MARK_TEXT if item.low_quality_unreliable else None
     merged_fields = merge_extracted_fields(item.extracted_fields)
+    review_fields = review_fields_for(item)
+    unfinished = unfinished_confirmation_items(item)
     return PartDrawingResponse(
         id=item.id,
         original_filename=item.original_filename,
@@ -146,8 +157,10 @@ def to_part_drawing_response(item: PartDrawing) -> PartDrawingResponse:
                 label=field.label,
                 value=field.value,
                 category=field.category,
+                requires_confirmation=field.requires_confirmation,
+                confirmed=field.confirmed,
             )
-            for field in merged_fields
+            for field in review_fields
         ],
         extraction_failure_reason=item.extraction_failure_reason,
         look_at_drawing_disclaimer=LOOK_AT_DRAWING_DISCLAIMER,
@@ -161,4 +174,6 @@ def to_part_drawing_response(item: PartDrawing) -> PartDrawingResponse:
             for label in evaluate_risk_labels(merged_fields)
         ],
         no_judgable_risk_message=NO_JUDGABLE_RISK_ITEMS_MESSAGE,
+        pending_confirmation_count=len(unfinished),
+        pending_confirmation_labels=[field.label for field in unfinished],
     )

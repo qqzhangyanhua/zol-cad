@@ -20,6 +20,7 @@ class ExtractedField:
     label: str
     value: str | None
     category: FieldCategory
+    confirmed: bool = False
 
 
 @dataclass(frozen=True)
@@ -81,5 +82,6 @@ def merge_extracted_fields(engine_fields: tuple[ExtractedField, ...]) -> tuple[E
         value = found.value if found is not None else None
         if value == "":
             value = None
-        merged.append(ExtractedField(spec.key, spec.label, value, spec.category))
+        confirmed = found.confirmed if found is not None else False
+        merged.append(ExtractedField(spec.key, spec.label, value, spec.category, confirmed))
     return tuple(merged)

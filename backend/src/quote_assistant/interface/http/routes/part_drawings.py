@@ -6,14 +6,22 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 
 from quote_assistant.domain.entities import IncomingDrawing
-from quote_assistant.domain.errors import IllegalPartDrawingTransition, PartDrawingNotFound
+from quote_assistant.domain.errors import (
+    ExtractedFieldNotFound,
+    IllegalPartDrawingTransition,
+    IncompleteReview,
+    PartDrawingNotFound,
+)
 from quote_assistant.interface.http.deps import (
+    get_complete_review,
+    get_confirm_extracted_field,
     get_continue_despite_poor_quality,
     get_extract_part_drawing,
     get_get_part_drawing,
     get_issue_original_access_url,
     get_list_part_drawing_events,
     get_list_part_drawings,
+    get_update_extracted_field,
     get_upload_part_drawings,
 )
 from quote_assistant.interface.http.schemas import (
@@ -23,6 +31,7 @@ from quote_assistant.interface.http.schemas import (
     PartDrawingListResponse,
     PartDrawingResponse,
     RejectedUploadResponse,
+    UpdateExtractedFieldRequest,
     UploadPartDrawingsResponse,
     to_part_drawing_response,
 )
@@ -32,6 +41,11 @@ from quote_assistant.usecase.get_part_drawing import GetPartDrawing
 from quote_assistant.usecase.issue_original_access_url import IssueOriginalAccessUrl
 from quote_assistant.usecase.list_part_drawing_events import ListPartDrawingEvents
 from quote_assistant.usecase.list_part_drawings import ListPartDrawings
+from quote_assistant.usecase.review_part_drawing import (
+    CompleteReview,
+    ConfirmExtractedField,
+    UpdateExtractedField,
+)
 from quote_assistant.usecase.upload_part_drawings import UploadPartDrawings
 
 router = APIRouter(prefix="/part-drawings", tags=["part-drawings"])
@@ -150,6 +164,57 @@ def extract_part_drawing(
         drawing = use_case.execute(drawing_id)
     except PartDrawingNotFound as exc:
         raise HTTPException(status_code=404, detail="零件图不存在") from exc
+    except IllegalPartDrawingTransition as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return to_part_drawing_response(drawing)
+
+
+@router.post("/{drawing_id}/fields/{field_key}/confirm", response_model=PartDrawingResponse)
+def confirm_extracted_field(
+    drawing_id: UUID,
+    field_key: str,
+    use_case: ConfirmExtractedField = Depends(get_confirm_extracted_field),
+) -> PartDrawingResponse:
+    try:
+        drawing = use_case.execute(drawing_id, field_key)
+    except PartDrawingNotFound as exc:
+        raise HTTPException(status_code=404, detail="零件图不存在") from exc
+    except ExtractedFieldNotFound as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except IllegalPartDrawingTransition as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return to_part_drawing_response(drawing)
+
+
+@router.patch("/{drawing_id}/fields/{field_key}", response_model=PartDrawingResponse)
+def update_extracted_field(
+    drawing_id: UUID,
+    field_key: str,
+    payload: UpdateExtractedFieldRequest,
+    use_case: UpdateExtractedField = Depends(get_update_extracted_field),
+) -> PartDrawingResponse:
+    try:
+        drawing = use_case.execute(drawing_id, field_key, payload.value)
+    except PartDrawingNotFound as exc:
+        raise HTTPException(status_code=404, detail="零件图不存在") from exc
+    except ExtractedFieldNotFound as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except IllegalPartDrawingTransition as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return to_part_drawing_response(drawing)
+
+
+@router.post("/{drawing_id}/complete-review", response_model=PartDrawingResponse)
+def complete_review(
+    drawing_id: UUID,
+    use_case: CompleteReview = Depends(get_complete_review),
+) -> PartDrawingResponse:
+    try:
+        drawing = use_case.execute(drawing_id)
+    except PartDrawingNotFound as exc:
+        raise HTTPException(status_code=404, detail="零件图不存在") from exc
+    except IncompleteReview as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except IllegalPartDrawingTransition as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     return to_part_drawing_response(drawing)

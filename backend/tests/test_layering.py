@@ -75,6 +75,38 @@ def test_用例层只依赖提取引擎抽象() -> None:
     assert "quote_assistant.adapter.extraction" not in extract
 
 
+def test_高风险字段判定表只活在领域层() -> None:
+    review = (SRC / "domain" / "review.py").read_text(encoding="utf-8")
+    assert "HIGH_RISK_FIELD_CLASSES" in review
+    assert "FIELD_RISK_CLASS_BY_KEY" in review
+    assert "def field_requires_confirmation" in review
+    assert "尺寸类" in review
+    assert "公差类" in review
+
+    schemas = (SRC / "interface" / "http" / "schemas.py").read_text(encoding="utf-8")
+    assert "review_fields_for" in schemas
+    assert "FIELD_RISK_CLASS_BY_KEY" not in schemas
+
+    for path in (SRC / "usecase").rglob("*.py"):
+        source = path.read_text(encoding="utf-8")
+        assert "HIGH_RISK_FIELD_CLASSES" not in source
+        assert "FIELD_RISK_CLASS_BY_KEY" not in source
+        assert "尺寸类" not in source
+        assert "公差类" not in source
+
+    frontend = SRC.parents[2] / "frontend" / "src"
+    offenders: list[str] = []
+    for path in list(frontend.rglob("*.ts")) + list(frontend.rglob("*.tsx")):
+        source = path.read_text(encoding="utf-8")
+        if "HIGH_RISK_FIELD" in source or "FIELD_RISK_CLASS" in source:
+            offenders.append(str(path.relative_to(frontend)))
+        if "field_requires_confirmation" in source:
+            offenders.append(str(path.relative_to(frontend)))
+        if "quality_grade === \"清晰\"" in source or "quality_grade === '清晰'" in source:
+            offenders.append(f"{path.relative_to(frontend)} 用图纸质量分级自行判断需确认")
+    assert offenders == []
+
+
 def test_风险规则引擎在领域层且用例不自行判断() -> None:
     risk = (SRC / "domain" / "risk_labels.py").read_text(encoding="utf-8")
     assert "def evaluate_risk_labels" in risk

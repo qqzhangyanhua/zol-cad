@@ -11,6 +11,11 @@ from quote_assistant.usecase.get_part_drawing import GetPartDrawing
 from quote_assistant.usecase.issue_original_access_url import IssueOriginalAccessUrl
 from quote_assistant.usecase.list_part_drawing_events import ListPartDrawingEvents
 from quote_assistant.usecase.list_part_drawings import ListPartDrawings
+from quote_assistant.usecase.review_part_drawing import (
+    CompleteReview,
+    ConfirmExtractedField,
+    UpdateExtractedField,
+)
 from quote_assistant.usecase.upload_part_drawings import UploadPartDrawings
 from drawing_fixtures import PNG_1X1
 from helpers import create_factory, create_quoter, insert_part_drawing, login
@@ -71,6 +76,9 @@ def test_上传与查看原图用例不接受工厂标识参数() -> None:
         ContinueDespitePoorQuality,
         ExtractPartDrawing,
         ListPartDrawingEvents,
+        ConfirmExtractedField,
+        UpdateExtractedField,
+        CompleteReview,
     ):
         names = list(inspect.signature(cls.execute).parameters)
         assert "factory_id" not in names
@@ -102,3 +110,12 @@ def test_甲厂报价员看不到乙厂刚上传的零件图也不能拿原图�
     assert client.get(f"/part-drawings/{drawing_id}/events").status_code == 404
     assert client.post(f"/part-drawings/{drawing_id}/continue-despite-quality").status_code == 404
     assert client.post(f"/part-drawings/{drawing_id}/extract").status_code == 404
+    assert client.post(f"/part-drawings/{drawing_id}/fields/drawing_no/confirm").status_code == 404
+    assert (
+        client.patch(
+            f"/part-drawings/{drawing_id}/fields/drawing_no",
+            json={"value": "偷改"},
+        ).status_code
+        == 404
+    )
+    assert client.post(f"/part-drawings/{drawing_id}/complete-review").status_code == 404
