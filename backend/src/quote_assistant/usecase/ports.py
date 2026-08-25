@@ -5,6 +5,8 @@ from typing import Protocol
 from uuid import UUID
 
 from quote_assistant.domain.entities import IssuedSession, PartDrawing, User
+from quote_assistant.domain.extraction import ExtractionRequest, ExtractionResult
+from quote_assistant.domain.part_drawing_state import PartDrawingEvent
 from quote_assistant.usecase.tenant import TenantScope
 
 
@@ -39,6 +41,9 @@ class PartDrawingRepository(Protocol):
     def add(self, drawing: PartDrawing) -> None:
         """Persist a newly uploaded 零件图. factory_id must already be the tenant's."""
 
+    def save(self, drawing: PartDrawing) -> None:
+        """Update an existing 零件图 that already belongs to the tenant."""
+
 
 class ObjectStorage(Protocol):
     """Narrow object-storage port. Use-case code must not import an OSS SDK."""
@@ -59,6 +64,24 @@ class ObjectStorage(Protocol):
 class PdfPageCounter(Protocol):
     def count_pages(self, content: bytes) -> int:
         """Return the page count of a PDF. Unreadable files raise PdfUnreadable."""
+
+
+class PartDrawingEventRepository(Protocol):
+    def add(self, event: PartDrawingEvent) -> None:
+        """Append one timestamped state-machine event."""
+
+    def list_for_drawing(self, tenant: TenantScope, drawing_id: UUID) -> list[PartDrawingEvent]:
+        """Events of one 零件图, oldest first. Tenant-filtered."""
+
+    def next_sequence(self, drawing_id: UUID) -> int:
+        """Next sequence_no for this 零件图 (1 if none yet)."""
+
+
+class ExtractionEngine(Protocol):
+    """Port for 读图取数. Use-case code must not import a concrete vendor SDK."""
+
+    def extract(self, request: ExtractionRequest) -> ExtractionResult:
+        """Return structured extraction plus the 图纸质量分级 signal."""
 
 
 class UnitOfWork(Protocol):

@@ -7,6 +7,7 @@ from fastapi import Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
 from quote_assistant.adapter.db.repositories import (
+    SqlPartDrawingEventRepository,
     SqlPartDrawingRepository,
     SqlPasswordAuthenticator,
     SqlSessionRepository,
@@ -17,9 +18,11 @@ from quote_assistant.config import Settings
 from quote_assistant.domain.entities import Actor
 from quote_assistant.domain.errors import Unauthenticated
 from quote_assistant.adapter.pdf.page_counter import PypdfPageCounter
+from quote_assistant.usecase.continue_despite_poor_quality import ContinueDespitePoorQuality
 from quote_assistant.usecase.get_current_actor import GetCurrentActor
 from quote_assistant.usecase.get_part_drawing import GetPartDrawing
 from quote_assistant.usecase.issue_original_access_url import IssueOriginalAccessUrl
+from quote_assistant.usecase.list_part_drawing_events import ListPartDrawingEvents
 from quote_assistant.usecase.list_part_drawings import ListPartDrawings
 from quote_assistant.usecase.login import Login
 from quote_assistant.usecase.logout import Logout
@@ -94,9 +97,34 @@ def get_upload_part_drawings(
     return UploadPartDrawings(
         actor=actor,
         drawings=SqlPartDrawingRepository(session),
+        events=SqlPartDrawingEventRepository(session),
         storage=request.app.state.object_storage,
         pdf_pages=PypdfPageCounter(),
+        engine=request.app.state.extraction_engine,
         uow=SqlAlchemyUnitOfWork(session),
+    )
+
+
+def get_continue_despite_poor_quality(
+    actor: Actor = Depends(require_actor),
+    session: Session = Depends(get_db),
+) -> ContinueDespitePoorQuality:
+    return ContinueDespitePoorQuality(
+        actor=actor,
+        drawings=SqlPartDrawingRepository(session),
+        events=SqlPartDrawingEventRepository(session),
+        uow=SqlAlchemyUnitOfWork(session),
+    )
+
+
+def get_list_part_drawing_events(
+    actor: Actor = Depends(require_actor),
+    session: Session = Depends(get_db),
+) -> ListPartDrawingEvents:
+    return ListPartDrawingEvents(
+        actor=actor,
+        drawings=SqlPartDrawingRepository(session),
+        events=SqlPartDrawingEventRepository(session),
     )
 
 

@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { LowQualityMark } from "@/components/LowQualityMark";
+import { QualityGradeBadge } from "@/components/QualityGradeBadge";
 import type { PartDrawing } from "@/lib/types";
 
 type PartDrawingListProps = {
@@ -19,9 +21,18 @@ export function PartDrawingList({ items }: PartDrawingListProps) {
               <span className="block truncate text-sm font-medium text-stone-900">
                 {item.original_filename}
               </span>
-              {item.content_type === "application/pdf" ? (
-                <span className="mt-1 block text-xs text-stone-500">
-                  指定第 {item.selected_page} 页（共 {item.page_count} 页）
+              <span className="mt-1 flex flex-wrap items-center gap-2">
+                <QualityGradeBadge grade={item.quality_grade} />
+                <span className="text-xs text-stone-500">{item.status}</span>
+                {item.content_type === "application/pdf" ? (
+                  <span className="text-xs text-stone-500">
+                    指定第 {item.selected_page} 页（共 {item.page_count} 页）
+                  </span>
+                ) : null}
+              </span>
+              {item.low_quality_mark ? (
+                <span className="mt-2 block">
+                  <LowQualityMark text={item.low_quality_mark} />
                 </span>
               ) : null}
             </span>

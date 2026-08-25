@@ -14,11 +14,25 @@ from quote_assistant.domain.entities import (
     Actor,
     IncomingDrawing,
     PartDrawing,
+    PartDrawingStatus,
     RejectedUpload,
     UploadPartDrawingsResult,
 )
 from quote_assistant.domain.errors import PdfUnreadable
-from quote_assistant.usecase.ports import ObjectStorage, PartDrawingRepository, PdfPageCounter, UnitOfWork
+from quote_assistant.domain.extraction import ExtractionRequest
+from quote_assistant.domain.part_drawing_state import (
+    birth_uploaded,
+    record_transition,
+    status_after_grade,
+)
+from quote_assistant.usecase.ports import (
+    ExtractionEngine,
+    ObjectStorage,
+    PartDrawingEventRepository,
+    PartDrawingRepository,
+    PdfPageCounter,
+    UnitOfWork,
+)
 from quote_assistant.usecase.tenant import TenantBoundUseCase
 
 
@@ -45,20 +59,24 @@ def _storage_suffix(media_type: str, original_filename: str) -> str:
 
 
 class UploadPartDrawings(TenantBoundUseCase):
-    """Store one or more 零件图 for the authenticated 报价员's factory."""
+    """Store one or more 零件图 for the authenticated 报价员's factory, then grade them."""
 
     def __init__(
         self,
         actor: Actor,
         drawings: PartDrawingRepository,
+        events: PartDrawingEventRepository,
         storage: ObjectStorage,
         pdf_pages: PdfPageCounter,
+        engine: ExtractionEngine,
         uow: UnitOfWork,
     ) -> None:
         super().__init__(actor)
         self._drawings = drawings
+        self._events = events
         self._storage = storage
         self._pdf_pages = pdf_pages
+        self._engine = engine
         self._uow = uow
 
     def execute(self, files: list[IncomingDrawing]) -> UploadPartDrawingsResult:
@@ -105,19 +123,59 @@ class UploadPartDrawings(TenantBoundUseCase):
                 )
                 self._storage.store(storage_key, assessed.content, assessed.media_type)
                 stored_keys.append(storage_key)
+                now = datetime.now(UTC)
                 drawing = PartDrawing(
                     id=drawing_id,
                     factory_id=self.tenant.factory_id,
                     original_filename=assessed.original_filename,
-                    uploaded_at=datetime.now(UTC),
+                    uploaded_at=now,
                     storage_key=storage_key,
                     content_type=assessed.media_type,
                     byte_size=assessed.byte_size,
                     page_count=assessed.page_count,
                     selected_page=assessed.selected_page,
                     uploaded_by_user_id=self.actor.user_id,
+                    status=PartDrawingStatus.UPLOADED,
+                    quality_grade=None,
+                    is_assembly_or_exploded=False,
+                    low_quality_unreliable=False,
+                )
+                drawing, born = birth_uploaded(
+                    drawing, occurred_at=now, actor_user_id=self.actor.user_id
                 )
                 self._drawings.add(drawing)
+                self._events.add(born)
+                drawing, grading = record_transition(
+                    drawing,
+                    PartDrawingStatus.GRADING,
+                    occurred_at=datetime.now(UTC),
+                    sequence_no=2,
+                    actor_user_id=self.actor.user_id,
+                )
+                self._drawings.save(drawing)
+                self._events.add(grading)
+
+                page_content = self._storage.fetch(storage_key)
+                result = self._engine.extract(
+                    ExtractionRequest(
+                        page_content=page_content,
+                        media_type=assessed.media_type,
+                        part_family_id=None,
+                        input_drawing_id=assessed.original_filename,
+                    )
+                )
+                next_status = status_after_grade(result)
+                drawing, graded = record_transition(
+                    drawing,
+                    next_status,
+                    occurred_at=datetime.now(UTC),
+                    sequence_no=3,
+                    actor_user_id=self.actor.user_id,
+                    quality_grade=result.quality_grade,
+                    is_assembly_or_exploded=result.is_assembly_or_exploded,
+                )
+                self._drawings.save(drawing)
+                self._events.add(graded)
                 accepted.append(drawing)
             self._uow.commit()
         except Exception:

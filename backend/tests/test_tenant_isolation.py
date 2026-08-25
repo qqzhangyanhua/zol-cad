@@ -5,8 +5,10 @@ import inspect
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
+from quote_assistant.usecase.continue_despite_poor_quality import ContinueDespitePoorQuality
 from quote_assistant.usecase.get_part_drawing import GetPartDrawing
 from quote_assistant.usecase.issue_original_access_url import IssueOriginalAccessUrl
+from quote_assistant.usecase.list_part_drawing_events import ListPartDrawingEvents
 from quote_assistant.usecase.list_part_drawings import ListPartDrawings
 from quote_assistant.usecase.upload_part_drawings import UploadPartDrawings
 from drawing_fixtures import PNG_1X1
@@ -61,7 +63,13 @@ def test_零件图列表忽略调用方传入的工厂标识(client: TestClient,
 
 
 def test_上传与查看原图用例不接受工厂标识参数() -> None:
-    for cls in (UploadPartDrawings, GetPartDrawing, IssueOriginalAccessUrl):
+    for cls in (
+        UploadPartDrawings,
+        GetPartDrawing,
+        IssueOriginalAccessUrl,
+        ContinueDespitePoorQuality,
+        ListPartDrawingEvents,
+    ):
         names = list(inspect.signature(cls.execute).parameters)
         assert "factory_id" not in names
         assert "tenant_id" not in names
@@ -89,3 +97,5 @@ def test_甲厂报价员看不到乙厂刚上传的零件图也不能拿原图�
     assert client.get("/part-drawings").json() == {"items": []}
     assert client.get(f"/part-drawings/{drawing_id}").status_code == 404
     assert client.get(f"/part-drawings/{drawing_id}/original").status_code == 404
+    assert client.get(f"/part-drawings/{drawing_id}/events").status_code == 404
+    assert client.post(f"/part-drawings/{drawing_id}/continue-despite-quality").status_code == 404

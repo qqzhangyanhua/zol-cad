@@ -93,7 +93,7 @@ export function PartDrawingUploadPanel() {
         </p>
         <p className="mt-2 max-w-lg text-xs leading-5 text-stone-500">
           支持 PDF、JPEG、PNG、WebP、TIFF · 单文件不超过 {MAX_FILE_SIZE_MB} MB · PDF 不超过{" "}
-          {MAX_PDF_PAGES} 页 · 可一次选多张
+          {MAX_PDF_PAGES} 页 · 可一次选多张。装配图、爆炸图不在处理范围，请只上传单个零件的零件图。
         </p>
         <input
           id={inputId}

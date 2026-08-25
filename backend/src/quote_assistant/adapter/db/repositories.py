@@ -4,12 +4,14 @@ from datetime import UTC, datetime, timedelta
 from secrets import token_urlsafe
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, joinedload
 
-from quote_assistant.adapter.db.models import PartDrawingRow, SessionRow, UserRow
+from quote_assistant.adapter.db.models import PartDrawingEventRow, PartDrawingRow, SessionRow, UserRow
 from quote_assistant.adapter.security.passwords import verify_password
-from quote_assistant.domain.entities import IssuedSession, PartDrawing, Role, User
+from quote_assistant.domain.entities import IssuedSession, PartDrawing, PartDrawingStatus, Role, User
+from quote_assistant.domain.part_drawing_state import PartDrawingEvent
+from quote_assistant.domain.quality import QualityGrade
 from quote_assistant.usecase.tenant import TenantScope
 
 
@@ -25,6 +27,26 @@ def _to_part_drawing(row: PartDrawingRow) -> PartDrawing:
         page_count=row.page_count,
         selected_page=row.selected_page,
         uploaded_by_user_id=row.uploaded_by_user_id,
+        status=PartDrawingStatus(row.status),
+        quality_grade=QualityGrade(row.quality_grade) if row.quality_grade else None,
+        is_assembly_or_exploded=row.is_assembly_or_exploded,
+        low_quality_unreliable=row.low_quality_unreliable,
+    )
+
+
+def _to_event(row: PartDrawingEventRow) -> PartDrawingEvent:
+    occurred_at = row.occurred_at
+    if occurred_at.tzinfo is None:
+        occurred_at = occurred_at.replace(tzinfo=UTC)
+    return PartDrawingEvent(
+        id=row.id,
+        part_drawing_id=row.part_drawing_id,
+        factory_id=row.factory_id,
+        from_status=PartDrawingStatus(row.from_status) if row.from_status else None,
+        to_status=PartDrawingStatus(row.to_status),
+        occurred_at=occurred_at,
+        sequence_no=row.sequence_no,
+        actor_user_id=row.actor_user_id,
     )
 
 
@@ -156,5 +178,65 @@ class SqlPartDrawingRepository:
                 page_count=drawing.page_count,
                 selected_page=drawing.selected_page,
                 uploaded_by_user_id=drawing.uploaded_by_user_id,
+                status=drawing.status.value,
+                quality_grade=drawing.quality_grade.value if drawing.quality_grade else None,
+                is_assembly_or_exploded=drawing.is_assembly_or_exploded,
+                low_quality_unreliable=drawing.low_quality_unreliable,
             )
         )
+        self._session.flush()
+
+    def save(self, drawing: PartDrawing) -> None:
+        row = self._session.get(PartDrawingRow, drawing.id)
+        if row is None:
+            self.add(drawing)
+            return
+        row.original_filename = drawing.original_filename
+        row.storage_key = drawing.storage_key
+        row.content_type = drawing.content_type
+        row.byte_size = drawing.byte_size
+        row.page_count = drawing.page_count
+        row.selected_page = drawing.selected_page
+        row.uploaded_by_user_id = drawing.uploaded_by_user_id
+        row.status = drawing.status.value
+        row.quality_grade = drawing.quality_grade.value if drawing.quality_grade else None
+        row.is_assembly_or_exploded = drawing.is_assembly_or_exploded
+        row.low_quality_unreliable = drawing.low_quality_unreliable
+
+
+class SqlPartDrawingEventRepository:
+    def __init__(self, session: Session) -> None:
+        self._session = session
+
+    def add(self, event: PartDrawingEvent) -> None:
+        self._session.add(
+            PartDrawingEventRow(
+                id=event.id,
+                part_drawing_id=event.part_drawing_id,
+                factory_id=event.factory_id,
+                from_status=event.from_status.value if event.from_status else None,
+                to_status=event.to_status.value,
+                occurred_at=event.occurred_at,
+                sequence_no=event.sequence_no,
+                actor_user_id=event.actor_user_id,
+            )
+        )
+
+    def list_for_drawing(self, tenant: TenantScope, drawing_id: UUID) -> list[PartDrawingEvent]:
+        rows = self._session.execute(
+            select(PartDrawingEventRow)
+            .where(
+                PartDrawingEventRow.part_drawing_id == drawing_id,
+                PartDrawingEventRow.factory_id == tenant.factory_id,
+            )
+            .order_by(PartDrawingEventRow.sequence_no.asc())
+        ).scalars()
+        return [_to_event(row) for row in rows]
+
+    def next_sequence(self, drawing_id: UUID) -> int:
+        current = self._session.execute(
+            select(func.coalesce(func.max(PartDrawingEventRow.sequence_no), 0)).where(
+                PartDrawingEventRow.part_drawing_id == drawing_id
+            )
+        ).scalar_one()
+        return int(current) + 1

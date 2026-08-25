@@ -5,6 +5,16 @@ from datetime import datetime
 from enum import StrEnum
 from uuid import UUID
 
+from quote_assistant.domain.quality import QualityGrade
+
+
+class PartDrawingStatus(StrEnum):
+    UPLOADED = "已上传"
+    GRADING = "分级中"
+    GRADED = "已分级"
+    ADVISE_MANUAL = "建议人工"
+    OUT_OF_SCOPE = "不在范围"
+
 
 class Role(StrEnum):
     QUOTER = "quoter"
@@ -60,6 +70,10 @@ class PartDrawing:
     page_count: int
     selected_page: int
     uploaded_by_user_id: UUID | None
+    status: PartDrawingStatus
+    quality_grade: QualityGrade | None
+    is_assembly_or_exploded: bool
+    low_quality_unreliable: bool
 
 
 @dataclass(frozen=True)
