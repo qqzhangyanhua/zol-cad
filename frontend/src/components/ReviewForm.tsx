@@ -21,6 +21,7 @@ export function ReviewForm({ drawing }: ReviewFormProps) {
   return (
     <div className="space-y-6" aria-label="复核提取结果">
       <ReviewProgress
+        key={`${drawing.pending_confirmation_count}:${drawing.pending_confirmation_labels.join(",")}`}
         drawingId={drawing.id}
         pendingCount={drawing.pending_confirmation_count}
         pendingLabels={drawing.pending_confirmation_labels}
