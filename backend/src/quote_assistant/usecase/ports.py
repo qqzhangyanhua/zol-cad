@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Protocol
 from uuid import UUID
 
 from quote_assistant.domain.correction import CorrectionRecord
 from quote_assistant.domain.entities import IssuedSession, ManualBaseline, PartDrawing, User
+from quote_assistant.domain.quote_task import QuoteTask
 from quote_assistant.domain.extraction import ExtractionRequest, ExtractionResult
 from quote_assistant.domain.part_drawing_state import PartDrawingEvent
 from quote_assistant.usecase.tenant import TenantScope
@@ -38,6 +39,9 @@ class PartDrawingRepository(Protocol):
 
     def get_for_tenant(self, tenant: TenantScope, drawing_id: UUID) -> PartDrawing | None:
         """Load one 零件图 if it belongs to the Actor's factory."""
+
+    def list_for_quote_task(self, tenant: TenantScope, quote_task_id: UUID) -> list[PartDrawing]:
+        """零件图 belonging to one 报价任务 of the Actor's factory, oldest first."""
 
     def add(self, drawing: PartDrawing) -> None:
         """Persist a newly uploaded 零件图. factory_id must already be the tenant's."""
@@ -98,6 +102,24 @@ class CorrectionRecordRepository(Protocol):
 
     def list_for_tenant(self, tenant: TenantScope) -> list[CorrectionRecord]:
         """All 修正记录 of the Actor's factory, oldest first."""
+
+
+class QuoteTaskRepository(Protocol):
+    def add(self, task: QuoteTask) -> None:
+        """Persist a newly created 报价任务. factory_id must already be the tenant's."""
+
+    def get_for_tenant(self, tenant: TenantScope, task_id: UUID) -> QuoteTask | None:
+        """Load one 报价任务 if it belongs to the Actor's factory."""
+
+    def list_for_tenant(
+        self,
+        tenant: TenantScope,
+        *,
+        customer_name: str | None = None,
+        created_from: datetime | None = None,
+        created_to: datetime | None = None,
+    ) -> list[QuoteTask]:
+        """报价任务 of the Actor's factory, newest first. Optional customer/time filters."""
 
 
 class ExtractionEngine(Protocol):

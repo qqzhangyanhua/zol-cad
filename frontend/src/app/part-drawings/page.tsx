@@ -6,23 +6,26 @@ import { PartDrawingList } from "@/components/PartDrawingList";
 import { PartDrawingUploadPanel } from "@/components/PartDrawingUploadPanel";
 import { QualityGradeDisclaimer } from "@/components/QualityGradeDisclaimer";
 import { fetchBackend } from "@/lib/backend";
-import { parseCurrentUser, parsePartDrawingList } from "@/lib/types";
+import { parseCurrentUser, parsePartDrawingList, parseQuoteTaskList } from "@/lib/types";
 
 export default async function PartDrawingsPage() {
-  const [meResponse, listResponse] = await Promise.all([
+  const [meResponse, listResponse, tasksResponse] = await Promise.all([
     fetchBackend("/auth/me"),
     fetchBackend("/part-drawings"),
+    fetchBackend("/quote-tasks"),
   ]);
 
-  if (meResponse.status === 401 || listResponse.status === 401) {
+  if (meResponse.status === 401 || listResponse.status === 401 || tasksResponse.status === 401) {
     redirect("/login");
   }
-  if (!meResponse.ok || !listResponse.ok) {
+  if (!meResponse.ok || !listResponse.ok || !tasksResponse.ok) {
     throw new Error("无法读取零件图列表");
   }
 
   const user = parseCurrentUser(await meResponse.json());
   const list = parsePartDrawingList(await listResponse.json());
+  const tasks = parseQuoteTaskList(await tasksResponse.json());
+  const quoteTaskNames = Object.fromEntries(tasks.items.map((item) => [item.id, item.name]));
 
   return (
     <div className="flex min-h-full flex-1 flex-col bg-stone-50">
@@ -44,7 +47,7 @@ export default async function PartDrawingsPage() {
         {list.items.length === 0 ? (
           <EmptyPartDrawingState />
         ) : (
-          <PartDrawingList items={list.items} />
+          <PartDrawingList items={list.items} quoteTaskNames={quoteTaskNames} />
         )}
       </main>
     </div>

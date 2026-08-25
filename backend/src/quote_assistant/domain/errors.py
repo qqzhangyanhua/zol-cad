@@ -40,3 +40,11 @@ class AdminRequired(DomainError):
 
 class InvalidManualBaseline(DomainError):
     """管理员录入的人工基线不完整或数值不合法。"""
+
+
+class InvalidQuoteTask(DomainError):
+    """报价任务名称或客户名称不完整或不合法。"""
+
+
+class QuoteTaskNotFound(DomainError):
+    pass

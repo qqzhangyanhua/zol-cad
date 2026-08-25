@@ -5,7 +5,13 @@ from uuid import UUID, uuid4
 
 from sqlalchemy.orm import Session
 
-from quote_assistant.adapter.db.models import FactoryRow, PartDrawingEventRow, PartDrawingRow, UserRow
+from quote_assistant.adapter.db.models import (
+    FactoryRow,
+    PartDrawingEventRow,
+    PartDrawingRow,
+    QuoteTaskRow,
+    UserRow,
+)
 from quote_assistant.adapter.security.passwords import hash_password
 from quote_assistant.domain.entities import PartDrawingStatus, Role
 from quote_assistant.domain.part_family import UNKNOWN_PART_FAMILY_ID
@@ -68,6 +74,7 @@ def insert_part_drawing(
         extracted_fields=[],
         extraction_failure_reason=None,
         part_family_id=UNKNOWN_PART_FAMILY_ID,
+        quote_task_id=None,
     )
     session.add(row)
     session.flush()
@@ -99,6 +106,28 @@ def insert_event(
     )
     session.flush()
     return event_id
+
+
+def insert_quote_task(
+    session: Session,
+    factory_id: UUID,
+    name: str,
+    customer_name: str,
+    created_by_user_id: UUID,
+    *,
+    created_at: datetime | None = None,
+) -> UUID:
+    row = QuoteTaskRow(
+        id=uuid4(),
+        factory_id=factory_id,
+        name=name,
+        customer_name=customer_name,
+        created_at=created_at or datetime.now(UTC),
+        created_by_user_id=created_by_user_id,
+    )
+    session.add(row)
+    session.flush()
+    return row.id
 
 
 def login(client, username: str, password: str):

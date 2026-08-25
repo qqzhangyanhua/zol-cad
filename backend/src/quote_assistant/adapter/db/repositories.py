@@ -12,6 +12,7 @@ from quote_assistant.adapter.db.models import (
     ManualBaselineRow,
     PartDrawingEventRow,
     PartDrawingRow,
+    QuoteTaskRow,
     SessionRow,
     UserRow,
 )
@@ -28,6 +29,7 @@ from quote_assistant.domain.entities import (
 from quote_assistant.domain.extraction import ExtractedField, FieldCategory, FieldSource
 from quote_assistant.domain.part_drawing_state import PartDrawingEvent
 from quote_assistant.domain.quality import QualityGrade
+from quote_assistant.domain.quote_task import QuoteTask
 from quote_assistant.usecase.tenant import TenantScope
 
 
@@ -92,6 +94,7 @@ def _to_part_drawing(row: PartDrawingRow) -> PartDrawing:
         extracted_fields=_fields_from_json(row.extracted_fields),
         extraction_failure_reason=row.extraction_failure_reason,
         part_family_id=row.part_family_id,
+        quote_task_id=row.quote_task_id,
     )
 
 
@@ -226,6 +229,17 @@ class SqlPartDrawingRepository:
             return None
         return _to_part_drawing(row)
 
+    def list_for_quote_task(self, tenant: TenantScope, quote_task_id: UUID) -> list[PartDrawing]:
+        rows = self._session.execute(
+            select(PartDrawingRow)
+            .where(
+                PartDrawingRow.factory_id == tenant.factory_id,
+                PartDrawingRow.quote_task_id == quote_task_id,
+            )
+            .order_by(PartDrawingRow.uploaded_at.asc())
+        ).scalars()
+        return [_to_part_drawing(row) for row in rows]
+
     def add(self, drawing: PartDrawing) -> None:
         self._session.add(
             PartDrawingRow(
@@ -246,6 +260,7 @@ class SqlPartDrawingRepository:
                 extracted_fields=_fields_to_json(drawing.extracted_fields),
                 extraction_failure_reason=drawing.extraction_failure_reason,
                 part_family_id=drawing.part_family_id,
+                quote_task_id=drawing.quote_task_id,
             )
         )
         self._session.flush()
@@ -269,6 +284,7 @@ class SqlPartDrawingRepository:
         row.extracted_fields = _fields_to_json(drawing.extracted_fields)
         row.extraction_failure_reason = drawing.extraction_failure_reason
         row.part_family_id = drawing.part_family_id
+        row.quote_task_id = drawing.quote_task_id
 
 
 class SqlPartDrawingEventRepository:
@@ -416,3 +432,64 @@ class SqlManualBaselineRepository:
             .order_by(ManualBaselineRow.recorded_at.desc())
         ).scalars()
         return [_to_manual_baseline(row) for row in rows]
+
+
+def _to_quote_task(row: QuoteTaskRow) -> QuoteTask:
+    created_at = row.created_at
+    if created_at.tzinfo is None:
+        created_at = created_at.replace(tzinfo=UTC)
+    return QuoteTask(
+        id=row.id,
+        factory_id=row.factory_id,
+        name=row.name,
+        customer_name=row.customer_name,
+        created_at=created_at,
+        created_by_user_id=row.created_by_user_id,
+    )
+
+
+class SqlQuoteTaskRepository:
+    def __init__(self, session: Session) -> None:
+        self._session = session
+
+    def add(self, task: QuoteTask) -> None:
+        self._session.add(
+            QuoteTaskRow(
+                id=task.id,
+                factory_id=task.factory_id,
+                name=task.name,
+                customer_name=task.customer_name,
+                created_at=task.created_at,
+                created_by_user_id=task.created_by_user_id,
+            )
+        )
+        self._session.flush()
+
+    def get_for_tenant(self, tenant: TenantScope, task_id: UUID) -> QuoteTask | None:
+        row = self._session.execute(
+            select(QuoteTaskRow).where(
+                QuoteTaskRow.id == task_id,
+                QuoteTaskRow.factory_id == tenant.factory_id,
+            )
+        ).scalar_one_or_none()
+        if row is None:
+            return None
+        return _to_quote_task(row)
+
+    def list_for_tenant(
+        self,
+        tenant: TenantScope,
+        *,
+        customer_name: str | None = None,
+        created_from: datetime | None = None,
+        created_to: datetime | None = None,
+    ) -> list[QuoteTask]:
+        stmt = select(QuoteTaskRow).where(QuoteTaskRow.factory_id == tenant.factory_id)
+        if customer_name:
+            stmt = stmt.where(QuoteTaskRow.customer_name.ilike(f"%{customer_name}%"))
+        if created_from is not None:
+            stmt = stmt.where(QuoteTaskRow.created_at >= created_from)
+        if created_to is not None:
+            stmt = stmt.where(QuoteTaskRow.created_at <= created_to)
+        rows = self._session.execute(stmt.order_by(QuoteTaskRow.created_at.desc())).scalars()
+        return [_to_quote_task(row) for row in rows]

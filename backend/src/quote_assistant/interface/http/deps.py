@@ -12,6 +12,7 @@ from quote_assistant.adapter.db.repositories import (
     SqlPartDrawingEventRepository,
     SqlPartDrawingRepository,
     SqlPasswordAuthenticator,
+    SqlQuoteTaskRepository,
     SqlSessionRepository,
     SqlUserRepository,
 )
@@ -20,7 +21,14 @@ from quote_assistant.config import Settings
 from quote_assistant.domain.entities import Actor
 from quote_assistant.domain.errors import Unauthenticated
 from quote_assistant.adapter.pdf.page_counter import PypdfPageCounter
+from quote_assistant.usecase.assign_part_drawing_to_quote_task import (
+    AssignPartDrawingToQuoteTask,
+    RemovePartDrawingFromQuoteTask,
+)
 from quote_assistant.usecase.compare_processing_time import CompareProcessingTime
+from quote_assistant.usecase.create_quote_task import CreateQuoteTask
+from quote_assistant.usecase.get_quote_task import GetQuoteTask
+from quote_assistant.usecase.list_quote_tasks import ListQuoteTasks
 from quote_assistant.usecase.continue_despite_poor_quality import ContinueDespitePoorQuality
 from quote_assistant.usecase.extract_part_drawing import ExtractPartDrawing
 from quote_assistant.usecase.get_current_actor import GetCurrentActor
@@ -301,6 +309,60 @@ def get_record_manual_baseline(
         actor=actor,
         baselines=SqlManualBaselineRepository(session),
         uow=SqlAlchemyUnitOfWork(session),
+    )
+
+
+def _quote_task_repos(
+    session: Session,
+) -> tuple[SqlQuoteTaskRepository, SqlPartDrawingRepository, SqlAlchemyUnitOfWork]:
+    return (
+        SqlQuoteTaskRepository(session),
+        SqlPartDrawingRepository(session),
+        SqlAlchemyUnitOfWork(session),
+    )
+
+
+def get_create_quote_task(
+    actor: Actor = Depends(require_actor),
+    session: Session = Depends(get_db),
+) -> CreateQuoteTask:
+    quote_tasks, _drawings, uow = _quote_task_repos(session)
+    return CreateQuoteTask(actor=actor, quote_tasks=quote_tasks, uow=uow)
+
+
+def get_list_quote_tasks(
+    actor: Actor = Depends(require_actor),
+    session: Session = Depends(get_db),
+) -> ListQuoteTasks:
+    quote_tasks, drawings, _uow = _quote_task_repos(session)
+    return ListQuoteTasks(actor=actor, quote_tasks=quote_tasks, drawings=drawings)
+
+
+def get_get_quote_task(
+    actor: Actor = Depends(require_actor),
+    session: Session = Depends(get_db),
+) -> GetQuoteTask:
+    quote_tasks, drawings, _uow = _quote_task_repos(session)
+    return GetQuoteTask(actor=actor, quote_tasks=quote_tasks, drawings=drawings)
+
+
+def get_assign_part_drawing_to_quote_task(
+    actor: Actor = Depends(require_actor),
+    session: Session = Depends(get_db),
+) -> AssignPartDrawingToQuoteTask:
+    quote_tasks, drawings, uow = _quote_task_repos(session)
+    return AssignPartDrawingToQuoteTask(
+        actor=actor, quote_tasks=quote_tasks, drawings=drawings, uow=uow
+    )
+
+
+def get_remove_part_drawing_from_quote_task(
+    actor: Actor = Depends(require_actor),
+    session: Session = Depends(get_db),
+) -> RemovePartDrawingFromQuoteTask:
+    quote_tasks, drawings, uow = _quote_task_repos(session)
+    return RemovePartDrawingFromQuoteTask(
+        actor=actor, quote_tasks=quote_tasks, drawings=drawings, uow=uow
     )
 
 

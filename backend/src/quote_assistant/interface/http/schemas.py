@@ -33,6 +33,7 @@ from quote_assistant.domain.review import (
     review_fields_for,
     unfinished_confirmation_items,
 )
+from quote_assistant.domain.quote_task import QuoteTaskReviewStatus, QuoteTaskView
 from quote_assistant.domain.risk_labels import (
     NO_JUDGABLE_RISK_ITEMS_MESSAGE,
     RiskLabelName,
@@ -110,6 +111,7 @@ class PartDrawingResponse(BaseModel):
     no_judgable_risk_message: str
     pending_confirmation_count: int
     pending_confirmation_labels: list[str]
+    quote_task_id: UUID | None
 
 
 class PartDrawingListResponse(BaseModel):
@@ -287,6 +289,60 @@ def to_part_drawing_response(item: PartDrawing) -> PartDrawingResponse:
         no_judgable_risk_message=NO_JUDGABLE_RISK_ITEMS_MESSAGE,
         pending_confirmation_count=len(unfinished),
         pending_confirmation_labels=[field.label for field in unfinished],
+        quote_task_id=item.quote_task_id,
+    )
+
+
+class CreateQuoteTaskRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=200)
+    customer_name: str = Field(min_length=1, max_length=200)
+
+
+class AssignPartDrawingRequest(BaseModel):
+    part_drawing_id: UUID
+
+
+class QuoteTaskSummaryResponse(BaseModel):
+    id: UUID
+    name: str
+    customer_name: str
+    created_at: datetime
+    review_status: QuoteTaskReviewStatus
+    drawing_count: int
+
+
+class QuoteTaskListResponse(BaseModel):
+    items: list[QuoteTaskSummaryResponse]
+
+
+class QuoteTaskDetailResponse(BaseModel):
+    id: UUID
+    name: str
+    customer_name: str
+    created_at: datetime
+    review_status: QuoteTaskReviewStatus
+    drawings: list[PartDrawingResponse]
+
+
+def to_quote_task_summary_response(view: QuoteTaskView) -> QuoteTaskSummaryResponse:
+    return QuoteTaskSummaryResponse(
+        id=view.task.id,
+        name=view.task.name,
+        customer_name=view.task.customer_name,
+        created_at=view.task.created_at,
+        review_status=view.review_status,
+        drawing_count=view.drawing_count,
+    )
+
+
+def to_quote_task_detail_response(view: QuoteTaskView) -> QuoteTaskDetailResponse:
+    return QuoteTaskDetailResponse(
+        id=view.task.id,
+        name=view.task.name,
+        customer_name=view.task.customer_name,
+        created_at=view.task.created_at,
+        review_status=view.review_status,
+        drawings=[to_part_drawing_response(drawing) for drawing in view.drawings],
     )
 
 

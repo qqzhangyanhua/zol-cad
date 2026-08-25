@@ -131,6 +131,25 @@ def test_风险规则引擎在领域层且用例不自行判断() -> None:
         assert "evaluate_risk_labels" not in source
 
 
+def test_报价任务归集逻辑在领域层且不含金额审批字段() -> None:
+    quote_task = (SRC / "domain" / "quote_task.py").read_text(encoding="utf-8")
+    assert "def derive_quote_task_review_status" in quote_task
+    assert "def new_quote_task" in quote_task
+    assert "class QuoteTask" in quote_task
+    assert "class QuoteTaskReviewStatus" in quote_task
+    schemas = (SRC / "interface" / "http" / "schemas.py").read_text(encoding="utf-8")
+    assert "class CreateQuoteTaskRequest" in schemas
+    assert "class QuoteTaskDetailResponse" in schemas
+    assert "amount" not in schemas
+    assert "price" not in schemas
+    assert "approval" not in schemas
+    for path in (SRC / "usecase").glob("*quote_task*.py"):
+        source = path.read_text(encoding="utf-8")
+        assert "amount" not in source
+        assert "price" not in source
+        assert "approval" not in source
+
+
 def test_用例层不依赖框架与适配器() -> None:
     usecase_dir = SRC / "usecase"
     offenders: list[str] = []

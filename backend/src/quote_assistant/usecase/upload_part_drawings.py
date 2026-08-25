@@ -145,6 +145,7 @@ class UploadPartDrawings(TenantBoundUseCase):
                     extracted_fields=(),
                     extraction_failure_reason=None,
                     part_family_id=part_family_id,
+                    quote_task_id=None,
                 )
                 drawing, born = birth_uploaded(
                     drawing, occurred_at=now, actor_user_id=self.actor.user_id

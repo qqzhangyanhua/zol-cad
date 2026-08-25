@@ -15,6 +15,7 @@ from quote_assistant.interface.http.routes.correction_stats import router as cor
 from quote_assistant.interface.http.routes.object_store import router as object_store_router
 from quote_assistant.interface.http.routes.part_drawings import router as part_drawings_router
 from quote_assistant.interface.http.routes.processing_time import router as processing_time_router
+from quote_assistant.interface.http.routes.quote_tasks import router as quote_tasks_router
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -42,6 +43,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(part_drawings_router)
     app.include_router(correction_stats_router)
     app.include_router(processing_time_router)
+    app.include_router(quote_tasks_router)
     app.include_router(object_store_router)
 
     @app.get("/health")

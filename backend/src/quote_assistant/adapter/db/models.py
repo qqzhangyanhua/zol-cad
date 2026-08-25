@@ -60,6 +60,9 @@ class PartDrawingRow(Base):
     )
     extraction_failure_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     part_family_id: Mapped[str] = mapped_column(String(80), nullable=False)
+    quote_task_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("quote_tasks.id"), nullable=True, index=True
+    )
 
 
 class PartDrawingEventRow(Base):
@@ -96,6 +99,17 @@ class CorrectionRecordRow(Base):
     new_value: Mapped[str | None] = mapped_column(Text, nullable=True)
     actor_user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
     occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class QuoteTaskRow(Base):
+    __tablename__ = "quote_tasks"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    factory_id: Mapped[UUID] = mapped_column(ForeignKey("factories.id"), nullable=False, index=True)
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    customer_name: Mapped[str] = mapped_column(String(200), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    created_by_user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
 
 
 class ManualBaselineRow(Base):
