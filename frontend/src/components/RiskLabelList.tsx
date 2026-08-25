@@ -7,13 +7,14 @@ type RiskLabelListProps = {
 
 function RiskLabelCard({ label }: { label: RiskLabel }) {
   return (
-    <details className="rounded-lg border border-amber-200 bg-amber-50 open:bg-amber-50">
+    <details className="group rounded-lg border border-amber-200 bg-amber-50 open:bg-amber-50">
       <summary className="cursor-pointer list-none px-3 py-2.5 marker:content-none">
         <span className="flex items-center justify-between gap-3">
           <span className="inline-flex rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-950">
             {label.name}
           </span>
-          <span className="text-[11px] text-amber-800">展开看规则与触发值</span>
+          <span className="text-[11px] text-amber-800 group-open:hidden">展开看规则与触发值</span>
+          <span className="hidden text-[11px] text-amber-800 group-open:inline">收起</span>
         </span>
       </summary>
       <dl className="space-y-2 border-t border-amber-200 px-3 py-2.5 text-xs">
