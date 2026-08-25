@@ -35,7 +35,27 @@ class IncompleteReview(DomainError):
 
 
 class AdminRequired(DomainError):
-    """管理员专属能力（全厂修正记录统计、处理耗时与人工基线）。"""
+    """管理员专属能力（账号、全厂记录、偏好配置、修正统计、处理耗时）。"""
+
+
+class AccountDisabled(DomainError):
+    """停用后的报价员账号不能再登录。"""
+
+
+class DuplicateUsername(DomainError):
+    """创建报价员时用户名已被占用。"""
+
+
+class InvalidAccount(DomainError):
+    """创建或停用账号的输入不合法。"""
+
+
+class UserNotFound(DomainError):
+    pass
+
+
+class InvalidFactoryPreferences(DomainError):
+    """本厂常用材料或风险标签优先级不合法。"""
 
 
 class InvalidManualBaseline(DomainError):

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 
-from quote_assistant.domain.errors import InvalidCredentials
+from quote_assistant.domain.errors import AccountDisabled, InvalidCredentials
 from quote_assistant.interface.http.deps import (
     SESSION_COOKIE,
     get_current_actor_use_case,
@@ -28,6 +28,8 @@ def login(
 ) -> OkResponse:
     try:
         issued = use_case.execute(username=body.username, password=body.password)
+    except AccountDisabled as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
     except InvalidCredentials as exc:
         raise HTTPException(status_code=401, detail="账号或密码不正确") from exc
     response.set_cookie(

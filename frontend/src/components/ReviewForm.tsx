@@ -6,6 +6,7 @@ import { FIELD_CATEGORIES, type ExtractedField, type FieldCategory, type PartDra
 
 type ReviewFormProps = {
   drawing: PartDrawing;
+  materialCandidates: string[];
 };
 
 const CATEGORY_HINT: Record<FieldCategory, string> = {
@@ -18,7 +19,7 @@ function fieldsForCategory(fields: ExtractedField[], category: FieldCategory): E
   return fields.filter((field) => field.category === category);
 }
 
-export function ReviewForm({ drawing }: ReviewFormProps) {
+export function ReviewForm({ drawing, materialCandidates }: ReviewFormProps) {
   const readOnly = drawing.status === "已复核";
   return (
     <div className="space-y-6" aria-label="复核提取结果">
@@ -49,6 +50,7 @@ export function ReviewForm({ drawing }: ReviewFormProps) {
                   drawingId={drawing.id}
                   field={field}
                   readOnly={readOnly}
+                  materialCandidates={materialCandidates}
                 />
               ))}
             </div>

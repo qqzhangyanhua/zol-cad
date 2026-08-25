@@ -21,6 +21,15 @@ export function AppHeader({ user }: AppHeaderProps) {
           </Link>
           {user.role === "admin" ? (
             <>
+              <Link href="/admin/accounts" className="hover:text-stone-800">
+                账号
+              </Link>
+              <Link href="/admin/processing-records" className="hover:text-stone-800">
+                处理记录
+              </Link>
+              <Link href="/admin/preferences" className="hover:text-stone-800">
+                本厂偏好
+              </Link>
               <Link href="/processing-time" className="hover:text-stone-800">
                 处理耗时
               </Link>

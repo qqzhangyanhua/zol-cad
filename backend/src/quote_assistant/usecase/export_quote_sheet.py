@@ -3,7 +3,7 @@ from __future__ import annotations
 from uuid import UUID
 
 from quote_assistant.domain.entities import Actor
-from quote_assistant.domain.errors import IncompleteQuoteTaskReview, QuoteTaskNotFound
+from quote_assistant.domain.errors import IncompleteQuoteTaskReview
 from quote_assistant.domain.quote_sheet import (
     QuoteSheetFile,
     QuoteSheetFileFormat,
@@ -20,7 +20,11 @@ from quote_assistant.usecase.ports import (
     QuoteSheetTemplateRepository,
     QuoteTaskRepository,
 )
-from quote_assistant.usecase.tenant import TenantBoundUseCase
+from quote_assistant.usecase.tenant import (
+    TenantBoundUseCase,
+    filter_owned_by_actor,
+    require_visible_quote_task,
+)
 
 
 class ExportQuoteSheet(TenantBoundUseCase):
@@ -43,10 +47,14 @@ class ExportQuoteSheet(TenantBoundUseCase):
     def execute(
         self, quote_task_id: UUID, file_format: QuoteSheetFileFormat
     ) -> QuoteSheetFile:
-        task = self._quote_tasks.get_for_tenant(self.tenant, quote_task_id)
-        if task is None:
-            raise QuoteTaskNotFound()
-        drawings = self._drawings.list_for_quote_task(self.tenant, quote_task_id)
+        task = require_visible_quote_task(
+            self.actor, self._quote_tasks.get_for_tenant(self.tenant, quote_task_id)
+        )
+        drawings = filter_owned_by_actor(
+            self.actor,
+            self._drawings.list_for_quote_task(self.tenant, quote_task_id),
+            lambda drawing: drawing.uploaded_by_user_id,
+        )
         unfinished = unreviewed_drawings_for_export(drawings)
         if unfinished:
             raise IncompleteQuoteTaskReview(incomplete_export_message(unfinished))

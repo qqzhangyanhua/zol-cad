@@ -5,15 +5,17 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 
-from quote_assistant.domain.entities import IncomingDrawing
+from quote_assistant.domain.entities import IncomingDrawing, PartDrawing
 from quote_assistant.domain.errors import (
     ExtractedFieldNotFound,
     IllegalPartDrawingTransition,
     IncompleteReview,
     PartDrawingNotFound,
 )
+from quote_assistant.domain.factory_preferences import FactoryPreferences
 from quote_assistant.interface.http.deps import (
     get_add_critical_dimension,
+    get_loaded_factory_preferences,
     get_complete_review,
     get_confirm_extracted_field,
     get_continue_despite_poor_quality,
@@ -64,6 +66,10 @@ from quote_assistant.usecase.upload_part_drawings import UploadPartDrawings
 router = APIRouter(prefix="/part-drawings", tags=["part-drawings"])
 
 
+def _drawing(item: PartDrawing, prefs: FactoryPreferences) -> PartDrawingResponse:
+    return to_part_drawing_response(item, risk_label_priority=prefs.risk_label_priority)
+
+
 def _parse_selected_pages(raw: str | None, file_count: int) -> list[int]:
     if not raw:
         return [1] * file_count
@@ -81,10 +87,11 @@ def _parse_selected_pages(raw: str | None, file_count: int) -> list[int]:
 @router.get("", response_model=PartDrawingListResponse)
 def list_part_drawings(
     use_case: ListPartDrawings = Depends(get_list_part_drawings),
+    prefs: FactoryPreferences = Depends(get_loaded_factory_preferences),
 ) -> PartDrawingListResponse:
     # factory_id query/body args are intentionally not accepted.
     items = use_case.execute()
-    return PartDrawingListResponse(items=[to_part_drawing_response(item) for item in items])
+    return PartDrawingListResponse(items=[_drawing(item, prefs) for item in items])
 
 
 @router.post("", response_model=UploadPartDrawingsResponse)
@@ -92,6 +99,7 @@ async def upload_part_drawings(
     files: list[UploadFile] = File(...),
     selected_pages: str | None = Form(default=None),
     use_case: UploadPartDrawings = Depends(get_upload_part_drawings),
+    prefs: FactoryPreferences = Depends(get_loaded_factory_preferences),
 ) -> UploadPartDrawingsResponse:
     if not files:
         raise HTTPException(status_code=400, detail="请至少选择一张零件图")
@@ -108,7 +116,7 @@ async def upload_part_drawings(
         )
     result = use_case.execute(incoming)
     return UploadPartDrawingsResponse(
-        items=[to_part_drawing_response(item) for item in result.items],
+        items=[_drawing(item, prefs) for item in result.items],
         rejected=[
             RejectedUploadResponse(
                 original_filename=item.original_filename,
@@ -123,12 +131,13 @@ async def upload_part_drawings(
 def get_part_drawing(
     drawing_id: UUID,
     use_case: GetPartDrawing = Depends(get_get_part_drawing),
+    prefs: FactoryPreferences = Depends(get_loaded_factory_preferences),
 ) -> PartDrawingResponse:
     try:
         drawing = use_case.execute(drawing_id)
     except PartDrawingNotFound as exc:
         raise HTTPException(status_code=404, detail="零件图不存在") from exc
-    return to_part_drawing_response(drawing)
+    return _drawing(drawing, prefs)
 
 
 @router.get("/{drawing_id}/correction-records", response_model=CorrectionRecordListResponse)
@@ -172,6 +181,7 @@ def list_part_drawing_events(
 def continue_despite_poor_quality(
     drawing_id: UUID,
     use_case: ContinueDespitePoorQuality = Depends(get_continue_despite_poor_quality),
+    prefs: FactoryPreferences = Depends(get_loaded_factory_preferences),
 ) -> PartDrawingResponse:
     try:
         drawing = use_case.execute(drawing_id)
@@ -179,13 +189,14 @@ def continue_despite_poor_quality(
         raise HTTPException(status_code=404, detail="零件图不存在") from exc
     except IllegalPartDrawingTransition as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
-    return to_part_drawing_response(drawing)
+    return _drawing(drawing, prefs)
 
 
 @router.post("/{drawing_id}/extract", response_model=PartDrawingResponse)
 def extract_part_drawing(
     drawing_id: UUID,
     use_case: ExtractPartDrawing = Depends(get_extract_part_drawing),
+    prefs: FactoryPreferences = Depends(get_loaded_factory_preferences),
 ) -> PartDrawingResponse:
     try:
         drawing = use_case.execute(drawing_id)
@@ -193,7 +204,7 @@ def extract_part_drawing(
         raise HTTPException(status_code=404, detail="零件图不存在") from exc
     except IllegalPartDrawingTransition as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
-    return to_part_drawing_response(drawing)
+    return _drawing(drawing, prefs)
 
 
 @router.post("/{drawing_id}/fields/{field_key}/confirm", response_model=PartDrawingResponse)
@@ -201,6 +212,7 @@ def confirm_extracted_field(
     drawing_id: UUID,
     field_key: str,
     use_case: ConfirmExtractedField = Depends(get_confirm_extracted_field),
+    prefs: FactoryPreferences = Depends(get_loaded_factory_preferences),
 ) -> PartDrawingResponse:
     try:
         drawing = use_case.execute(drawing_id, field_key)
@@ -210,7 +222,7 @@ def confirm_extracted_field(
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except IllegalPartDrawingTransition as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
-    return to_part_drawing_response(drawing)
+    return _drawing(drawing, prefs)
 
 
 @router.patch("/{drawing_id}/fields/{field_key}", response_model=PartDrawingResponse)
@@ -219,6 +231,7 @@ def update_extracted_field(
     field_key: str,
     payload: UpdateExtractedFieldRequest,
     use_case: UpdateExtractedField = Depends(get_update_extracted_field),
+    prefs: FactoryPreferences = Depends(get_loaded_factory_preferences),
 ) -> PartDrawingResponse:
     try:
         drawing = use_case.execute(drawing_id, field_key, payload.value)
@@ -228,7 +241,7 @@ def update_extracted_field(
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except IllegalPartDrawingTransition as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
-    return to_part_drawing_response(drawing)
+    return _drawing(drawing, prefs)
 
 
 @router.post("/{drawing_id}/fields/{field_key}/ignore", response_model=PartDrawingResponse)
@@ -236,6 +249,7 @@ def ignore_extracted_field(
     drawing_id: UUID,
     field_key: str,
     use_case: IgnoreExtractedField = Depends(get_ignore_extracted_field),
+    prefs: FactoryPreferences = Depends(get_loaded_factory_preferences),
 ) -> PartDrawingResponse:
     try:
         drawing = use_case.execute(drawing_id, field_key)
@@ -245,7 +259,7 @@ def ignore_extracted_field(
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except IllegalPartDrawingTransition as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
-    return to_part_drawing_response(drawing)
+    return _drawing(drawing, prefs)
 
 
 @router.post("/{drawing_id}/fields/{field_key}/unignore", response_model=PartDrawingResponse)
@@ -253,6 +267,7 @@ def unignore_extracted_field(
     drawing_id: UUID,
     field_key: str,
     use_case: UnignoreExtractedField = Depends(get_unignore_extracted_field),
+    prefs: FactoryPreferences = Depends(get_loaded_factory_preferences),
 ) -> PartDrawingResponse:
     try:
         drawing = use_case.execute(drawing_id, field_key)
@@ -262,7 +277,7 @@ def unignore_extracted_field(
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except IllegalPartDrawingTransition as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
-    return to_part_drawing_response(drawing)
+    return _drawing(drawing, prefs)
 
 
 @router.post("/{drawing_id}/fields", response_model=PartDrawingResponse)
@@ -270,6 +285,7 @@ def add_critical_dimension(
     drawing_id: UUID,
     payload: AddCriticalDimensionRequest,
     use_case: AddCriticalDimension = Depends(get_add_critical_dimension),
+    prefs: FactoryPreferences = Depends(get_loaded_factory_preferences),
 ) -> PartDrawingResponse:
     try:
         drawing = use_case.execute(drawing_id, payload.kind, payload.value, payload.label)
@@ -279,13 +295,14 @@ def add_critical_dimension(
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except IllegalPartDrawingTransition as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
-    return to_part_drawing_response(drawing)
+    return _drawing(drawing, prefs)
 
 
 @router.post("/{drawing_id}/reopen-review", response_model=PartDrawingResponse)
 def reopen_review(
     drawing_id: UUID,
     use_case: ReopenReview = Depends(get_reopen_review),
+    prefs: FactoryPreferences = Depends(get_loaded_factory_preferences),
 ) -> PartDrawingResponse:
     try:
         drawing = use_case.execute(drawing_id)
@@ -293,13 +310,14 @@ def reopen_review(
         raise HTTPException(status_code=404, detail="零件图不存在") from exc
     except IllegalPartDrawingTransition as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
-    return to_part_drawing_response(drawing)
+    return _drawing(drawing, prefs)
 
 
 @router.post("/{drawing_id}/complete-review", response_model=PartDrawingResponse)
 def complete_review(
     drawing_id: UUID,
     use_case: CompleteReview = Depends(get_complete_review),
+    prefs: FactoryPreferences = Depends(get_loaded_factory_preferences),
 ) -> PartDrawingResponse:
     try:
         drawing = use_case.execute(drawing_id)
@@ -309,7 +327,7 @@ def complete_review(
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     except IllegalPartDrawingTransition as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
-    return to_part_drawing_response(drawing)
+    return _drawing(drawing, prefs)
 
 
 @router.get("/{drawing_id}/original", response_model=OriginalAccessResponse)

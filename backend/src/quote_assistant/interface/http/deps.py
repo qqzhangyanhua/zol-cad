@@ -8,10 +8,12 @@ from sqlalchemy.orm import Session
 
 from quote_assistant.adapter.db.repositories import (
     SqlCorrectionRecordRepository,
+    SqlFactoryPreferenceRepository,
     SqlManualBaselineRepository,
     SqlPartDrawingEventRepository,
     SqlPartDrawingRepository,
     SqlPasswordAuthenticator,
+    SqlPasswordHasher,
     SqlQuoteSheetTemplateRepository,
     SqlQuoteTaskRepository,
     SqlSessionRepository,
@@ -53,7 +55,16 @@ from quote_assistant.usecase.review_part_drawing import (
     UnignoreExtractedField,
     UpdateExtractedField,
 )
+from quote_assistant.usecase.create_quoter import CreateQuoter
+from quote_assistant.usecase.disable_quoter import DisableQuoter
+from quote_assistant.usecase.get_factory_preferences import GetFactoryPreferences
+from quote_assistant.usecase.list_factory_accounts import ListFactoryAccounts
+from quote_assistant.usecase.list_factory_processing_records import ListFactoryProcessingRecords
+from quote_assistant.usecase.list_risk_rules import ListRiskRules
+from quote_assistant.usecase.replace_common_materials import ReplaceCommonMaterials
+from quote_assistant.usecase.replace_risk_label_priority import ReplaceRiskLabelPriority
 from quote_assistant.usecase.upload_part_drawings import UploadPartDrawings
+from quote_assistant.domain.factory_preferences import FactoryPreferences
 
 SESSION_COOKIE = "qa_session"
 
@@ -99,6 +110,8 @@ def require_actor(
     user = SqlUserRepository(session).get_by_id(issued.user_id)
     if user is None:
         raise HTTPException(status_code=401, detail="未登录")
+    if user.disabled_at is not None:
+        raise HTTPException(status_code=401, detail="账号已停用")
     return Actor.from_user(user)
 
 
@@ -381,6 +394,94 @@ def get_export_quote_sheet(
         templates=SqlQuoteSheetTemplateRepository(session),
         writer=OpenpyxlQuoteSheetFileWriter(),
     )
+
+
+def get_loaded_factory_preferences(
+    actor: Actor = Depends(require_actor),
+    session: Session = Depends(get_db),
+) -> FactoryPreferences:
+    return GetFactoryPreferences(
+        actor=actor, preferences=SqlFactoryPreferenceRepository(session)
+    ).execute()
+
+
+def get_list_factory_accounts(
+    actor: Actor = Depends(require_actor),
+    session: Session = Depends(get_db),
+) -> ListFactoryAccounts:
+    return ListFactoryAccounts(actor=actor, users=SqlUserRepository(session))
+
+
+def get_create_quoter(
+    actor: Actor = Depends(require_actor),
+    session: Session = Depends(get_db),
+) -> CreateQuoter:
+    return CreateQuoter(
+        actor=actor,
+        users=SqlUserRepository(session),
+        hasher=SqlPasswordHasher(),
+        uow=SqlAlchemyUnitOfWork(session),
+    )
+
+
+def get_disable_quoter(
+    actor: Actor = Depends(require_actor),
+    session: Session = Depends(get_db),
+) -> DisableQuoter:
+    return DisableQuoter(
+        actor=actor,
+        users=SqlUserRepository(session),
+        sessions=SqlSessionRepository(session),
+        uow=SqlAlchemyUnitOfWork(session),
+    )
+
+
+def get_list_factory_processing_records(
+    actor: Actor = Depends(require_actor),
+    session: Session = Depends(get_db),
+) -> ListFactoryProcessingRecords:
+    return ListFactoryProcessingRecords(
+        actor=actor,
+        drawings=SqlPartDrawingRepository(session),
+        users=SqlUserRepository(session),
+    )
+
+
+def get_get_factory_preferences(
+    actor: Actor = Depends(require_actor),
+    session: Session = Depends(get_db),
+) -> GetFactoryPreferences:
+    return GetFactoryPreferences(
+        actor=actor, preferences=SqlFactoryPreferenceRepository(session)
+    )
+
+
+def get_replace_common_materials(
+    actor: Actor = Depends(require_actor),
+    session: Session = Depends(get_db),
+) -> ReplaceCommonMaterials:
+    return ReplaceCommonMaterials(
+        actor=actor,
+        preferences=SqlFactoryPreferenceRepository(session),
+        uow=SqlAlchemyUnitOfWork(session),
+    )
+
+
+def get_replace_risk_label_priority(
+    actor: Actor = Depends(require_actor),
+    session: Session = Depends(get_db),
+) -> ReplaceRiskLabelPriority:
+    return ReplaceRiskLabelPriority(
+        actor=actor,
+        preferences=SqlFactoryPreferenceRepository(session),
+        uow=SqlAlchemyUnitOfWork(session),
+    )
+
+
+def get_list_risk_rules(
+    actor: Actor = Depends(require_actor),
+) -> ListRiskRules:
+    return ListRiskRules(actor)
 
 
 def map_unauthenticated(exc: Unauthenticated) -> HTTPException:

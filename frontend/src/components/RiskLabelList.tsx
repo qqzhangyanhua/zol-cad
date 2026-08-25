@@ -1,8 +1,9 @@
-import type { RiskLabel } from "@/lib/types";
+import { sortRiskLabels, type RiskLabel, type RiskLabelName } from "@/lib/types";
 
 type RiskLabelListProps = {
   labels: RiskLabel[];
   emptyMessage: string;
+  priority: readonly RiskLabelName[];
 };
 
 function RiskLabelCard({ label }: { label: RiskLabel }) {
@@ -35,7 +36,8 @@ function RiskLabelCard({ label }: { label: RiskLabel }) {
   );
 }
 
-export function RiskLabelList({ labels, emptyMessage }: RiskLabelListProps) {
+export function RiskLabelList({ labels, emptyMessage, priority }: RiskLabelListProps) {
+  const ordered = sortRiskLabels(labels, priority);
   return (
     <section aria-labelledby="risk-label-heading" className="mb-6">
       <div className="mb-3">
@@ -50,7 +52,7 @@ export function RiskLabelList({ labels, emptyMessage }: RiskLabelListProps) {
         </p>
       ) : (
         <ul className="space-y-2">
-          {labels.map((label) => (
+          {ordered.map((label) => (
             <li key={label.rule_id}>
               <RiskLabelCard label={label} />
             </li>

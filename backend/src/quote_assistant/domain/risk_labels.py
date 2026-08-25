@@ -48,6 +48,66 @@ class RiskLabel:
     reason: str
 
 
+@dataclass(frozen=True)
+class RiskRuleDefinition:
+    """当前生效规则的只读描述。阈值仍是暂定值，不是票 01 样本结论。"""
+
+    rule_id: str
+    label_name: RiskLabelName
+    threshold: str
+    description: str
+    provisional: bool = True
+
+
+DEFAULT_RISK_LABEL_PRIORITY: tuple[RiskLabelName, ...] = (
+    RiskLabelName.HIGH_PRECISION,
+    RiskLabelName.DEEP_HOLE,
+    RiskLabelName.THIN_WALL,
+    RiskLabelName.SLENDER,
+)
+
+
+def list_risk_rule_definitions() -> tuple[RiskRuleDefinition, ...]:
+    return (
+        RiskRuleDefinition(
+            rule_id="RL-HIGH-PREC",
+            label_name=RiskLabelName.HIGH_PRECISION,
+            threshold=f"公差 ≤ IT{PROVISIONAL_IT_GRADE_MAX}",
+            description="最严公差不粗于暂定门槛时标高精度（ADR-0007 示例，待票 01 调研确认）",
+        ),
+        RiskRuleDefinition(
+            rule_id="RL-DEEP-HOLE",
+            label_name=RiskLabelName.DEEP_HOLE,
+            threshold=f"孔深/孔径 > {PROVISIONAL_DEPTH_TO_DIAMETER_GT}",
+            description="最深孔的深径比大于暂定门槛时标深孔（ADR-0007 示例，待票 01 调研确认）",
+        ),
+        RiskRuleDefinition(
+            rule_id="RL-THIN-WALL",
+            label_name=RiskLabelName.THIN_WALL,
+            threshold=f"最薄壁 ≤ {PROVISIONAL_THIN_WALL_MM_MAX} mm",
+            description="最薄壁达到暂定门槛时标薄壁（接线用占位，待票 01 调研确认）",
+        ),
+        RiskRuleDefinition(
+            rule_id="RL-SLENDER",
+            label_name=RiskLabelName.SLENDER,
+            threshold=f"长度/直径 > {PROVISIONAL_SLENDERNESS_GT}",
+            description="最大外形的长径比大于暂定门槛时标细长（接线用占位，待票 01 调研确认）",
+        ),
+    )
+
+
+def sort_risk_labels(
+    labels: Sequence[RiskLabel],
+    priority: Sequence[RiskLabelName] | None = None,
+) -> tuple[RiskLabel, ...]:
+    """Display order only. Does not change which rules fire."""
+    order = tuple(priority) if priority else DEFAULT_RISK_LABEL_PRIORITY
+    rank = {name: index for index, name in enumerate(order)}
+    return tuple(
+        sorted(labels, key=lambda label: rank.get(label.name, len(rank)))
+    )
+
+
 def evaluate_risk_labels(fields: Sequence[ExtractedField]) -> tuple[RiskLabel, ...]:
     """Pure function: current structured data in, fired 风险标签 out.
 

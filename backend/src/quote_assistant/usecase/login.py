@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import timedelta
 
 from quote_assistant.domain.entities import IssuedSession
-from quote_assistant.domain.errors import InvalidCredentials
+from quote_assistant.domain.errors import AccountDisabled, InvalidCredentials
 from quote_assistant.usecase.ports import PasswordAuthenticator, SessionRepository, UnitOfWork
 
 
@@ -24,6 +24,8 @@ class Login:
         user = self._authenticator.authenticate(username=username, password=password)
         if user is None:
             raise InvalidCredentials()
+        if user.disabled_at is not None:
+            raise AccountDisabled("账号已停用")
         issued = self._sessions.create(user.id, self._session_ttl)
         self._uow.commit()
         return issued

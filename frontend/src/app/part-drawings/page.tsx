@@ -33,7 +33,9 @@ export default async function PartDrawingsPage() {
       <main className="flex flex-1 flex-col">
         <div className="px-6 py-5">
           <h1 className="text-xl font-semibold text-stone-900">零件图</h1>
-          <p className="mt-1 text-sm text-stone-500">本厂已上传的零件图</p>
+          <p className="mt-1 text-sm text-stone-500">
+            {user.role === "admin" ? "本厂全部零件图" : "你自己处理过的零件图"}
+          </p>
           <div className="mt-2">
             <QualityGradeDisclaimer
               text={

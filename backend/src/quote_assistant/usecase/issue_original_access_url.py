@@ -4,9 +4,8 @@ from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from quote_assistant.domain.entities import Actor, OriginalAccess
-from quote_assistant.domain.errors import PartDrawingNotFound
 from quote_assistant.usecase.ports import ObjectStorage, PartDrawingRepository
-from quote_assistant.usecase.tenant import TenantBoundUseCase
+from quote_assistant.usecase.tenant import TenantBoundUseCase, require_visible_drawing
 
 
 class IssueOriginalAccessUrl(TenantBoundUseCase):
@@ -25,9 +24,9 @@ class IssueOriginalAccessUrl(TenantBoundUseCase):
         self._ttl = ttl
 
     def execute(self, drawing_id: UUID) -> OriginalAccess:
-        drawing = self._drawings.get_for_tenant(self.tenant, drawing_id)
-        if drawing is None:
-            raise PartDrawingNotFound()
+        drawing = require_visible_drawing(
+            self.actor, self._drawings.get_for_tenant(self.tenant, drawing_id)
+        )
         url = self._storage.sign_access_url(drawing.storage_key, self._ttl)
         return OriginalAccess(
             drawing=drawing,

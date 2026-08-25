@@ -43,6 +43,7 @@ def _create_user(
         password_hash=hash_password(password),
         role=role.value,
         created_at=datetime.now(UTC),
+        disabled_at=None,
     )
     session.add(row)
     session.flush()
@@ -55,6 +56,7 @@ def insert_part_drawing(
     filename: str,
     *,
     status: PartDrawingStatus = PartDrawingStatus.UPLOADED,
+    uploaded_by_user_id: UUID | None = None,
 ) -> UUID:
     drawing_id = uuid4()
     row = PartDrawingRow(
@@ -67,7 +69,7 @@ def insert_part_drawing(
         byte_size=0,
         page_count=1,
         selected_page=1,
-        uploaded_by_user_id=None,
+        uploaded_by_user_id=uploaded_by_user_id,
         status=status.value,
         quality_grade=None,
         is_assembly_or_exploded=False,

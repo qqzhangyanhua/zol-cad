@@ -67,7 +67,9 @@ export default async function QuoteTasksPage({ searchParams }: QuoteTasksPagePro
         <div>
           <h1 className="text-xl font-semibold text-stone-900">报价任务</h1>
           <p className="mt-1 text-sm text-stone-500">
-            轻量归集层：把一次询价里的多张零件图归到一起。产品核心仍是单张图的提取与复核。
+            {user.role === "admin"
+              ? "全厂报价任务。轻量归集层：把一次询价里的多张零件图归到一起。"
+              : "你自己处理过的报价任务。轻量归集层：把一次询价里的多张零件图归到一起。"}
           </p>
         </div>
         <QuoteTaskCreateForm />

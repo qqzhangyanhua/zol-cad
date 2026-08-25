@@ -2,13 +2,14 @@ from __future__ import annotations
 
 from quote_assistant.domain.entities import Actor, PartDrawing
 from quote_assistant.usecase.ports import PartDrawingRepository
-from quote_assistant.usecase.tenant import TenantBoundUseCase
+from quote_assistant.usecase.tenant import TenantBoundUseCase, filter_owned_by_actor
 
 
 class ListPartDrawings(TenantBoundUseCase):
-    """List 零件图 for the authenticated 报价员's factory.
+    """List 零件图 for the authenticated Actor.
 
-    execute() takes no factory id. The tenant scope is taken from the Actor.
+    Tenant comes from Actor. 报价员 only see drawings they themselves handled;
+    管理员 see the whole factory. execute() takes no factory id.
     """
 
     def __init__(self, actor: Actor, drawings: PartDrawingRepository) -> None:
@@ -16,4 +17,8 @@ class ListPartDrawings(TenantBoundUseCase):
         self._drawings = drawings
 
     def execute(self) -> list[PartDrawing]:
-        return self._drawings.list_for_tenant(self.tenant)
+        return filter_owned_by_actor(
+            self.actor,
+            self._drawings.list_for_tenant(self.tenant),
+            lambda drawing: drawing.uploaded_by_user_id,
+        )

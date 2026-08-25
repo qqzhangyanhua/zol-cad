@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 from uuid import UUID
 
 from quote_assistant.domain.entities import Actor, PartDrawing, PartDrawingStatus
-from quote_assistant.domain.errors import IllegalPartDrawingTransition, PartDrawingNotFound
+from quote_assistant.domain.errors import IllegalPartDrawingTransition
 from quote_assistant.domain.part_drawing_state import record_transition
 from quote_assistant.domain.quality import QualityGrade
 from quote_assistant.usecase.extract_part_drawing import apply_extraction
@@ -15,7 +15,7 @@ from quote_assistant.usecase.ports import (
     PartDrawingRepository,
     UnitOfWork,
 )
-from quote_assistant.usecase.tenant import TenantBoundUseCase
+from quote_assistant.usecase.tenant import TenantBoundUseCase, require_visible_drawing
 
 
 class ContinueDespitePoorQuality(TenantBoundUseCase):
@@ -38,9 +38,9 @@ class ContinueDespitePoorQuality(TenantBoundUseCase):
         self._uow = uow
 
     def execute(self, drawing_id: UUID) -> PartDrawing:
-        drawing = self._drawings.get_for_tenant(self.tenant, drawing_id)
-        if drawing is None:
-            raise PartDrawingNotFound()
+        drawing = require_visible_drawing(
+            self.actor, self._drawings.get_for_tenant(self.tenant, drawing_id)
+        )
         if (
             drawing.status is not PartDrawingStatus.ADVISE_MANUAL
             or drawing.quality_grade is not QualityGrade.POOR

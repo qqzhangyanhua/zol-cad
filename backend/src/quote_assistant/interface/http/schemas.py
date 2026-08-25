@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from datetime import datetime
 from uuid import UUID
 
@@ -8,11 +9,13 @@ from pydantic import BaseModel, Field
 from quote_assistant.domain.correction import CorrectionFieldTypeStat, CorrectionRecord
 from quote_assistant.domain.entities import (
     DrawingProcessingTime,
+    FactoryProcessingRecord,
     ManualBaseline,
     PartDrawing,
     PartDrawingStatus,
     ProcessingTimeComparison,
     Role,
+    User,
 )
 from quote_assistant.domain.extraction import (
     LOOK_AT_DRAWING_DISCLAIMER,
@@ -34,10 +37,13 @@ from quote_assistant.domain.review import (
     unfinished_confirmation_items,
 )
 from quote_assistant.domain.quote_task import QuoteTaskReviewStatus, QuoteTaskView
+from quote_assistant.domain.factory_preferences import FactoryPreferences
 from quote_assistant.domain.risk_labels import (
     NO_JUDGABLE_RISK_ITEMS_MESSAGE,
     RiskLabelName,
+    RiskRuleDefinition,
     evaluate_risk_labels,
+    sort_risk_labels,
 )
 
 
@@ -231,7 +237,11 @@ class ProcessingTimeComparisonResponse(BaseModel):
     baselines: list[ManualBaselineResponse]
 
 
-def to_part_drawing_response(item: PartDrawing) -> PartDrawingResponse:
+def to_part_drawing_response(
+    item: PartDrawing,
+    *,
+    risk_label_priority: Sequence[RiskLabelName] | None = None,
+) -> PartDrawingResponse:
     advise = (
         POOR_GRADE_ADVISE_TEXT
         if item.status is PartDrawingStatus.ADVISE_MANUAL
@@ -284,7 +294,9 @@ def to_part_drawing_response(item: PartDrawing) -> PartDrawingResponse:
                 triggering_value=label.triggering_value,
                 reason=label.reason,
             )
-            for label in evaluate_risk_labels(risk_fields)
+            for label in sort_risk_labels(
+                evaluate_risk_labels(risk_fields), risk_label_priority
+            )
         ],
         no_judgable_risk_message=NO_JUDGABLE_RISK_ITEMS_MESSAGE,
         pending_confirmation_count=len(unfinished),
@@ -335,14 +347,120 @@ def to_quote_task_summary_response(view: QuoteTaskView) -> QuoteTaskSummaryRespo
     )
 
 
-def to_quote_task_detail_response(view: QuoteTaskView) -> QuoteTaskDetailResponse:
+def to_quote_task_detail_response(
+    view: QuoteTaskView,
+    *,
+    risk_label_priority: Sequence[RiskLabelName] | None = None,
+) -> QuoteTaskDetailResponse:
     return QuoteTaskDetailResponse(
         id=view.task.id,
         name=view.task.name,
         customer_name=view.task.customer_name,
         created_at=view.task.created_at,
         review_status=view.review_status,
-        drawings=[to_part_drawing_response(drawing) for drawing in view.drawings],
+        drawings=[
+            to_part_drawing_response(drawing, risk_label_priority=risk_label_priority)
+            for drawing in view.drawings
+        ],
+    )
+
+
+class CreateQuoterRequest(BaseModel):
+    username: str = Field(min_length=1, max_length=80)
+    password: str = Field(min_length=1, max_length=200)
+
+
+class FactoryAccountResponse(BaseModel):
+    id: UUID
+    username: str
+    role: Role
+    created_at: datetime
+    disabled_at: datetime | None
+
+
+class FactoryAccountListResponse(BaseModel):
+    items: list[FactoryAccountResponse]
+
+
+class CommonMaterialsRequest(BaseModel):
+    materials: list[str] = Field(default_factory=list)
+
+
+class RiskLabelPriorityRequest(BaseModel):
+    priority: list[str] = Field(min_length=1)
+
+
+class FactoryPreferencesResponse(BaseModel):
+    common_materials: list[str]
+    risk_label_priority: list[RiskLabelName]
+
+
+class RiskRuleResponse(BaseModel):
+    rule_id: str
+    label_name: RiskLabelName
+    threshold: str
+    description: str
+    provisional: bool
+
+
+class RiskRuleListResponse(BaseModel):
+    items: list[RiskRuleResponse]
+
+
+class FactoryProcessingRecordResponse(BaseModel):
+    part_drawing_id: UUID
+    original_filename: str
+    uploaded_at: datetime
+    status: PartDrawingStatus
+    uploaded_by_user_id: UUID | None
+    uploaded_by_username: str | None
+    quote_task_id: UUID | None
+    quality_grade: QualityGrade | None
+
+
+class FactoryProcessingRecordListResponse(BaseModel):
+    items: list[FactoryProcessingRecordResponse]
+
+
+def to_factory_account_response(user: User) -> FactoryAccountResponse:
+    return FactoryAccountResponse(
+        id=user.id,
+        username=user.username,
+        role=user.role,
+        created_at=user.created_at,
+        disabled_at=user.disabled_at,
+    )
+
+
+def to_factory_preferences_response(prefs: FactoryPreferences) -> FactoryPreferencesResponse:
+    return FactoryPreferencesResponse(
+        common_materials=list(prefs.common_materials),
+        risk_label_priority=list(prefs.risk_label_priority),
+    )
+
+
+def to_risk_rule_response(rule: RiskRuleDefinition) -> RiskRuleResponse:
+    return RiskRuleResponse(
+        rule_id=rule.rule_id,
+        label_name=rule.label_name,
+        threshold=rule.threshold,
+        description=rule.description,
+        provisional=rule.provisional,
+    )
+
+
+def to_factory_processing_record_response(
+    record: FactoryProcessingRecord,
+) -> FactoryProcessingRecordResponse:
+    return FactoryProcessingRecordResponse(
+        part_drawing_id=record.part_drawing_id,
+        original_filename=record.original_filename,
+        uploaded_at=record.uploaded_at,
+        status=record.status,
+        uploaded_by_user_id=record.uploaded_by_user_id,
+        uploaded_by_username=record.uploaded_by_username,
+        quote_task_id=record.quote_task_id,
+        quality_grade=record.quality_grade,
     )
 
 
