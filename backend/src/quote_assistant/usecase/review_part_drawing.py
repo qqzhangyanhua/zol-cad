@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from uuid import UUID
 
+from quote_assistant.domain.correction import records_for_value_changes
 from quote_assistant.domain.entities import Actor, PartDrawing
 from quote_assistant.domain.errors import PartDrawingNotFound
 from quote_assistant.domain.review import (
@@ -15,7 +16,12 @@ from quote_assistant.domain.review import (
     reopen_review,
     unignore_extracted_field,
 )
-from quote_assistant.usecase.ports import PartDrawingEventRepository, PartDrawingRepository, UnitOfWork
+from quote_assistant.usecase.ports import (
+    CorrectionRecordRepository,
+    PartDrawingEventRepository,
+    PartDrawingRepository,
+    UnitOfWork,
+)
 from quote_assistant.usecase.tenant import TenantBoundUseCase, TenantScope
 
 
@@ -77,28 +83,39 @@ class ConfirmExtractedField(TenantBoundUseCase):
 
 
 class UpdateExtractedField(TenantBoundUseCase):
-    """报价员就地修改提取值；修改立即落库。"""
+    """报价员就地修改提取值；修改立即落库，并追加一条不可变修正记录。"""
 
     def __init__(
         self,
         actor: Actor,
         drawings: PartDrawingRepository,
         events: PartDrawingEventRepository,
+        corrections: CorrectionRecordRepository,
         uow: UnitOfWork,
     ) -> None:
         super().__init__(actor)
         self._drawings = drawings
         self._events = events
+        self._corrections = corrections
         self._uow = uow
 
     def execute(self, drawing_id: UUID, field_key: str, value: str | None) -> PartDrawing:
         drawing = _load_for_tenant(self._drawings, self.tenant, drawing_id)
+        before = drawing
         drawing = _save_review_action(
             edit_extracted_field(drawing, field_key, value),
             actor_user_id=self.actor.user_id,
             drawings=self._drawings,
             events=self._events,
         )
+        occurred_at = datetime.now(UTC)
+        for record in records_for_value_changes(
+            before,
+            drawing,
+            actor_user_id=self.actor.user_id,
+            occurred_at=occurred_at,
+        ):
+            self._corrections.add(record)
         self._uow.commit()
         return drawing
 
@@ -158,18 +175,20 @@ class UnignoreExtractedField(TenantBoundUseCase):
 
 
 class AddCriticalDimension(TenantBoundUseCase):
-    """手工补录一条 AI 未提出的关键尺寸。"""
+    """手工补录一条 AI 未提出的关键尺寸，并留下原值为空的修正记录。"""
 
     def __init__(
         self,
         actor: Actor,
         drawings: PartDrawingRepository,
         events: PartDrawingEventRepository,
+        corrections: CorrectionRecordRepository,
         uow: UnitOfWork,
     ) -> None:
         super().__init__(actor)
         self._drawings = drawings
         self._events = events
+        self._corrections = corrections
         self._uow = uow
 
     def execute(
@@ -180,12 +199,21 @@ class AddCriticalDimension(TenantBoundUseCase):
         label: str | None = None,
     ) -> PartDrawing:
         drawing = _load_for_tenant(self._drawings, self.tenant, drawing_id)
+        before = drawing
         drawing = _save_review_action(
             add_critical_dimension(drawing, kind, value, label),
             actor_user_id=self.actor.user_id,
             drawings=self._drawings,
             events=self._events,
         )
+        occurred_at = datetime.now(UTC)
+        for record in records_for_value_changes(
+            before,
+            drawing,
+            actor_user_id=self.actor.user_id,
+            occurred_at=occurred_at,
+        ):
+            self._corrections.add(record)
         self._uow.commit()
         return drawing
 

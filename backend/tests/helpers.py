@@ -31,6 +31,20 @@ def create_quoter(session: Session, factory_id: UUID, username: str, password: s
     return row.id
 
 
+def create_admin(session: Session, factory_id: UUID, username: str, password: str) -> UUID:
+    row = UserRow(
+        id=uuid4(),
+        factory_id=factory_id,
+        username=username,
+        password_hash=hash_password(password),
+        role=Role.ADMIN.value,
+        created_at=datetime.now(UTC),
+    )
+    session.add(row)
+    session.flush()
+    return row.id
+
+
 def insert_part_drawing(session: Session, factory_id: UUID, filename: str) -> UUID:
     drawing_id = uuid4()
     row = PartDrawingRow(

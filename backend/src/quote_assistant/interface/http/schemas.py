@@ -5,6 +5,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+from quote_assistant.domain.correction import CorrectionFieldTypeStat, CorrectionRecord
 from quote_assistant.domain.entities import PartDrawing, PartDrawingStatus, Role
 from quote_assistant.domain.extraction import (
     LOOK_AT_DRAWING_DISCLAIMER,
@@ -133,6 +134,51 @@ class PartDrawingEventResponse(BaseModel):
 
 class PartDrawingEventListResponse(BaseModel):
     items: list[PartDrawingEventResponse]
+
+
+class CorrectionRecordResponse(BaseModel):
+    id: UUID
+    part_drawing_id: UUID
+    field_key: str
+    field_type: str
+    old_value: str | None
+    new_value: str | None
+    actor_user_id: UUID
+    occurred_at: datetime
+
+
+class CorrectionRecordListResponse(BaseModel):
+    items: list[CorrectionRecordResponse]
+
+
+class CorrectionFieldTypeStatResponse(BaseModel):
+    field_type: str
+    correction_count: int
+
+
+class CorrectionStatsResponse(BaseModel):
+    items: list[CorrectionFieldTypeStatResponse]
+    purpose: str
+
+
+def to_correction_record_response(record: CorrectionRecord) -> CorrectionRecordResponse:
+    return CorrectionRecordResponse(
+        id=record.id,
+        part_drawing_id=record.part_drawing_id,
+        field_key=record.field_key,
+        field_type=record.field_type,
+        old_value=record.old_value,
+        new_value=record.new_value,
+        actor_user_id=record.actor_user_id,
+        occurred_at=record.occurred_at,
+    )
+
+
+def to_correction_stat_response(stat: CorrectionFieldTypeStat) -> CorrectionFieldTypeStatResponse:
+    return CorrectionFieldTypeStatResponse(
+        field_type=stat.field_type,
+        correction_count=stat.correction_count,
+    )
 
 
 def to_part_drawing_response(item: PartDrawing) -> PartDrawingResponse:

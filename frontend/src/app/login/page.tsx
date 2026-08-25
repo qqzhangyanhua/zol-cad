@@ -11,7 +11,7 @@ export default function LoginPage() {
           欢迎回来
         </h1>
         <p className="mt-2 mb-8 text-center text-sm text-stone-500">
-          请使用报价员账号登录
+          请使用本厂账号登录
         </p>
         <LoginForm />
       </section>

@@ -11,6 +11,7 @@ from quote_assistant.adapter.extraction.fake import FixtureExtractionEngine
 from quote_assistant.adapter.storage.factory import build_object_storage
 from quote_assistant.config import Settings
 from quote_assistant.interface.http.routes.auth import router as auth_router
+from quote_assistant.interface.http.routes.correction_stats import router as correction_stats_router
 from quote_assistant.interface.http.routes.object_store import router as object_store_router
 from quote_assistant.interface.http.routes.part_drawings import router as part_drawings_router
 
@@ -38,6 +39,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.extraction_engine = FixtureExtractionEngine()
     app.include_router(auth_router)
     app.include_router(part_drawings_router)
+    app.include_router(correction_stats_router)
     app.include_router(object_store_router)
 
     @app.get("/health")
