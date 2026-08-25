@@ -92,12 +92,16 @@ def _parse_gate_table(text: str) -> tuple[HardGateStatus, ...]:
 
 
 def _implementation_constraints(text: str) -> tuple[str, ...]:
-    block = re.search(r"实现约束.*?:\s*(.+?)(?:\n## |\Z)", text, flags=re.DOTALL)
-    if block is None:
+    marker = "实现约束（有条件通过时必填，否则写「无」）"
+    start = text.find(marker)
+    if start < 0:
         return ()
+    rest = text[start + len(marker) :].lstrip("：:").lstrip()
     items: list[str] = []
-    for line in block.group(1).splitlines():
+    for line in rest.splitlines():
         stripped = line.strip()
+        if stripped.startswith("## "):
+            break
         if stripped.startswith("- "):
             items.append(stripped[2:].strip())
     return tuple(items)

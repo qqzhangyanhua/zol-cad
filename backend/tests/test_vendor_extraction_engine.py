@@ -160,17 +160,21 @@ def test_超时失败有明确原因且可走现有重试(
     db_session.commit()
     assert login(client, "quoter_a", "secret-a").status_code == 200
 
-    app.state.extraction_engine = VendorExtractionEngine(
-        transport=_RaiseTransport(VendorTimeout("deadline"))
-    )
     uploaded = client.post(
         "/part-drawings",
         files=[("files", ("FX-TQ-01.png", PNG_1X1, "image/png"))],
     )
     assert uploaded.status_code == 200
     item = uploaded.json()["items"][0]
-    assert item["status"] == "提取失败"
-    assert item["extraction_failure_reason"] == TIMEOUT_REASON
+    assert item["status"] == "已提取"
+
+    app.state.extraction_engine = VendorExtractionEngine(
+        transport=_RaiseTransport(VendorTimeout("deadline"))
+    )
+    failed = client.post(f"/part-drawings/{item['id']}/extract")
+    assert failed.status_code == 200
+    assert failed.json()["status"] == "提取失败"
+    assert failed.json()["extraction_failure_reason"] == TIMEOUT_REASON
 
     app.state.extraction_engine = FixtureExtractionEngine()
     retried = client.post(f"/part-drawings/{item['id']}/extract")
@@ -186,16 +190,20 @@ def test_骨架失败进入提取失败且可重试回假引擎(
     db_session.commit()
     assert login(client, "quoter_a", "secret-a").status_code == 200
 
-    app.state.extraction_engine = VendorExtractionEngine()
     uploaded = client.post(
         "/part-drawings",
         files=[("files", ("FX-TQ-01.png", PNG_1X1, "image/png"))],
     )
     assert uploaded.status_code == 200
     item = uploaded.json()["items"][0]
-    assert item["status"] == "提取失败"
-    assert item["extraction_failure_reason"] == VENDOR_NOT_CONFIGURED_REASON
-    assert all(field["value"] is None for field in item["extracted_fields"])
+    assert item["status"] == "已提取"
+
+    app.state.extraction_engine = VendorExtractionEngine()
+    failed = client.post(f"/part-drawings/{item['id']}/extract")
+    assert failed.status_code == 200
+    body = failed.json()
+    assert body["status"] == "提取失败"
+    assert body["extraction_failure_reason"] == VENDOR_NOT_CONFIGURED_REASON
 
     app.state.extraction_engine = FixtureExtractionEngine()
     retried = client.post(f"/part-drawings/{item['id']}/extract")

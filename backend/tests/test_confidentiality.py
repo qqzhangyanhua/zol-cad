@@ -58,6 +58,11 @@ def test_当前ADR解析为未选定且三条门槛待填() -> None:
     assert snapshot.vendor_decision_line.startswith("待填")
     assert [gate.verdict for gate in snapshot.hard_gates] == ["待填", "待填", "待填"]
     assert snapshot.research_notes_path == RESEARCH_NOTES_RELATIVE
+    assert snapshot.implementation_constraints == (
+        "锁定地域 / endpoint：待填",
+        "禁止使用的 SKU（如 Coding Plan、个人版、境外地域）：待填",
+        "禁止签署的除外协议（如数据授权用于训练）：待填",
+    )
 
 
 def test_ADR关闭后保密说明改为读入选定供应商() -> None:
@@ -100,6 +105,7 @@ def test_管理员能看到诚实的保密说明报价员不能(
         "可签 DPA（中国站主体、覆盖该推理 API）",
     ]
     assert all(gate["verdict"] == "待填" for gate in body["hard_gates"])
+    assert body["implementation_constraints"][0].endswith("待填")
     assert "待填" in body["used_for_training_statement"]
     assert "待填" in body["dpa_statement"]
     assert "不构成供应商承诺或营销文案" in body["caveats"][0]
