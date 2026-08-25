@@ -35,7 +35,7 @@ class IncompleteReview(DomainError):
 
 
 class AdminRequired(DomainError):
-    """管理员专属能力（账号、全厂记录、偏好配置、修正统计、处理耗时）。"""
+    """管理员专属能力（账号、全厂记录、偏好配置、修正统计、处理耗时、本厂数据导出与删除）。"""
 
 
 class AccountDisabled(DomainError):
@@ -76,3 +76,7 @@ class IncompleteQuoteTaskReview(DomainError):
 
 class InvalidQuoteSheetTemplate(DomainError):
     """工厂报价底稿模板配置不合法。后台 onboarding 配置，不进管理员界面。"""
+
+
+class TenantDeleteConfirmationInvalid(DomainError):
+    """删除本厂数据的二次确认 token 或短语不正确、已过期或已使用。"""

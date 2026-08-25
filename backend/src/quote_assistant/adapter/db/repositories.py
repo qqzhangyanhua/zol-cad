@@ -4,7 +4,7 @@ from datetime import UTC, datetime, timedelta
 from secrets import token_urlsafe
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session, joinedload
 
 from quote_assistant.adapter.db.models import (
@@ -16,6 +16,7 @@ from quote_assistant.adapter.db.models import (
     QuoteSheetTemplateRow,
     QuoteTaskRow,
     SessionRow,
+    TenantDeleteChallengeRow,
     UserRow,
 )
 from quote_assistant.adapter.security.passwords import hash_password, verify_password
@@ -35,6 +36,7 @@ from quote_assistant.domain.factory_preferences import FactoryPreferences
 from quote_assistant.domain.quote_sheet import QuoteSheetTemplate, parse_quote_sheet_columns
 from quote_assistant.domain.quote_task import QuoteTask
 from quote_assistant.domain.risk_labels import RiskLabelName
+from quote_assistant.domain.tenant_data import TenantDeleteChallenge, challenge_is_open
 from quote_assistant.usecase.tenant import TenantScope
 
 
@@ -629,4 +631,104 @@ class SqlQuoteSheetTemplateRepository:
             )
         else:
             row.columns = payload
+        self._session.flush()
+
+
+def _to_delete_challenge(row: TenantDeleteChallengeRow) -> TenantDeleteChallenge:
+    expires_at = row.expires_at
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=UTC)
+    created_at = row.created_at
+    if created_at.tzinfo is None:
+        created_at = created_at.replace(tzinfo=UTC)
+    consumed_at = row.consumed_at
+    if consumed_at is not None and consumed_at.tzinfo is None:
+        consumed_at = consumed_at.replace(tzinfo=UTC)
+    return TenantDeleteChallenge(
+        token=row.token,
+        factory_id=row.factory_id,
+        required_phrase=row.required_phrase,
+        expires_at=expires_at,
+        created_by_user_id=row.created_by_user_id,
+        created_at=created_at,
+        consumed_at=consumed_at,
+    )
+
+
+class SqlTenantDeleteChallengeRepository:
+    def __init__(self, session: Session) -> None:
+        self._session = session
+
+    def add(self, challenge: TenantDeleteChallenge) -> None:
+        open_rows = self._session.execute(
+            select(TenantDeleteChallengeRow).where(
+                TenantDeleteChallengeRow.factory_id == challenge.factory_id,
+                TenantDeleteChallengeRow.consumed_at.is_(None),
+            )
+        ).scalars()
+        for row in open_rows:
+            row.consumed_at = challenge.created_at
+        self._session.add(
+            TenantDeleteChallengeRow(
+                factory_id=challenge.factory_id,
+                token=challenge.token,
+                required_phrase=challenge.required_phrase,
+                expires_at=challenge.expires_at,
+                created_by_user_id=challenge.created_by_user_id,
+                created_at=challenge.created_at,
+                consumed_at=challenge.consumed_at,
+            )
+        )
+        self._session.flush()
+
+    def get_open(self, tenant: TenantScope, token: str, now: datetime) -> TenantDeleteChallenge | None:
+        row = self._session.execute(
+            select(TenantDeleteChallengeRow).where(
+                TenantDeleteChallengeRow.token == token,
+                TenantDeleteChallengeRow.factory_id == tenant.factory_id,
+            )
+        ).scalar_one_or_none()
+        if row is None:
+            return None
+        challenge = _to_delete_challenge(row)
+        if not challenge_is_open(challenge, now):
+            return None
+        return challenge
+
+    def mark_consumed(self, tenant: TenantScope, token: str, consumed_at: datetime) -> None:
+        row = self._session.execute(
+            select(TenantDeleteChallengeRow).where(
+                TenantDeleteChallengeRow.token == token,
+                TenantDeleteChallengeRow.factory_id == tenant.factory_id,
+            )
+        ).scalar_one_or_none()
+        if row is None:
+            return
+        row.consumed_at = consumed_at
+        self._session.flush()
+
+
+class SqlTenantDataPurge:
+    def __init__(self, session: Session) -> None:
+        self._session = session
+
+    def delete_operational_data(self, tenant: TenantScope) -> None:
+        factory_id = tenant.factory_id
+        self._session.execute(
+            delete(CorrectionRecordRow).where(CorrectionRecordRow.factory_id == factory_id)
+        )
+        self._session.execute(
+            delete(PartDrawingEventRow).where(PartDrawingEventRow.factory_id == factory_id)
+        )
+        self._session.execute(delete(PartDrawingRow).where(PartDrawingRow.factory_id == factory_id))
+        self._session.execute(delete(QuoteTaskRow).where(QuoteTaskRow.factory_id == factory_id))
+        self._session.execute(
+            delete(ManualBaselineRow).where(ManualBaselineRow.factory_id == factory_id)
+        )
+        self._session.execute(
+            delete(FactoryPreferenceRow).where(FactoryPreferenceRow.factory_id == factory_id)
+        )
+        self._session.execute(
+            delete(TenantDeleteChallengeRow).where(TenantDeleteChallengeRow.factory_id == factory_id)
+        )
         self._session.flush()

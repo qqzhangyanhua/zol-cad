@@ -44,6 +44,7 @@ from quote_assistant.domain.errors import (
     PartDrawingNotFound,
     PdfUnreadable,
     QuoteTaskNotFound,
+    TenantDeleteConfirmationInvalid,
     Unauthenticated,
 )
 from quote_assistant.domain.extraction import (
@@ -190,6 +191,7 @@ __all__ = [
     "QUOTE_TASK_REVIEW_STATUSES",
     "QuoteTask",
     "QuoteTaskNotFound",
+    "TenantDeleteConfirmationInvalid",
     "QuoteTaskReviewStatus",
     "QuoteTaskView",
     "PartDrawingEvent",

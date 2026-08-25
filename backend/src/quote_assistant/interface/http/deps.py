@@ -17,9 +17,12 @@ from quote_assistant.adapter.db.repositories import (
     SqlQuoteSheetTemplateRepository,
     SqlQuoteTaskRepository,
     SqlSessionRepository,
+    SqlTenantDataPurge,
+    SqlTenantDeleteChallengeRepository,
     SqlUserRepository,
 )
 from quote_assistant.adapter.export.quote_sheet_writer import OpenpyxlQuoteSheetFileWriter
+from quote_assistant.adapter.export.tenant_archive_writer import ZipTenantArchiveWriter
 from quote_assistant.adapter.db.session import SqlAlchemyUnitOfWork
 from quote_assistant.config import Settings
 from quote_assistant.domain.entities import Actor
@@ -61,8 +64,11 @@ from quote_assistant.usecase.get_factory_preferences import GetFactoryPreference
 from quote_assistant.usecase.list_factory_accounts import ListFactoryAccounts
 from quote_assistant.usecase.list_factory_processing_records import ListFactoryProcessingRecords
 from quote_assistant.usecase.list_risk_rules import ListRiskRules
+from quote_assistant.usecase.delete_tenant_data import DeleteTenantData
+from quote_assistant.usecase.export_tenant_data import ExportTenantData
 from quote_assistant.usecase.replace_common_materials import ReplaceCommonMaterials
 from quote_assistant.usecase.replace_risk_label_priority import ReplaceRiskLabelPriority
+from quote_assistant.usecase.request_tenant_delete import RequestTenantDelete
 from quote_assistant.usecase.upload_part_drawings import UploadPartDrawings
 from quote_assistant.domain.factory_preferences import FactoryPreferences
 
@@ -482,6 +488,47 @@ def get_list_risk_rules(
     actor: Actor = Depends(require_actor),
 ) -> ListRiskRules:
     return ListRiskRules(actor)
+
+
+def get_export_tenant_data(
+    request: Request,
+    actor: Actor = Depends(require_actor),
+    session: Session = Depends(get_db),
+) -> ExportTenantData:
+    return ExportTenantData(
+        actor=actor,
+        drawings=SqlPartDrawingRepository(session),
+        quote_tasks=SqlQuoteTaskRepository(session),
+        corrections=SqlCorrectionRecordRepository(session),
+        storage=request.app.state.object_storage,
+        writer=ZipTenantArchiveWriter(),
+    )
+
+
+def get_request_tenant_delete(
+    actor: Actor = Depends(require_actor),
+    session: Session = Depends(get_db),
+) -> RequestTenantDelete:
+    return RequestTenantDelete(
+        actor=actor,
+        challenges=SqlTenantDeleteChallengeRepository(session),
+        uow=SqlAlchemyUnitOfWork(session),
+    )
+
+
+def get_delete_tenant_data(
+    request: Request,
+    actor: Actor = Depends(require_actor),
+    session: Session = Depends(get_db),
+) -> DeleteTenantData:
+    return DeleteTenantData(
+        actor=actor,
+        drawings=SqlPartDrawingRepository(session),
+        challenges=SqlTenantDeleteChallengeRepository(session),
+        purge=SqlTenantDataPurge(session),
+        storage=request.app.state.object_storage,
+        uow=SqlAlchemyUnitOfWork(session),
+    )
 
 
 def map_unauthenticated(exc: Unauthenticated) -> HTTPException:
