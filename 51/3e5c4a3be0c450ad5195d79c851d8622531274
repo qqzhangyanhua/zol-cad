@@ -1,0 +1,64 @@
+.scratch/mvp-quote-assistant/spec.md
+  s_f01f06e7807de4::t_78938f18905b60 101-102
+  s_f01f06e7807de4::t_a083a0a9e4158c 274-277
+  s_f01f06e7807de4::t_6461db5e536876 197-198
+  s_f01f06e7807de4::t_359bdc2335d7e3 236
+  s_f01f06e7807de4::t_afaf730cec949d 1-100,103-128,146-158,160,163-196,199-212,214-222,224-235,237-273,278-279,281
+  s_f01f06e7807de4::t_47cdfae2d43d35 223
+  s_f01f06e7807de4::t_d6172e783abf9c 280
+  s_f01f06e7807de4::t_e1cf8e93bf3b7a 213
+  s_f01f06e7807de4::t_83c2390f822265 129-145
+  s_f01f06e7807de4::t_447e56f8cddc6f 159,161-162
+.scratch/mvp-quote-assistant/issues/01-target-part-family-research.md
+  s_f01f06e7807de4::t_bbef85690ff150 1-17
+.scratch/mvp-quote-assistant/issues/04-upload-drawing.md
+  s_f01f06e7807de4::t_a3ab737699294e 1-19
+.scratch/mvp-quote-assistant/issues/06-extraction-and-side-by-side-view.md
+  s_f01f06e7807de4::t_044798c62210d5 1-23
+.scratch/mvp-quote-assistant/issues/07-risk-label-rule-engine.md
+  s_f01f06e7807de4::t_85a332b34dcd89 1-24
+.scratch/mvp-quote-assistant/issues/16-tenant-data-export-and-deletion.md
+  s_f01f06e7807de4::t_82a22c6e9fedcf 1-17
+.scratch/mvp-quote-assistant/issues/17-real-extraction-engine-and-confidentiality.md
+  s_f01f06e7807de4::t_9e79dc45e7b3a0 1-23
+.scratch/mvp-quote-assistant/issues/02-llm-vendor-compliance-research.md
+  s_f01f06e7807de4::t_528c5dfae0fc7b 1-19
+.scratch/mvp-quote-assistant/issues/05-quality-grading.md
+  s_f01f06e7807de4::t_6d9cffa8345c07 1-22
+.scratch/mvp-quote-assistant/issues/10-correction-records.md
+  s_f01f06e7807de4::t_baca046470b876 1-17
+.scratch/mvp-quote-assistant/issues/03-walking-skeleton-auth-tenant.md
+  s_f01f06e7807de4::t_0dc24e8f6da69d 1-21
+.scratch/mvp-quote-assistant/issues/12-target-part-family-tagging.md
+  s_f01f06e7807de4::t_ebd2073bda8e70 1-18
+.scratch/mvp-quote-assistant/issues/14-quote-sheet-export.md
+  s_f01f06e7807de4::t_23becfd2e7daa1 1-21
+CONTEXT.md
+  s_f01f06e7807de4::t_f395e497aa2ee5 12
+.scratch/mvp-quote-assistant/issues/09-review-ignore-add-reopen-recalc.md
+  s_f01f06e7807de4::t_622219b3916d10 1-21
+.scratch/mvp-quote-assistant/issues/13-quote-task.md
+  s_f01f06e7807de4::t_c3b5eb7c2e3221 1-21
+.scratch/mvp-quote-assistant/issues/08-review-confirm-and-complete.md
+  s_f01f06e7807de4::t_9ab833b5c635a7 1-24
+.scratch/mvp-quote-assistant/issues/15-admin-accounts-records-preferences.md
+  s_f01f06e7807de4::t_b2526b6c58d250 1-23
+.scratch/mvp-quote-assistant/issues/11-processing-time-and-baseline.md
+  s_f01f06e7807de4::t_99486c84d5ede3 1-19
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.6.23",
+  "base_commit_sha": "513e5c4a3be0c450ad5195d79c851d8622531274",
+  "prompts": {},
+  "sessions": {
+    "s_f01f06e7807de4": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "e517bfd1-57b3-48f0-ba2d-4ee04d104ec0",
+        "model": "grok-4.6"
+      },
+      "human_author": "张艳华 <939593210@qq.com>"
+    }
+  }
+}
