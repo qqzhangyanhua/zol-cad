@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 from enum import StrEnum
 
-from quote_assistant.domain.extraction import ExtractedField
+from quote_assistant.domain.extraction import ExtractedField, role_key_for_field
 
 # Closed output vocabulary. Type-level invariant: no 安全 / 无风险 / 通过.
 # A false "无深孔风险" would make the 报价员 skip a price uplift (ADR-0007).
@@ -54,7 +54,7 @@ def evaluate_risk_labels(fields: Sequence[ExtractedField]) -> tuple[RiskLabel, .
     No IO, no randomness, no time. Missing or unparseable values do not fire;
     silence is not safety — the display layer carries that meaning.
     """
-    values = _values_by_key(fields)
+    values = _values_by_role(fields)
     fired: list[RiskLabel] = []
     for rule in _PROVISIONAL_RULES:
         label = rule(values)
@@ -63,13 +63,23 @@ def evaluate_risk_labels(fields: Sequence[ExtractedField]) -> tuple[RiskLabel, .
     return tuple(fired)
 
 
-def _values_by_key(fields: Sequence[ExtractedField]) -> dict[str, str]:
-    values: dict[str, str] = {}
+def _values_by_role(fields: Sequence[ExtractedField]) -> dict[str, tuple[str, ...]]:
+    """Current 报价员-visible values, keyed by canonical role.
+
+    Ignored items are excluded so 风险标签 follow confirmed / 补录 values,
+    not an inapplicable AI row. Extra 补录 keys map back to their role.
+    """
+    buckets: dict[str, list[str]] = {}
     for field in fields:
-        if field.key in values or field.value is None or field.value == "":
+        if field.ignored or field.value is None or field.value == "":
             continue
-        values[field.key] = field.value
-    return values
+        role = role_key_for_field(field.key)
+        buckets.setdefault(role, []).append(field.value)
+    return {role: tuple(raw_values) for role, raw_values in buckets.items()}
+
+
+def _role_values(values: Mapping[str, tuple[str, ...]], key: str) -> tuple[str, ...]:
+    return values.get(key, ())
 
 
 def _parse_it_grade(raw: str) -> int | None:
@@ -106,86 +116,82 @@ def _parse_millimetres(raw: str) -> Decimal | None:
     return value
 
 
-def _high_precision(values: Mapping[str, str]) -> RiskLabel | None:
-    raw = values.get("tightest_tolerance")
-    if raw is None:
-        return None
-    grade = _parse_it_grade(raw)
-    if grade is None or grade > PROVISIONAL_IT_GRADE_MAX:
-        return None
-    return RiskLabel(
-        name=RiskLabelName.HIGH_PRECISION,
-        rule_id="RL-HIGH-PREC",
-        triggering_value=raw,
-        reason=(
-            f"最严公差 {raw} 不粗于暂定门槛 IT{PROVISIONAL_IT_GRADE_MAX}"
-            "（ADR-0007 示例，待票 01 调研确认）"
-        ),
-    )
+def _high_precision(values: Mapping[str, tuple[str, ...]]) -> RiskLabel | None:
+    for raw in _role_values(values, "tightest_tolerance"):
+        grade = _parse_it_grade(raw)
+        if grade is None or grade > PROVISIONAL_IT_GRADE_MAX:
+            continue
+        return RiskLabel(
+            name=RiskLabelName.HIGH_PRECISION,
+            rule_id="RL-HIGH-PREC",
+            triggering_value=raw,
+            reason=(
+                f"最严公差 {raw} 不粗于暂定门槛 IT{PROVISIONAL_IT_GRADE_MAX}"
+                "（ADR-0007 示例，待票 01 调研确认）"
+            ),
+        )
+    return None
 
 
-def _deep_hole(values: Mapping[str, str]) -> RiskLabel | None:
-    raw = values.get("deepest_hole")
-    if raw is None:
-        return None
-    parsed = _parse_pair(raw)
-    if parsed is None:
-        return None
-    diameter, depth = parsed
-    ratio = depth / diameter
-    if ratio <= PROVISIONAL_DEPTH_TO_DIAMETER_GT:
-        return None
-    return RiskLabel(
-        name=RiskLabelName.DEEP_HOLE,
-        rule_id="RL-DEEP-HOLE",
-        triggering_value=raw,
-        reason=(
-            f"最深孔 {raw} 的孔深/孔径为 {ratio:.2f}，大于暂定门槛 "
-            f"{PROVISIONAL_DEPTH_TO_DIAMETER_GT}"
-            "（ADR-0007 示例，待票 01 调研确认）"
-        ),
-    )
+def _deep_hole(values: Mapping[str, tuple[str, ...]]) -> RiskLabel | None:
+    for raw in _role_values(values, "deepest_hole"):
+        parsed = _parse_pair(raw)
+        if parsed is None:
+            continue
+        diameter, depth = parsed
+        ratio = depth / diameter
+        if ratio <= PROVISIONAL_DEPTH_TO_DIAMETER_GT:
+            continue
+        return RiskLabel(
+            name=RiskLabelName.DEEP_HOLE,
+            rule_id="RL-DEEP-HOLE",
+            triggering_value=raw,
+            reason=(
+                f"最深孔 {raw} 的孔深/孔径为 {ratio:.2f}，大于暂定门槛 "
+                f"{PROVISIONAL_DEPTH_TO_DIAMETER_GT}"
+                "（ADR-0007 示例，待票 01 调研确认）"
+            ),
+        )
+    return None
 
 
-def _thin_wall(values: Mapping[str, str]) -> RiskLabel | None:
-    raw = values.get("thinnest_wall")
-    if raw is None:
-        return None
-    thickness = _parse_millimetres(raw)
-    if thickness is None or thickness > PROVISIONAL_THIN_WALL_MM_MAX:
-        return None
-    return RiskLabel(
-        name=RiskLabelName.THIN_WALL,
-        rule_id="RL-THIN-WALL",
-        triggering_value=raw,
-        reason=(
-            f"最薄壁 {raw} 达到暂定门槛 {PROVISIONAL_THIN_WALL_MM_MAX} mm"
-            "（接线用占位，待票 01 调研确认，非样本结论）"
-        ),
-    )
+def _thin_wall(values: Mapping[str, tuple[str, ...]]) -> RiskLabel | None:
+    for raw in _role_values(values, "thinnest_wall"):
+        thickness = _parse_millimetres(raw)
+        if thickness is None or thickness > PROVISIONAL_THIN_WALL_MM_MAX:
+            continue
+        return RiskLabel(
+            name=RiskLabelName.THIN_WALL,
+            rule_id="RL-THIN-WALL",
+            triggering_value=raw,
+            reason=(
+                f"最薄壁 {raw} 达到暂定门槛 {PROVISIONAL_THIN_WALL_MM_MAX} mm"
+                "（接线用占位，待票 01 调研确认，非样本结论）"
+            ),
+        )
+    return None
 
 
-def _slender(values: Mapping[str, str]) -> RiskLabel | None:
-    raw = values.get("max_envelope")
-    if raw is None:
-        return None
-    parsed = _parse_pair(raw)
-    if parsed is None:
-        return None
-    diameter, length = parsed
-    ratio = length / diameter
-    if ratio <= PROVISIONAL_SLENDERNESS_GT:
-        return None
-    return RiskLabel(
-        name=RiskLabelName.SLENDER,
-        rule_id="RL-SLENDER",
-        triggering_value=raw,
-        reason=(
-            f"最大外形 {raw} 的长度/直径为 {ratio:.2f}，大于暂定门槛 "
-            f"{PROVISIONAL_SLENDERNESS_GT}"
-            "（接线用占位，待票 01 调研确认，非样本结论）"
-        ),
-    )
+def _slender(values: Mapping[str, tuple[str, ...]]) -> RiskLabel | None:
+    for raw in _role_values(values, "max_envelope"):
+        parsed = _parse_pair(raw)
+        if parsed is None:
+            continue
+        diameter, length = parsed
+        ratio = length / diameter
+        if ratio <= PROVISIONAL_SLENDERNESS_GT:
+            continue
+        return RiskLabel(
+            name=RiskLabelName.SLENDER,
+            rule_id="RL-SLENDER",
+            triggering_value=raw,
+            reason=(
+                f"最大外形 {raw} 的长度/直径为 {ratio:.2f}，大于暂定门槛 "
+                f"{PROVISIONAL_SLENDERNESS_GT}"
+                "（接线用占位，待票 01 调研确认，非样本结论）"
+            ),
+        )
+    return None
 
 
 _PROVISIONAL_RULES = (_high_precision, _deep_hole, _thin_wall, _slender)

@@ -185,12 +185,14 @@ def test_提取失败可一键重试且不必重新上传(app, client: TestClien
     ]
 
 
-def test_已提取后不能再次提取(client: TestClient, db_session: Session) -> None:
+def test_已提取后可重试读图取数(client: TestClient, db_session: Session) -> None:
     _login_quoter(client, db_session)
     drawing_id = _upload(client, "FX-TQ-01.png").json()["items"][0]["id"]
     response = client.post(f"/part-drawings/{drawing_id}/extract")
-    assert response.status_code == 409
-    assert client.get(f"/part-drawings/{drawing_id}").json()["status"] == "已提取"
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "已提取"
+    assert _fields_by_key(body)["drawing_no"]["value"] == "FL-001"
 
 
 def test_看图提示常驻在提取结果里(client: TestClient, db_session: Session) -> None:

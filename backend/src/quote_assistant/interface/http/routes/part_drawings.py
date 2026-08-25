@@ -13,18 +13,23 @@ from quote_assistant.domain.errors import (
     PartDrawingNotFound,
 )
 from quote_assistant.interface.http.deps import (
+    get_add_critical_dimension,
     get_complete_review,
     get_confirm_extracted_field,
     get_continue_despite_poor_quality,
     get_extract_part_drawing,
     get_get_part_drawing,
+    get_ignore_extracted_field,
     get_issue_original_access_url,
     get_list_part_drawing_events,
     get_list_part_drawings,
+    get_reopen_review,
+    get_unignore_extracted_field,
     get_update_extracted_field,
     get_upload_part_drawings,
 )
 from quote_assistant.interface.http.schemas import (
+    AddCriticalDimensionRequest,
     OriginalAccessResponse,
     PartDrawingEventListResponse,
     PartDrawingEventResponse,
@@ -42,8 +47,12 @@ from quote_assistant.usecase.issue_original_access_url import IssueOriginalAcces
 from quote_assistant.usecase.list_part_drawing_events import ListPartDrawingEvents
 from quote_assistant.usecase.list_part_drawings import ListPartDrawings
 from quote_assistant.usecase.review_part_drawing import (
+    AddCriticalDimension,
     CompleteReview,
     ConfirmExtractedField,
+    IgnoreExtractedField,
+    ReopenReview,
+    UnignoreExtractedField,
     UpdateExtractedField,
 )
 from quote_assistant.usecase.upload_part_drawings import UploadPartDrawings
@@ -199,6 +208,71 @@ def update_extracted_field(
         raise HTTPException(status_code=404, detail="零件图不存在") from exc
     except ExtractedFieldNotFound as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except IllegalPartDrawingTransition as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return to_part_drawing_response(drawing)
+
+
+@router.post("/{drawing_id}/fields/{field_key}/ignore", response_model=PartDrawingResponse)
+def ignore_extracted_field(
+    drawing_id: UUID,
+    field_key: str,
+    use_case: IgnoreExtractedField = Depends(get_ignore_extracted_field),
+) -> PartDrawingResponse:
+    try:
+        drawing = use_case.execute(drawing_id, field_key)
+    except PartDrawingNotFound as exc:
+        raise HTTPException(status_code=404, detail="零件图不存在") from exc
+    except ExtractedFieldNotFound as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except IllegalPartDrawingTransition as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return to_part_drawing_response(drawing)
+
+
+@router.post("/{drawing_id}/fields/{field_key}/unignore", response_model=PartDrawingResponse)
+def unignore_extracted_field(
+    drawing_id: UUID,
+    field_key: str,
+    use_case: UnignoreExtractedField = Depends(get_unignore_extracted_field),
+) -> PartDrawingResponse:
+    try:
+        drawing = use_case.execute(drawing_id, field_key)
+    except PartDrawingNotFound as exc:
+        raise HTTPException(status_code=404, detail="零件图不存在") from exc
+    except ExtractedFieldNotFound as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except IllegalPartDrawingTransition as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return to_part_drawing_response(drawing)
+
+
+@router.post("/{drawing_id}/fields", response_model=PartDrawingResponse)
+def add_critical_dimension(
+    drawing_id: UUID,
+    payload: AddCriticalDimensionRequest,
+    use_case: AddCriticalDimension = Depends(get_add_critical_dimension),
+) -> PartDrawingResponse:
+    try:
+        drawing = use_case.execute(drawing_id, payload.kind, payload.value, payload.label)
+    except PartDrawingNotFound as exc:
+        raise HTTPException(status_code=404, detail="零件图不存在") from exc
+    except ExtractedFieldNotFound as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except IllegalPartDrawingTransition as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return to_part_drawing_response(drawing)
+
+
+@router.post("/{drawing_id}/reopen-review", response_model=PartDrawingResponse)
+def reopen_review(
+    drawing_id: UUID,
+    use_case: ReopenReview = Depends(get_reopen_review),
+) -> PartDrawingResponse:
+    try:
+        drawing = use_case.execute(drawing_id)
+    except PartDrawingNotFound as exc:
+        raise HTTPException(status_code=404, detail="零件图不存在") from exc
     except IllegalPartDrawingTransition as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     return to_part_drawing_response(drawing)

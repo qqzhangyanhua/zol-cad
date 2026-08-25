@@ -1,6 +1,8 @@
-import { FIELD_CATEGORIES, type ExtractedField, type FieldCategory, type PartDrawing } from "@/lib/types";
+import { AddCriticalDimensionForm } from "@/components/AddCriticalDimensionForm";
+import { RetryExtractionButton } from "@/components/RetryExtractionButton";
 import { ReviewFieldRow } from "@/components/ReviewFieldRow";
 import { ReviewProgress } from "@/components/ReviewProgress";
+import { FIELD_CATEGORIES, type ExtractedField, type FieldCategory, type PartDrawing } from "@/lib/types";
 
 type ReviewFormProps = {
   drawing: PartDrawing;
@@ -43,16 +45,31 @@ export function ReviewForm({ drawing }: ReviewFormProps) {
             <div className="space-y-2">
               {items.map((field) => (
                 <ReviewFieldRow
-                  key={`${field.key}:${field.value ?? ""}:${String(field.confirmed)}`}
+                  key={`${field.key}:${field.value ?? ""}:${String(field.confirmed)}:${String(field.ignored)}`}
                   drawingId={drawing.id}
                   field={field}
                   readOnly={readOnly}
                 />
               ))}
             </div>
+            {category === "关键尺寸" && !readOnly ? (
+              <div className="mt-3">
+                <AddCriticalDimensionForm drawingId={drawing.id} />
+              </div>
+            ) : null}
           </section>
         );
       })}
+      {!readOnly ? (
+        <div className="rounded-lg border border-stone-200 bg-white px-3 py-3">
+          <p className="text-xs text-stone-500">
+            重试读图取数不会覆盖已确认、已忽略或手工补录的项。
+          </p>
+          <div className="mt-2">
+            <RetryExtractionButton drawingId={drawing.id} />
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

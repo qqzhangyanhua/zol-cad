@@ -14,6 +14,14 @@ class FieldCategory(StrEnum):
     TECHNICAL_REQUIREMENT = "技术要求"
 
 
+class FieldSource(StrEnum):
+    EXTRACTED = "extracted"
+    ADDED = "added"
+
+
+ADDED_KEY_SEPARATOR = "__added__"
+
+
 @dataclass(frozen=True)
 class ExtractedField:
     key: str
@@ -21,6 +29,8 @@ class ExtractedField:
     value: str | None
     category: FieldCategory
     confirmed: bool = False
+    ignored: bool = False
+    source: FieldSource = FieldSource.EXTRACTED
 
 
 @dataclass(frozen=True)
@@ -73,6 +83,19 @@ def empty_extraction_fields() -> tuple[ExtractedField, ...]:
     )
 
 
+def role_key_for_field(field_key: str) -> str:
+    """Map a补录 extra key (`tightest_tolerance__added__1`) back to its canonical role."""
+    if ADDED_KEY_SEPARATOR in field_key:
+        prefix, _sep, suffix = field_key.partition(ADDED_KEY_SEPARATOR)
+        if prefix in CANONICAL_FIELD_BY_KEY and suffix.isdigit():
+            return prefix
+    return field_key
+
+
+def is_added_field_key(field_key: str) -> bool:
+    return role_key_for_field(field_key) != field_key
+
+
 def merge_extracted_fields(engine_fields: tuple[ExtractedField, ...]) -> tuple[ExtractedField, ...]:
     """Project engine output onto the canonical form. Omitted slots stay empty."""
     by_key = {field.key: field for field in engine_fields}
@@ -83,5 +106,40 @@ def merge_extracted_fields(engine_fields: tuple[ExtractedField, ...]) -> tuple[E
         if value == "":
             value = None
         confirmed = found.confirmed if found is not None else False
-        merged.append(ExtractedField(spec.key, spec.label, value, spec.category, confirmed))
+        ignored = found.ignored if found is not None else False
+        source = found.source if found is not None else FieldSource.EXTRACTED
+        merged.append(
+            ExtractedField(spec.key, spec.label, value, spec.category, confirmed, ignored, source)
+        )
     return tuple(merged)
+
+
+def reviewable_fields(stored: tuple[ExtractedField, ...]) -> tuple[ExtractedField, ...]:
+    """Canonical slots plus 报价员补录的额外关键尺寸. Extras stay after the form slots."""
+    extras = tuple(field for field in stored if field.key not in CANONICAL_FIELD_BY_KEY)
+    return merge_extracted_fields(stored) + extras
+
+
+def has_review_edit(field: ExtractedField) -> bool:
+    """A field the 报价员 already touched — retry extract must keep it."""
+    return field.confirmed or field.ignored or field.source is FieldSource.ADDED
+
+
+def merge_extraction_preserving_review(
+    existing: tuple[ExtractedField, ...],
+    engine_fields: tuple[ExtractedField, ...],
+) -> tuple[ExtractedField, ...]:
+    """Apply a new extract without overwriting 复核 edits or 补录项."""
+    incoming = merge_extracted_fields(engine_fields)
+    existing_by_key = {field.key: field for field in existing}
+    preserved: list[ExtractedField] = []
+    for field in incoming:
+        previous = existing_by_key.get(field.key)
+        if previous is not None and has_review_edit(previous):
+            preserved.append(previous)
+        else:
+            preserved.append(field)
+    for field in existing:
+        if field.key not in CANONICAL_FIELD_BY_KEY:
+            preserved.append(field)
+    return tuple(preserved)

@@ -28,8 +28,12 @@ from quote_assistant.usecase.list_part_drawings import ListPartDrawings
 from quote_assistant.usecase.login import Login
 from quote_assistant.usecase.logout import Logout
 from quote_assistant.usecase.review_part_drawing import (
+    AddCriticalDimension,
     CompleteReview,
     ConfirmExtractedField,
+    IgnoreExtractedField,
+    ReopenReview,
+    UnignoreExtractedField,
     UpdateExtractedField,
 )
 from quote_assistant.usecase.upload_part_drawings import UploadPartDrawings
@@ -198,6 +202,38 @@ def get_complete_review(
 ) -> CompleteReview:
     drawings, events, uow = _review_deps(session)
     return CompleteReview(actor=actor, drawings=drawings, events=events, uow=uow)
+
+
+def get_ignore_extracted_field(
+    actor: Actor = Depends(require_actor),
+    session: Session = Depends(get_db),
+) -> IgnoreExtractedField:
+    drawings, events, uow = _review_deps(session)
+    return IgnoreExtractedField(actor=actor, drawings=drawings, events=events, uow=uow)
+
+
+def get_unignore_extracted_field(
+    actor: Actor = Depends(require_actor),
+    session: Session = Depends(get_db),
+) -> UnignoreExtractedField:
+    drawings, events, uow = _review_deps(session)
+    return UnignoreExtractedField(actor=actor, drawings=drawings, events=events, uow=uow)
+
+
+def get_add_critical_dimension(
+    actor: Actor = Depends(require_actor),
+    session: Session = Depends(get_db),
+) -> AddCriticalDimension:
+    drawings, events, uow = _review_deps(session)
+    return AddCriticalDimension(actor=actor, drawings=drawings, events=events, uow=uow)
+
+
+def get_reopen_review(
+    actor: Actor = Depends(require_actor),
+    session: Session = Depends(get_db),
+) -> ReopenReview:
+    drawings, events, uow = _review_deps(session)
+    return ReopenReview(actor=actor, drawings=drawings, events=events, uow=uow)
 
 
 def get_current_actor_use_case(
