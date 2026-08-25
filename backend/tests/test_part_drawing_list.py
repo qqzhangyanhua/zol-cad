@@ -40,8 +40,4 @@ def test_启动时真实执行了Alembic迁移(migrated_engine: Engine) -> None:
 
     with migrated_engine.connect() as conn:
         version = conn.execute(text("SELECT version_num FROM alembic_version")).scalar_one()
-<<<<<<< HEAD
-    assert version == "0005_correction_records"
-=======
-        assert version == "0005_manual_baselines"
->>>>>>> 34101d9 (Fix Alembic head assertion and stage-duration float compare.)
+    assert version == "0006_manual_baselines"
