@@ -21,7 +21,7 @@ export function EmptyPartDrawingState() {
       </div>
       <h2 className="text-lg font-semibold text-stone-900">你还没有上传过零件图</h2>
       <p className="mt-2 max-w-sm text-sm leading-6 text-stone-500">
-        当前工厂还没有任何零件图。登录后即可查看本厂列表；上传会在后续版本开放。
+        当前工厂还没有任何零件图。上传会在后续版本开放。
       </p>
     </div>
   );
