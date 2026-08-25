@@ -7,6 +7,7 @@ from fastapi import Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
 from quote_assistant.adapter.db.repositories import (
+    SqlCorrectionRecordRepository,
     SqlPartDrawingEventRepository,
     SqlPartDrawingRepository,
     SqlPasswordAuthenticator,
@@ -23,6 +24,8 @@ from quote_assistant.usecase.extract_part_drawing import ExtractPartDrawing
 from quote_assistant.usecase.get_current_actor import GetCurrentActor
 from quote_assistant.usecase.get_part_drawing import GetPartDrawing
 from quote_assistant.usecase.issue_original_access_url import IssueOriginalAccessUrl
+from quote_assistant.usecase.list_correction_records import ListCorrectionRecords
+from quote_assistant.usecase.list_correction_stats import ListCorrectionStats
 from quote_assistant.usecase.list_part_drawing_events import ListPartDrawingEvents
 from quote_assistant.usecase.list_part_drawings import ListPartDrawings
 from quote_assistant.usecase.login import Login
@@ -193,7 +196,13 @@ def get_update_extracted_field(
     session: Session = Depends(get_db),
 ) -> UpdateExtractedField:
     drawings, events, uow = _review_deps(session)
-    return UpdateExtractedField(actor=actor, drawings=drawings, events=events, uow=uow)
+    return UpdateExtractedField(
+        actor=actor,
+        drawings=drawings,
+        events=events,
+        corrections=SqlCorrectionRecordRepository(session),
+        uow=uow,
+    )
 
 
 def get_complete_review(
@@ -225,7 +234,34 @@ def get_add_critical_dimension(
     session: Session = Depends(get_db),
 ) -> AddCriticalDimension:
     drawings, events, uow = _review_deps(session)
-    return AddCriticalDimension(actor=actor, drawings=drawings, events=events, uow=uow)
+    return AddCriticalDimension(
+        actor=actor,
+        drawings=drawings,
+        events=events,
+        corrections=SqlCorrectionRecordRepository(session),
+        uow=uow,
+    )
+
+
+def get_list_correction_records(
+    actor: Actor = Depends(require_actor),
+    session: Session = Depends(get_db),
+) -> ListCorrectionRecords:
+    return ListCorrectionRecords(
+        actor=actor,
+        drawings=SqlPartDrawingRepository(session),
+        corrections=SqlCorrectionRecordRepository(session),
+    )
+
+
+def get_list_correction_stats(
+    actor: Actor = Depends(require_actor),
+    session: Session = Depends(get_db),
+) -> ListCorrectionStats:
+    return ListCorrectionStats(
+        actor=actor,
+        corrections=SqlCorrectionRecordRepository(session),
+    )
 
 
 def get_reopen_review(

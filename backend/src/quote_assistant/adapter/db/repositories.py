@@ -7,8 +7,15 @@ from uuid import UUID
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, joinedload
 
-from quote_assistant.adapter.db.models import PartDrawingEventRow, PartDrawingRow, SessionRow, UserRow
+from quote_assistant.adapter.db.models import (
+    CorrectionRecordRow,
+    PartDrawingEventRow,
+    PartDrawingRow,
+    SessionRow,
+    UserRow,
+)
 from quote_assistant.adapter.security.passwords import verify_password
+from quote_assistant.domain.correction import CorrectionRecord
 from quote_assistant.domain.entities import IssuedSession, PartDrawing, PartDrawingStatus, Role, User
 from quote_assistant.domain.extraction import ExtractedField, FieldCategory, FieldSource
 from quote_assistant.domain.part_drawing_state import PartDrawingEvent
@@ -291,3 +298,62 @@ class SqlPartDrawingEventRepository:
             )
         ).scalar_one()
         return int(current) + 1
+
+
+def _to_correction(row: CorrectionRecordRow) -> CorrectionRecord:
+    occurred_at = row.occurred_at
+    if occurred_at.tzinfo is None:
+        occurred_at = occurred_at.replace(tzinfo=UTC)
+    return CorrectionRecord(
+        id=row.id,
+        factory_id=row.factory_id,
+        part_drawing_id=row.part_drawing_id,
+        field_key=row.field_key,
+        field_type=row.field_type,
+        old_value=row.old_value,
+        new_value=row.new_value,
+        actor_user_id=row.actor_user_id,
+        occurred_at=occurred_at,
+    )
+
+
+class SqlCorrectionRecordRepository:
+    """Append-only. There is no update or overwrite path."""
+
+    def __init__(self, session: Session) -> None:
+        self._session = session
+
+    def add(self, record: CorrectionRecord) -> None:
+        self._session.add(
+            CorrectionRecordRow(
+                id=record.id,
+                factory_id=record.factory_id,
+                part_drawing_id=record.part_drawing_id,
+                field_key=record.field_key,
+                field_type=record.field_type,
+                old_value=record.old_value,
+                new_value=record.new_value,
+                actor_user_id=record.actor_user_id,
+                occurred_at=record.occurred_at,
+            )
+        )
+        self._session.flush()
+
+    def list_for_drawing(self, tenant: TenantScope, drawing_id: UUID) -> list[CorrectionRecord]:
+        rows = self._session.execute(
+            select(CorrectionRecordRow)
+            .where(
+                CorrectionRecordRow.part_drawing_id == drawing_id,
+                CorrectionRecordRow.factory_id == tenant.factory_id,
+            )
+            .order_by(CorrectionRecordRow.occurred_at.asc(), CorrectionRecordRow.id.asc())
+        ).scalars()
+        return [_to_correction(row) for row in rows]
+
+    def list_for_tenant(self, tenant: TenantScope) -> list[CorrectionRecord]:
+        rows = self._session.execute(
+            select(CorrectionRecordRow)
+            .where(CorrectionRecordRow.factory_id == tenant.factory_id)
+            .order_by(CorrectionRecordRow.occurred_at.asc(), CorrectionRecordRow.id.asc())
+        ).scalars()
+        return [_to_correction(row) for row in rows]

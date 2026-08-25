@@ -4,6 +4,7 @@ from datetime import timedelta
 from typing import Protocol
 from uuid import UUID
 
+from quote_assistant.domain.correction import CorrectionRecord
 from quote_assistant.domain.entities import IssuedSession, PartDrawing, User
 from quote_assistant.domain.extraction import ExtractionRequest, ExtractionResult
 from quote_assistant.domain.part_drawing_state import PartDrawingEvent
@@ -75,6 +76,17 @@ class PartDrawingEventRepository(Protocol):
 
     def next_sequence(self, drawing_id: UUID) -> int:
         """Next sequence_no for this 零件图 (1 if none yet)."""
+
+
+class CorrectionRecordRepository(Protocol):
+    def add(self, record: CorrectionRecord) -> None:
+        """Append one immutable 修正记录. Callers must not update existing rows."""
+
+    def list_for_drawing(self, tenant: TenantScope, drawing_id: UUID) -> list[CorrectionRecord]:
+        """修正记录 of one 零件图, oldest first. Tenant-filtered."""
+
+    def list_for_tenant(self, tenant: TenantScope) -> list[CorrectionRecord]:
+        """All 修正记录 of the Actor's factory, oldest first."""
 
 
 class ExtractionEngine(Protocol):

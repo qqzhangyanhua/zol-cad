@@ -20,8 +20,8 @@ QA_LOCAL_OBJECT_DIR=/tmp/quote-assistant-objects \
 
 演示账号（种子数据）：
 
-- 华东精密 **报价员**：`quoter_a` / `change-me-a`
-- 南方模具 **报价员**：`quoter_b` / `change-me-b`
+- 华东精密 **报价员**：`quoter_a` / `change-me-a`；**管理员**：`admin_a` / `change-me-a`
+- 南方模具 **报价员**：`quoter_b` / `change-me-b`；**管理员**：`admin_b` / `change-me-b`
 
 对象存储：用例层只依赖 `ObjectStorage` 窄接口（存 / 取 / 签发临时 URL / 删）。`QA_OBJECT_STORE_BACKEND=local` 时写入本地目录；`oss` 时走阿里云 OSS，put 时带 `x-oss-server-side-encryption: AES256` 与 private ACL，Bucket 本身不得公共读。
 
@@ -30,6 +30,8 @@ QA_LOCAL_OBJECT_DIR=/tmp/quote-assistant-objects \
 风险标签：领域层纯函数 `evaluate_risk_labels`，输入当前结构化字段，输出标签列表（规则标识 / 触发值 / 理由）。词表不含「安全 / 无风险 / 通过」。门槛为 ADR-0007 示例与接线占位，待票 01 调研替换。标签现算不落库。
 
 复核：领域层静态表 `FIELD_RISK_CLASS_BY_KEY` 判定高风险字段（尺寸类 / 公差类）一律需确认，分级只影响低风险字段。前端只展示后端给出的 `requires_confirmation`，不参与判断。存在未处理需确认项时，标记已复核被拒绝。报价员可忽略不适用项（忽略项不阻塞已复核、仍可见可撤销）、补录 AI 漏提的关键尺寸（与提取项同等对待，进入风险标签计算），以及在已复核后重新打开修改。修正后风险标签按确认值重算；重试提取保留已有复核修改。
+
+修正记录：每次修改提取值或手工补录追加一条不可变记录（原值 → 新值、字段标识、字段类型、操作人、时间、所属零件图）。补录的原值为空。同一字段多次修改产生多条记录，不覆盖。管理员查看本厂按字段类型聚合的频次；报价员读不到其他厂的记录。用途是积累样本与迭代提示词/后处理，不是实时训练闭源提取引擎。
 
 ## 缝 1 测试
 

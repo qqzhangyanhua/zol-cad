@@ -32,3 +32,7 @@ class ExtractedFieldNotFound(DomainError):
 
 class IncompleteReview(DomainError):
     """标记已复核 was refused because 需确认 items are still unfinished."""
+
+
+class AdminRequired(DomainError):
+    """Factory-wide 修正记录 stats are for 管理员 only."""

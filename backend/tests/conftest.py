@@ -135,8 +135,8 @@ def truncate_tables(migrated_engine: Engine) -> Iterator[None]:
     with migrated_engine.begin() as conn:
         conn.execute(
             text(
-                "TRUNCATE sessions, part_drawing_events, part_drawings, users, factories "
-                "RESTART IDENTITY CASCADE"
+                "TRUNCATE sessions, correction_records, part_drawing_events, part_drawings, "
+                "users, factories RESTART IDENTITY CASCADE"
             )
         )
     yield

@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { LogoutButton } from "@/components/LogoutButton";
 import type { CurrentUser } from "@/lib/types";
 
@@ -10,7 +12,16 @@ export function AppHeader({ user }: AppHeaderProps) {
     <header className="flex items-center justify-between border-b border-stone-200 bg-white px-6 py-4">
       <div>
         <p className="text-sm font-semibold text-stone-900">机加工报价辅助</p>
-        <p className="text-xs text-stone-500">零件图</p>
+        <nav className="mt-1 flex items-center gap-3 text-xs text-stone-500">
+          <Link href="/part-drawings" className="hover:text-stone-800">
+            零件图
+          </Link>
+          {user.role === "admin" ? (
+            <Link href="/admin/correction-stats" className="hover:text-stone-800">
+              修正记录
+            </Link>
+          ) : null}
+        </nav>
       </div>
       <div className="flex items-center gap-4">
         <div className="text-right text-sm">

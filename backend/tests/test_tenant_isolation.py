@@ -9,6 +9,8 @@ from quote_assistant.usecase.continue_despite_poor_quality import ContinueDespit
 from quote_assistant.usecase.extract_part_drawing import ExtractPartDrawing
 from quote_assistant.usecase.get_part_drawing import GetPartDrawing
 from quote_assistant.usecase.issue_original_access_url import IssueOriginalAccessUrl
+from quote_assistant.usecase.list_correction_records import ListCorrectionRecords
+from quote_assistant.usecase.list_correction_stats import ListCorrectionStats
 from quote_assistant.usecase.list_part_drawing_events import ListPartDrawingEvents
 from quote_assistant.usecase.list_part_drawings import ListPartDrawings
 from quote_assistant.usecase.review_part_drawing import (
@@ -87,6 +89,8 @@ def test_上传与查看原图用例不接受工厂标识参数() -> None:
         AddCriticalDimension,
         ReopenReview,
         CompleteReview,
+        ListCorrectionRecords,
+        ListCorrectionStats,
     ):
         names = list(inspect.signature(cls.execute).parameters)
         assert "factory_id" not in names
@@ -137,3 +141,4 @@ def test_甲厂报价员看不到乙厂刚上传的零件图也不能拿原图�
         == 404
     )
     assert client.post(f"/part-drawings/{drawing_id}/reopen-review").status_code == 404
+    assert client.get(f"/part-drawings/{drawing_id}/correction-records").status_code == 404

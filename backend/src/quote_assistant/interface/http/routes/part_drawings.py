@@ -21,6 +21,7 @@ from quote_assistant.interface.http.deps import (
     get_get_part_drawing,
     get_ignore_extracted_field,
     get_issue_original_access_url,
+    get_list_correction_records,
     get_list_part_drawing_events,
     get_list_part_drawings,
     get_reopen_review,
@@ -30,6 +31,7 @@ from quote_assistant.interface.http.deps import (
 )
 from quote_assistant.interface.http.schemas import (
     AddCriticalDimensionRequest,
+    CorrectionRecordListResponse,
     OriginalAccessResponse,
     PartDrawingEventListResponse,
     PartDrawingEventResponse,
@@ -38,12 +40,14 @@ from quote_assistant.interface.http.schemas import (
     RejectedUploadResponse,
     UpdateExtractedFieldRequest,
     UploadPartDrawingsResponse,
+    to_correction_record_response,
     to_part_drawing_response,
 )
 from quote_assistant.usecase.continue_despite_poor_quality import ContinueDespitePoorQuality
 from quote_assistant.usecase.extract_part_drawing import ExtractPartDrawing
 from quote_assistant.usecase.get_part_drawing import GetPartDrawing
 from quote_assistant.usecase.issue_original_access_url import IssueOriginalAccessUrl
+from quote_assistant.usecase.list_correction_records import ListCorrectionRecords
 from quote_assistant.usecase.list_part_drawing_events import ListPartDrawingEvents
 from quote_assistant.usecase.list_part_drawings import ListPartDrawings
 from quote_assistant.usecase.review_part_drawing import (
@@ -125,6 +129,20 @@ def get_part_drawing(
     except PartDrawingNotFound as exc:
         raise HTTPException(status_code=404, detail="零件图不存在") from exc
     return to_part_drawing_response(drawing)
+
+
+@router.get("/{drawing_id}/correction-records", response_model=CorrectionRecordListResponse)
+def list_correction_records(
+    drawing_id: UUID,
+    use_case: ListCorrectionRecords = Depends(get_list_correction_records),
+) -> CorrectionRecordListResponse:
+    try:
+        records = use_case.execute(drawing_id)
+    except PartDrawingNotFound as exc:
+        raise HTTPException(status_code=404, detail="零件图不存在") from exc
+    return CorrectionRecordListResponse(
+        items=[to_correction_record_response(record) for record in records]
+    )
 
 
 @router.get("/{drawing_id}/events", response_model=PartDrawingEventListResponse)
