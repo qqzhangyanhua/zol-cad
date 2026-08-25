@@ -19,9 +19,6 @@ from quote_assistant.domain.quote_sheet import (
 )
 
 
-HIGH_RISK_KEYS = ("tightest_tolerance", "max_envelope", "deepest_hole", "thinnest_wall")
-
-
 def _login_quoter(client: TestClient, db_session: Session) -> None:
     factory_id = create_factory(db_session, "华东精密")
     create_quoter(db_session, factory_id, "quoter_a", "secret-a")
@@ -56,9 +53,12 @@ def _assign(client: TestClient, task_id: str, drawing_id: str) -> None:
 
 
 def _complete_review(client: TestClient, drawing_id: str) -> None:
-    for key in HIGH_RISK_KEYS:
-        confirmed = client.post(f"/part-drawings/{drawing_id}/fields/{key}/confirm")
-        assert confirmed.status_code == 200
+    detail = client.get(f"/part-drawings/{drawing_id}")
+    assert detail.status_code == 200
+    for field in detail.json()["extracted_fields"]:
+        if field["requires_confirmation"] and not field["confirmed"] and not field["ignored"]:
+            confirmed = client.post(f"/part-drawings/{drawing_id}/fields/{field['key']}/confirm")
+            assert confirmed.status_code == 200
     done = client.post(f"/part-drawings/{drawing_id}/complete-review")
     assert done.status_code == 200
     assert done.json()["status"] == "已复核"
