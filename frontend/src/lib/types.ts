@@ -794,6 +794,30 @@ export function parseFactoryProcessingRecordList(data: unknown): FactoryProcessi
   };
 }
 
+export type TenantDeleteChallenge = {
+  confirm_token: string;
+  confirm_phrase: string;
+  expires_at: string;
+};
+
+export function parseTenantDeleteChallenge(data: unknown): TenantDeleteChallenge {
+  if (!isRecord(data)) {
+    throw new Error("删除确认响应格式不正确");
+  }
+  if (
+    typeof data.confirm_token !== "string" ||
+    typeof data.confirm_phrase !== "string" ||
+    typeof data.expires_at !== "string"
+  ) {
+    throw new Error("删除确认响应格式不正确");
+  }
+  return {
+    confirm_token: data.confirm_token,
+    confirm_phrase: data.confirm_phrase,
+    expires_at: data.expires_at,
+  };
+}
+
 export function sortRiskLabels(labels: RiskLabel[], priority: readonly RiskLabelName[]): RiskLabel[] {
   const rank = new Map(priority.map((name, index) => [name, index]));
   return [...labels].sort((left, right) => {

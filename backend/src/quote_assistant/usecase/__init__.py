@@ -5,7 +5,9 @@ from quote_assistant.usecase.assign_part_drawing_to_quote_task import (
 from quote_assistant.usecase.compare_processing_time import CompareProcessingTime
 from quote_assistant.usecase.continue_despite_poor_quality import ContinueDespitePoorQuality
 from quote_assistant.usecase.create_quote_task import CreateQuoteTask
+from quote_assistant.usecase.delete_tenant_data import DeleteTenantData
 from quote_assistant.usecase.export_quote_sheet import ExportQuoteSheet
+from quote_assistant.usecase.export_tenant_data import ExportTenantData
 from quote_assistant.usecase.get_quote_task import GetQuoteTask
 from quote_assistant.usecase.list_quote_tasks import ListQuoteTasks
 from quote_assistant.usecase.extract_part_drawing import ExtractPartDrawing
@@ -19,6 +21,7 @@ from quote_assistant.usecase.list_part_drawings import ListPartDrawings
 from quote_assistant.usecase.login import Login
 from quote_assistant.usecase.logout import Logout
 from quote_assistant.usecase.record_manual_baseline import RecordManualBaseline
+from quote_assistant.usecase.request_tenant_delete import RequestTenantDelete
 from quote_assistant.usecase.review_part_drawing import (
     AddCriticalDimension,
     CompleteReview,
@@ -36,7 +39,9 @@ __all__ = [
     "AssignPartDrawingToQuoteTask",
     "CompareProcessingTime",
     "CreateQuoteTask",
+    "DeleteTenantData",
     "ExportQuoteSheet",
+    "ExportTenantData",
     "GetQuoteTask",
     "ListQuoteTasks",
     "RemovePartDrawingFromQuoteTask",
@@ -58,6 +63,7 @@ __all__ = [
     "Login",
     "Logout",
     "RecordManualBaseline",
+    "RequestTenantDelete",
     "TenantBoundUseCase",
     "TenantScope",
     "UpdateExtractedField",

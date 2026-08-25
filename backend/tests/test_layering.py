@@ -178,6 +178,21 @@ def test_报价任务归集逻辑在领域层且不含金额审批字段() -> No
         assert "approval" not in source
 
 
+def test_本厂数据导出打包在适配器_确认短语在领域层() -> None:
+    tenant_data = (SRC / "domain" / "tenant_data.py").read_text(encoding="utf-8")
+    assert "def tenant_delete_confirm_phrase" in tenant_data
+    assert "def confirmation_accepted" in tenant_data
+    assert "def build_tenant_archive" in tenant_data
+    assert "zipfile" not in tenant_data
+    export_use_case = (SRC / "usecase" / "export_tenant_data.py").read_text(encoding="utf-8")
+    delete_use_case = (SRC / "usecase" / "delete_tenant_data.py").read_text(encoding="utf-8")
+    assert "zipfile" not in export_use_case
+    assert "zipfile" not in delete_use_case
+    assert "evaluate_risk_labels" not in export_use_case
+    writer = (SRC / "adapter" / "export" / "tenant_archive_writer.py").read_text(encoding="utf-8")
+    assert "zipfile" in writer
+
+
 def test_用例层不依赖框架与适配器() -> None:
     usecase_dir = SRC / "usecase"
     offenders: list[str] = []

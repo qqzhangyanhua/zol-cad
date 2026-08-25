@@ -143,6 +143,22 @@ class ManualBaselineRow(Base):
     recorded_by_user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
 
 
+class TenantDeleteChallengeRow(Base):
+    """One-time admin confirmation for deleting this factory's operational data."""
+
+    __tablename__ = "tenant_delete_challenges"
+    __table_args__ = (UniqueConstraint("token", name="uq_tenant_delete_challenges_token"),)
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    factory_id: Mapped[UUID] = mapped_column(ForeignKey("factories.id"), nullable=False, index=True)
+    token: Mapped[str] = mapped_column(String(128), nullable=False)
+    required_phrase: Mapped[str] = mapped_column(String(200), nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    created_by_user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    consumed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
 class SessionRow(Base):
     __tablename__ = "sessions"
     __table_args__ = (UniqueConstraint("token", name="uq_sessions_token"),)

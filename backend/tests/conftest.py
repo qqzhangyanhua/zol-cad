@@ -135,9 +135,9 @@ def truncate_tables(migrated_engine: Engine) -> Iterator[None]:
     with migrated_engine.begin() as conn:
         conn.execute(
             text(
-                "TRUNCATE sessions, manual_baselines, correction_records, part_drawing_events, "
-                "part_drawings, quote_tasks, quote_sheet_templates, factory_preferences, "
-                "users, factories "
+                "TRUNCATE sessions, tenant_delete_challenges, manual_baselines, "
+                "correction_records, part_drawing_events, part_drawings, quote_tasks, "
+                "quote_sheet_templates, factory_preferences, users, factories "
                 "RESTART IDENTITY CASCADE"
             )
         )

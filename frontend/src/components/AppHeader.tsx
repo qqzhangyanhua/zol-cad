@@ -36,6 +36,9 @@ export function AppHeader({ user }: AppHeaderProps) {
               <Link href="/admin/correction-stats" className="hover:text-stone-800">
                 修正记录
               </Link>
+              <Link href="/admin/tenant-data" className="hover:text-stone-800">
+                本厂数据
+              </Link>
             </>
           ) : null}
         </nav>

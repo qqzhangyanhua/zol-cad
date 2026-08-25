@@ -422,6 +422,22 @@ class FactoryProcessingRecordListResponse(BaseModel):
     items: list[FactoryProcessingRecordResponse]
 
 
+class TenantDeleteChallengeResponse(BaseModel):
+    confirm_token: str
+    confirm_phrase: str
+    expires_at: datetime
+
+
+class TenantDeleteRequest(BaseModel):
+    confirm_token: str = Field(min_length=1, max_length=128)
+    confirm_phrase: str = Field(min_length=1, max_length=200)
+
+
+class TenantDeleteResponse(BaseModel):
+    ok: bool = True
+    deleted: bool = True
+
+
 def to_factory_account_response(user: User) -> FactoryAccountResponse:
     return FactoryAccountResponse(
         id=user.id,

@@ -11,6 +11,7 @@ from quote_assistant.domain.quote_sheet import QuoteSheetFileFormat, QuoteSheetT
 from quote_assistant.domain.quote_task import QuoteTask
 from quote_assistant.domain.extraction import ExtractionRequest, ExtractionResult
 from quote_assistant.domain.part_drawing_state import PartDrawingEvent
+from quote_assistant.domain.tenant_data import TenantArchiveFile, TenantDeleteChallenge
 from quote_assistant.usecase.tenant import TenantScope
 
 
@@ -170,6 +171,27 @@ class QuoteSheetFileWriter(Protocol):
         file_format: QuoteSheetFileFormat,
     ) -> bytes:
         """Turn a finished table into xlsx or csv bytes. No domain decisions."""
+
+
+class TenantArchiveWriter(Protocol):
+    def write(self, files: tuple[TenantArchiveFile, ...]) -> bytes:
+        """Pack already-built export files into a zip. No domain decisions."""
+
+
+class TenantDeleteChallengeRepository(Protocol):
+    def add(self, challenge: TenantDeleteChallenge) -> None:
+        """Persist a newly issued one-time delete confirmation. Tenant comes from the entity."""
+
+    def get_open(self, tenant: TenantScope, token: str, now: datetime) -> TenantDeleteChallenge | None:
+        """Load an unused, unexpired challenge that belongs to this factory."""
+
+    def mark_consumed(self, tenant: TenantScope, token: str, consumed_at: datetime) -> None:
+        """Mark the challenge used. Missing tokens are ignored."""
+
+
+class TenantDataPurge(Protocol):
+    def delete_operational_data(self, tenant: TenantScope) -> None:
+        """Delete this factory's 零件图, events, 修正记录, 报价任务, 人工基线, preferences, challenges."""
 
 
 class ExtractionEngine(Protocol):

@@ -38,8 +38,11 @@ from quote_assistant.usecase.get_factory_preferences import GetFactoryPreference
 from quote_assistant.usecase.list_factory_accounts import ListFactoryAccounts
 from quote_assistant.usecase.list_factory_processing_records import ListFactoryProcessingRecords
 from quote_assistant.usecase.list_risk_rules import ListRiskRules
+from quote_assistant.usecase.delete_tenant_data import DeleteTenantData
+from quote_assistant.usecase.export_tenant_data import ExportTenantData
 from quote_assistant.usecase.replace_common_materials import ReplaceCommonMaterials
 from quote_assistant.usecase.replace_risk_label_priority import ReplaceRiskLabelPriority
+from quote_assistant.usecase.request_tenant_delete import RequestTenantDelete
 from quote_assistant.usecase.upload_part_drawings import UploadPartDrawings
 from drawing_fixtures import PNG_1X1
 from helpers import create_factory, create_quoter, insert_part_drawing, insert_quote_task, login
@@ -128,6 +131,9 @@ def test_上传与查看原图用例不接受工厂标识参数() -> None:
         ReplaceCommonMaterials,
         ReplaceRiskLabelPriority,
         ListRiskRules,
+        ExportTenantData,
+        RequestTenantDelete,
+        DeleteTenantData,
     ):
         names = list(inspect.signature(cls.execute).parameters)
         assert "factory_id" not in names
