@@ -254,6 +254,7 @@ class SqlPartDrawingEventRepository:
                 actor_user_id=event.actor_user_id,
             )
         )
+        self._session.flush()
 
     def list_for_drawing(self, tenant: TenantScope, drawing_id: UUID) -> list[PartDrawingEvent]:
         rows = self._session.execute(
@@ -267,6 +268,7 @@ class SqlPartDrawingEventRepository:
         return [_to_event(row) for row in rows]
 
     def next_sequence(self, drawing_id: UUID) -> int:
+        self._session.flush()
         current = self._session.execute(
             select(func.coalesce(func.max(PartDrawingEventRow.sequence_no), 0)).where(
                 PartDrawingEventRow.part_drawing_id == drawing_id
