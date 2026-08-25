@@ -33,6 +33,33 @@ class PartDrawingRepository(Protocol):
     def list_for_tenant(self, tenant: TenantScope) -> list[PartDrawing]:
         """List 零件图 belonging to the Actor's factory only."""
 
+    def get_for_tenant(self, tenant: TenantScope, drawing_id: UUID) -> PartDrawing | None:
+        """Load one 零件图 if it belongs to the Actor's factory."""
+
+    def add(self, drawing: PartDrawing) -> None:
+        """Persist a newly uploaded 零件图. factory_id must already be the tenant's."""
+
+
+class ObjectStorage(Protocol):
+    """Narrow object-storage port. Use-case code must not import an OSS SDK."""
+
+    def store(self, key: str, content: bytes, content_type: str) -> None:
+        """Write bytes under key. Overwrites if the key already exists."""
+
+    def fetch(self, key: str) -> bytes:
+        """Read bytes for key. Missing keys raise FileNotFoundError."""
+
+    def sign_access_url(self, key: str, ttl: timedelta) -> str:
+        """Issue a short-lived URL that can fetch the object without public-read ACL."""
+
+    def delete(self, key: str) -> None:
+        """Remove the object. Missing keys are ignored."""
+
+
+class PdfPageCounter(Protocol):
+    def count_pages(self, content: bytes) -> int:
+        """Return the page count of a PDF. Unreadable files raise PdfUnreadable."""
+
 
 class UnitOfWork(Protocol):
     def commit(self) -> None:

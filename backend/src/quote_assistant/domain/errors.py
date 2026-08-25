@@ -8,3 +8,11 @@ class InvalidCredentials(DomainError):
 
 class Unauthenticated(DomainError):
     pass
+
+
+class PartDrawingNotFound(DomainError):
+    pass
+
+
+class PdfUnreadable(DomainError):
+    pass

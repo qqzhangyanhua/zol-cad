@@ -13,6 +13,8 @@ QA_DATABASE_URL=postgresql+psycopg://quote:quote@127.0.0.1:5432/quote_assistant 
   uv run alembic upgrade head
 QA_SEED_DEMO_DATA=true \
 QA_DATABASE_URL=postgresql+psycopg://quote:quote@127.0.0.1:5432/quote_assistant \
+QA_OBJECT_STORE_BACKEND=local \
+QA_LOCAL_OBJECT_DIR=/tmp/quote-assistant-objects \
   uv run uvicorn quote_assistant.interface.http.app:app --reload --app-dir src
 ```
 
@@ -20,6 +22,8 @@ QA_DATABASE_URL=postgresql+psycopg://quote:quote@127.0.0.1:5432/quote_assistant 
 
 - 华东精密 **报价员**：`quoter_a` / `change-me-a`
 - 南方模具 **报价员**：`quoter_b` / `change-me-b`
+
+对象存储：用例层只依赖 `ObjectStorage` 窄接口（存 / 取 / 签发临时 URL / 删）。`QA_OBJECT_STORE_BACKEND=local` 时写入本地目录；`oss` 时走阿里云 OSS，put 时带 `x-oss-server-side-encryption: AES256` 与 private ACL，Bucket 本身不得公共读。
 
 ## 缝 1 测试
 

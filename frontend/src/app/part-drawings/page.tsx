@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { AppHeader } from "@/components/AppHeader";
 import { EmptyPartDrawingState } from "@/components/EmptyPartDrawingState";
 import { PartDrawingList } from "@/components/PartDrawingList";
+import { PartDrawingUploadPanel } from "@/components/PartDrawingUploadPanel";
 import { fetchBackend } from "@/lib/backend";
 import { parseCurrentUser, parsePartDrawingList } from "@/lib/types";
 
@@ -30,6 +31,7 @@ export default async function PartDrawingsPage() {
           <h1 className="text-xl font-semibold text-stone-900">零件图</h1>
           <p className="mt-1 text-sm text-stone-500">本厂已上传的零件图</p>
         </div>
+        <PartDrawingUploadPanel />
         {list.items.length === 0 ? (
           <EmptyPartDrawingState />
         ) : (

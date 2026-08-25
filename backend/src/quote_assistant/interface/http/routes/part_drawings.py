@@ -1,12 +1,57 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
+import json
+from uuid import UUID
 
-from quote_assistant.interface.http.deps import get_list_part_drawings
-from quote_assistant.interface.http.schemas import PartDrawingListResponse, PartDrawingResponse
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+
+from quote_assistant.domain.entities import IncomingDrawing, PartDrawing
+from quote_assistant.domain.errors import PartDrawingNotFound
+from quote_assistant.interface.http.deps import (
+    get_get_part_drawing,
+    get_issue_original_access_url,
+    get_list_part_drawings,
+    get_upload_part_drawings,
+)
+from quote_assistant.interface.http.schemas import (
+    OriginalAccessResponse,
+    PartDrawingListResponse,
+    PartDrawingResponse,
+    RejectedUploadResponse,
+    UploadPartDrawingsResponse,
+)
+from quote_assistant.usecase.get_part_drawing import GetPartDrawing
+from quote_assistant.usecase.issue_original_access_url import IssueOriginalAccessUrl
 from quote_assistant.usecase.list_part_drawings import ListPartDrawings
+from quote_assistant.usecase.upload_part_drawings import UploadPartDrawings
 
 router = APIRouter(prefix="/part-drawings", tags=["part-drawings"])
+
+
+def _to_response(item: PartDrawing) -> PartDrawingResponse:
+    return PartDrawingResponse(
+        id=item.id,
+        original_filename=item.original_filename,
+        uploaded_at=item.uploaded_at,
+        content_type=item.content_type,
+        byte_size=item.byte_size,
+        page_count=item.page_count,
+        selected_page=item.selected_page,
+    )
+
+
+def _parse_selected_pages(raw: str | None, file_count: int) -> list[int]:
+    if not raw:
+        return [1] * file_count
+    try:
+        parsed = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise HTTPException(status_code=400, detail="selected_pages 必须是页码数组") from exc
+    if not isinstance(parsed, list) or not all(isinstance(item, int) for item in parsed):
+        raise HTTPException(status_code=400, detail="selected_pages 必须是页码数组")
+    if len(parsed) != file_count:
+        raise HTTPException(status_code=400, detail="selected_pages 数量必须与文件数量一致")
+    return parsed
 
 
 @router.get("", response_model=PartDrawingListResponse)
@@ -15,13 +60,67 @@ def list_part_drawings(
 ) -> PartDrawingListResponse:
     # factory_id query/body args are intentionally not accepted.
     items = use_case.execute()
-    return PartDrawingListResponse(
-        items=[
-            PartDrawingResponse(
-                id=item.id,
-                original_filename=item.original_filename,
-                uploaded_at=item.uploaded_at,
+    return PartDrawingListResponse(items=[_to_response(item) for item in items])
+
+
+@router.post("", response_model=UploadPartDrawingsResponse)
+async def upload_part_drawings(
+    files: list[UploadFile] = File(...),
+    selected_pages: str | None = Form(default=None),
+    use_case: UploadPartDrawings = Depends(get_upload_part_drawings),
+) -> UploadPartDrawingsResponse:
+    if not files:
+        raise HTTPException(status_code=400, detail="请至少选择一张零件图")
+    pages = _parse_selected_pages(selected_pages, len(files))
+    incoming: list[IncomingDrawing] = []
+    for upload, page in zip(files, pages, strict=True):
+        content = await upload.read()
+        incoming.append(
+            IncomingDrawing(
+                original_filename=upload.filename or "未命名文件",
+                content=content,
+                selected_page=page,
             )
-            for item in items
-        ]
+        )
+    result = use_case.execute(incoming)
+    return UploadPartDrawingsResponse(
+        items=[_to_response(item) for item in result.items],
+        rejected=[
+            RejectedUploadResponse(
+                original_filename=item.original_filename,
+                detail=item.detail,
+            )
+            for item in result.rejected
+        ],
+    )
+
+
+@router.get("/{drawing_id}", response_model=PartDrawingResponse)
+def get_part_drawing(
+    drawing_id: UUID,
+    use_case: GetPartDrawing = Depends(get_get_part_drawing),
+) -> PartDrawingResponse:
+    try:
+        drawing = use_case.execute(drawing_id)
+    except PartDrawingNotFound as exc:
+        raise HTTPException(status_code=404, detail="零件图不存在") from exc
+    return _to_response(drawing)
+
+
+@router.get("/{drawing_id}/original", response_model=OriginalAccessResponse)
+def get_part_drawing_original(
+    drawing_id: UUID,
+    use_case: IssueOriginalAccessUrl = Depends(get_issue_original_access_url),
+) -> OriginalAccessResponse:
+    try:
+        access = use_case.execute(drawing_id)
+    except PartDrawingNotFound as exc:
+        raise HTTPException(status_code=404, detail="零件图不存在") from exc
+    return OriginalAccessResponse(
+        url=access.url,
+        expires_at=access.expires_at,
+        content_type=access.drawing.content_type,
+        original_filename=access.drawing.original_filename,
+        page_count=access.drawing.page_count,
+        selected_page=access.drawing.selected_page,
     )

@@ -54,3 +54,37 @@ class PartDrawing:
     factory_id: UUID
     original_filename: str
     uploaded_at: datetime
+    storage_key: str
+    content_type: str
+    byte_size: int
+    page_count: int
+    selected_page: int
+    uploaded_by_user_id: UUID | None
+
+
+@dataclass(frozen=True)
+class IncomingDrawing:
+    """A file the 报价员 submitted for upload. No factory id — tenant comes from Actor."""
+
+    original_filename: str
+    content: bytes
+    selected_page: int = 1
+
+
+@dataclass(frozen=True)
+class RejectedUpload:
+    original_filename: str
+    detail: str
+
+
+@dataclass(frozen=True)
+class UploadPartDrawingsResult:
+    items: list[PartDrawing]
+    rejected: list[RejectedUpload]
+
+
+@dataclass(frozen=True)
+class OriginalAccess:
+    drawing: PartDrawing
+    url: str
+    expires_at: datetime

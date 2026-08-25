@@ -12,6 +12,8 @@ FORBIDDEN_IN_DOMAIN = (
     "psycopg",
     "starlette",
     "pwdlib",
+    "oss2",
+    "pypdf",
     "quote_assistant.adapter",
     "quote_assistant.interface",
 )
@@ -24,6 +26,8 @@ FORBIDDEN_IN_USECASE = (
     "psycopg",
     "starlette",
     "pwdlib",
+    "oss2",
+    "pypdf",
     "quote_assistant.adapter",
     "quote_assistant.interface",
 )
@@ -42,6 +46,15 @@ def test_领域层不依赖外部IO() -> None:
             if name in source:
                 offenders.append(f"{path.relative_to(SRC)} 引用了 {name}")
     assert offenders == []
+
+
+def test_对象存储端口只暴露存取签删() -> None:
+    source = (SRC / "usecase" / "ports.py").read_text(encoding="utf-8")
+    assert "class ObjectStorage" in source
+    for name in ("def store", "def fetch", "def sign_access_url", "def delete"):
+        assert name in source
+    assert "oss2" not in source
+    assert "aliyun" not in source.lower()
 
 
 def test_用例层不依赖框架与适配器() -> None:

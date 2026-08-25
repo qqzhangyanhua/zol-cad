@@ -13,6 +13,21 @@ from quote_assistant.domain.entities import IssuedSession, PartDrawing, Role, Us
 from quote_assistant.usecase.tenant import TenantScope
 
 
+def _to_part_drawing(row: PartDrawingRow) -> PartDrawing:
+    return PartDrawing(
+        id=row.id,
+        factory_id=row.factory_id,
+        original_filename=row.original_filename,
+        uploaded_at=row.uploaded_at,
+        storage_key=row.storage_key,
+        content_type=row.content_type,
+        byte_size=row.byte_size,
+        page_count=row.page_count,
+        selected_page=row.selected_page,
+        uploaded_by_user_id=row.uploaded_by_user_id,
+    )
+
+
 def _to_user(row: UserRow) -> User:
     return User(
         id=row.id,
@@ -115,12 +130,31 @@ class SqlPartDrawingRepository:
             .where(PartDrawingRow.factory_id == tenant.factory_id)
             .order_by(PartDrawingRow.uploaded_at.desc())
         ).scalars()
-        return [
-            PartDrawing(
-                id=row.id,
-                factory_id=row.factory_id,
-                original_filename=row.original_filename,
-                uploaded_at=row.uploaded_at,
+        return [_to_part_drawing(row) for row in rows]
+
+    def get_for_tenant(self, tenant: TenantScope, drawing_id: UUID) -> PartDrawing | None:
+        row = self._session.execute(
+            select(PartDrawingRow).where(
+                PartDrawingRow.id == drawing_id,
+                PartDrawingRow.factory_id == tenant.factory_id,
             )
-            for row in rows
-        ]
+        ).scalar_one_or_none()
+        if row is None:
+            return None
+        return _to_part_drawing(row)
+
+    def add(self, drawing: PartDrawing) -> None:
+        self._session.add(
+            PartDrawingRow(
+                id=drawing.id,
+                factory_id=drawing.factory_id,
+                original_filename=drawing.original_filename,
+                uploaded_at=drawing.uploaded_at,
+                storage_key=drawing.storage_key,
+                content_type=drawing.content_type,
+                byte_size=drawing.byte_size,
+                page_count=drawing.page_count,
+                selected_page=drawing.selected_page,
+                uploaded_by_user_id=drawing.uploaded_by_user_id,
+            )
+        )

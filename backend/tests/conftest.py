@@ -84,10 +84,33 @@ def migrated_engine(database_url: str) -> Iterator[Engine]:
 
 
 @pytest.fixture(scope="session")
-def app(database_url: str, migrated_engine: Engine):
+def object_store_dir(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    return tmp_path_factory.mktemp("object-store")
+
+
+@pytest.fixture(scope="session")
+def app(database_url: str, migrated_engine: Engine, object_store_dir: Path):
     del migrated_engine  # migrations must run before the app starts
-    settings = Settings(database_url=database_url, seed_demo_data=False)
+    settings = Settings(
+        database_url=database_url,
+        seed_demo_data=False,
+        object_store_backend="local",
+        local_object_dir=str(object_store_dir),
+        public_base_url="",
+        object_sign_secret="test-object-sign-secret",
+        signed_url_ttl_seconds=300,
+    )
     return create_app(settings)
+
+
+@pytest.fixture(autouse=True)
+def clean_object_store(object_store_dir: Path) -> Iterator[None]:
+    yield
+    for child in object_store_dir.iterdir():
+        if child.is_dir():
+            shutil.rmtree(child)
+        else:
+            child.unlink()
 
 
 @pytest.fixture
