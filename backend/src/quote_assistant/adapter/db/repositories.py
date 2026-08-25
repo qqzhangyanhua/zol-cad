@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session, joinedload
 from quote_assistant.adapter.db.models import PartDrawingEventRow, PartDrawingRow, SessionRow, UserRow
 from quote_assistant.adapter.security.passwords import verify_password
 from quote_assistant.domain.entities import IssuedSession, PartDrawing, PartDrawingStatus, Role, User
-from quote_assistant.domain.extraction import ExtractedField, FieldCategory
+from quote_assistant.domain.extraction import ExtractedField, FieldCategory, FieldSource
 from quote_assistant.domain.part_drawing_state import PartDrawingEvent
 from quote_assistant.domain.quality import QualityGrade
 from quote_assistant.usecase.tenant import TenantScope
@@ -24,9 +24,18 @@ def _fields_to_json(fields: tuple[ExtractedField, ...]) -> list[dict[str, object
             "value": field.value,
             "category": field.category.value,
             "confirmed": field.confirmed,
+            "ignored": field.ignored,
+            "source": field.source.value,
         }
         for field in fields
     ]
+
+
+def _field_source(raw: object) -> FieldSource:
+    try:
+        return FieldSource(str(raw))
+    except ValueError:
+        return FieldSource.EXTRACTED
 
 
 def _fields_from_json(raw: list[dict[str, object]] | None) -> tuple[ExtractedField, ...]:
@@ -42,6 +51,8 @@ def _fields_from_json(raw: list[dict[str, object]] | None) -> tuple[ExtractedFie
                 value=value if isinstance(value, str) else None,
                 category=FieldCategory(str(item["category"])),
                 confirmed=bool(item.get("confirmed", False)),
+                ignored=bool(item.get("ignored", False)),
+                source=_field_source(item.get("source")),
             )
         )
     return tuple(parsed)

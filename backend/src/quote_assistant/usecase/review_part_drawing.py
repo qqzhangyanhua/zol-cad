@@ -6,10 +6,14 @@ from uuid import UUID
 from quote_assistant.domain.entities import Actor, PartDrawing
 from quote_assistant.domain.errors import PartDrawingNotFound
 from quote_assistant.domain.review import (
+    add_critical_dimension,
     begin_reviewing,
     complete_review,
     confirm_extracted_field,
     edit_extracted_field,
+    ignore_extracted_field,
+    reopen_review,
+    unignore_extracted_field,
 )
 from quote_assistant.usecase.ports import PartDrawingEventRepository, PartDrawingRepository, UnitOfWork
 from quote_assistant.usecase.tenant import TenantBoundUseCase, TenantScope
@@ -95,6 +99,122 @@ class UpdateExtractedField(TenantBoundUseCase):
             drawings=self._drawings,
             events=self._events,
         )
+        self._uow.commit()
+        return drawing
+
+
+class IgnoreExtractedField(TenantBoundUseCase):
+    """报价员把不适用项标为忽略；忽略项不阻塞已复核。"""
+
+    def __init__(
+        self,
+        actor: Actor,
+        drawings: PartDrawingRepository,
+        events: PartDrawingEventRepository,
+        uow: UnitOfWork,
+    ) -> None:
+        super().__init__(actor)
+        self._drawings = drawings
+        self._events = events
+        self._uow = uow
+
+    def execute(self, drawing_id: UUID, field_key: str) -> PartDrawing:
+        drawing = _load_for_tenant(self._drawings, self.tenant, drawing_id)
+        drawing = _save_review_action(
+            ignore_extracted_field(drawing, field_key),
+            actor_user_id=self.actor.user_id,
+            drawings=self._drawings,
+            events=self._events,
+        )
+        self._uow.commit()
+        return drawing
+
+
+class UnignoreExtractedField(TenantBoundUseCase):
+    """撤销忽略，使该项重新参与需确认判定与风险标签。"""
+
+    def __init__(
+        self,
+        actor: Actor,
+        drawings: PartDrawingRepository,
+        events: PartDrawingEventRepository,
+        uow: UnitOfWork,
+    ) -> None:
+        super().__init__(actor)
+        self._drawings = drawings
+        self._events = events
+        self._uow = uow
+
+    def execute(self, drawing_id: UUID, field_key: str) -> PartDrawing:
+        drawing = _load_for_tenant(self._drawings, self.tenant, drawing_id)
+        drawing = _save_review_action(
+            unignore_extracted_field(drawing, field_key),
+            actor_user_id=self.actor.user_id,
+            drawings=self._drawings,
+            events=self._events,
+        )
+        self._uow.commit()
+        return drawing
+
+
+class AddCriticalDimension(TenantBoundUseCase):
+    """手工补录一条 AI 未提出的关键尺寸。"""
+
+    def __init__(
+        self,
+        actor: Actor,
+        drawings: PartDrawingRepository,
+        events: PartDrawingEventRepository,
+        uow: UnitOfWork,
+    ) -> None:
+        super().__init__(actor)
+        self._drawings = drawings
+        self._events = events
+        self._uow = uow
+
+    def execute(
+        self,
+        drawing_id: UUID,
+        kind: str,
+        value: str,
+        label: str | None = None,
+    ) -> PartDrawing:
+        drawing = _load_for_tenant(self._drawings, self.tenant, drawing_id)
+        drawing = _save_review_action(
+            add_critical_dimension(drawing, kind, value, label),
+            actor_user_id=self.actor.user_id,
+            drawings=self._drawings,
+            events=self._events,
+        )
+        self._uow.commit()
+        return drawing
+
+
+class ReopenReview(TenantBoundUseCase):
+    """已复核的零件图重新打开，改动保留。"""
+
+    def __init__(
+        self,
+        actor: Actor,
+        drawings: PartDrawingRepository,
+        events: PartDrawingEventRepository,
+        uow: UnitOfWork,
+    ) -> None:
+        super().__init__(actor)
+        self._drawings = drawings
+        self._events = events
+        self._uow = uow
+
+    def execute(self, drawing_id: UUID) -> PartDrawing:
+        drawing = _load_for_tenant(self._drawings, self.tenant, drawing_id)
+        drawing, event = reopen_review(
+            drawing,
+            occurred_at=datetime.now(UTC),
+            sequence_no=self._events.next_sequence(drawing.id),
+            actor_user_id=self.actor.user_id,
+        )
+        self._drawings.save(drawing)
+        self._events.add(event)
         self._uow.commit()
         return drawing
 

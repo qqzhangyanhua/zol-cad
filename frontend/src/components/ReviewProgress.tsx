@@ -42,11 +42,46 @@ export function ReviewProgress({
     setPending(false);
   }
 
+  async function onReopen(): Promise<void> {
+    if (pending) {
+      return;
+    }
+    setPending(true);
+    setError(null);
+    const response = await fetch(`/api/part-drawings/${drawingId}/reopen-review`, {
+      method: "POST",
+    });
+    const payload: unknown = await response.json().catch(() => null);
+    if (!response.ok) {
+      setError(readErrorDetail(payload) ?? "无法重新打开复核");
+      setPending(false);
+      return;
+    }
+    parsePartDrawing(payload);
+    router.refresh();
+    setPending(false);
+  }
+
   if (reviewed) {
     return (
       <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-3">
         <p className="text-sm font-medium text-emerald-900">已复核</p>
         <p className="mt-1 text-xs text-emerald-800">这张零件图已成为可追溯的报价依据。</p>
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => {
+            void onReopen();
+          }}
+          className="mt-3 h-9 rounded-lg border border-emerald-300 bg-white px-3 text-sm font-medium text-emerald-900 hover:bg-emerald-100 disabled:opacity-50"
+        >
+          {pending ? "正在打开…" : "重新打开修改"}
+        </button>
+        {error ? (
+          <p className="mt-2 text-xs text-red-700" role="alert">
+            {error}
+          </p>
+        ) : null}
       </div>
     );
   }

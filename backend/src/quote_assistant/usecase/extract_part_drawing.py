@@ -9,7 +9,7 @@ from quote_assistant.domain.errors import (
     IllegalPartDrawingTransition,
     PartDrawingNotFound,
 )
-from quote_assistant.domain.extraction import ExtractionRequest, merge_extracted_fields
+from quote_assistant.domain.extraction import ExtractionRequest, merge_extraction_preserving_review
 from quote_assistant.domain.part_drawing_state import record_transition
 from quote_assistant.usecase.ports import (
     ExtractionEngine,
@@ -20,7 +20,14 @@ from quote_assistant.usecase.ports import (
 )
 from quote_assistant.usecase.tenant import TenantBoundUseCase
 
-_RETRYABLE = frozenset({PartDrawingStatus.GRADED, PartDrawingStatus.EXTRACT_FAILED})
+_RETRYABLE = frozenset(
+    {
+        PartDrawingStatus.GRADED,
+        PartDrawingStatus.EXTRACT_FAILED,
+        PartDrawingStatus.EXTRACTED,
+        PartDrawingStatus.REVIEWING,
+    }
+)
 _ENGINE_FAILURE_REASON = "读图取数失败，请重试"
 
 
@@ -66,7 +73,10 @@ def apply_extraction(
             occurred_at=datetime.now(UTC),
             sequence_no=events.next_sequence(drawing.id),
             actor_user_id=actor_user_id,
-            extracted_fields=merge_extracted_fields(result.fields),
+            extracted_fields=merge_extraction_preserving_review(
+                drawing.extracted_fields,
+                result.fields,
+            ),
             extraction_failure_reason=None,
         )
     except ExtractionValidationFailed as exc:

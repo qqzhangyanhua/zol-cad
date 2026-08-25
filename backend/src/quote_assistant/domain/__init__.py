@@ -36,8 +36,11 @@ from quote_assistant.domain.extraction import (
     ExtractionRequest,
     ExtractionResult,
     FieldCategory,
+    FieldSource,
     empty_extraction_fields,
     merge_extracted_fields,
+    merge_extraction_preserving_review,
+    reviewable_fields,
 )
 from quote_assistant.domain.part_drawing_state import (
     PartDrawingEvent,
@@ -59,6 +62,7 @@ from quote_assistant.domain.review import (
     FieldRiskClass,
     ReviewFieldView,
     field_requires_confirmation,
+    fields_for_risk_labels,
     review_fields_for,
     unfinished_confirmation_items,
 )
@@ -94,6 +98,7 @@ __all__ = [
     "ExtractionResult",
     "ExtractionValidationFailed",
     "FieldCategory",
+    "FieldSource",
     "FieldRiskClass",
     "IncompleteReview",
     "IncomingDrawing",
@@ -124,6 +129,9 @@ __all__ = [
     "evaluate_risk_labels",
     "field_requires_confirmation",
     "merge_extracted_fields",
+    "merge_extraction_preserving_review",
+    "reviewable_fields",
+    "fields_for_risk_labels",
     "review_fields_for",
     "unfinished_confirmation_items",
     "record_transition",

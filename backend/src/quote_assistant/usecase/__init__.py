@@ -8,16 +8,24 @@ from quote_assistant.usecase.list_part_drawings import ListPartDrawings
 from quote_assistant.usecase.login import Login
 from quote_assistant.usecase.logout import Logout
 from quote_assistant.usecase.review_part_drawing import (
+    AddCriticalDimension,
     CompleteReview,
     ConfirmExtractedField,
+    IgnoreExtractedField,
+    ReopenReview,
+    UnignoreExtractedField,
     UpdateExtractedField,
 )
 from quote_assistant.usecase.tenant import TenantBoundUseCase, TenantScope
 from quote_assistant.usecase.upload_part_drawings import UploadPartDrawings
 
 __all__ = [
+    "AddCriticalDimension",
     "CompleteReview",
     "ConfirmExtractedField",
+    "IgnoreExtractedField",
+    "ReopenReview",
+    "UnignoreExtractedField",
     "ContinueDespitePoorQuality",
     "ExtractPartDrawing",
     "GetCurrentActor",

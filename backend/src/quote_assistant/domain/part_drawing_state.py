@@ -24,9 +24,12 @@ LEGAL_TRANSITIONS: frozenset[tuple[PartDrawingStatus | None, PartDrawingStatus]]
         (PartDrawingStatus.EXTRACTING, PartDrawingStatus.EXTRACTED),
         (PartDrawingStatus.EXTRACTING, PartDrawingStatus.EXTRACT_FAILED),
         (PartDrawingStatus.EXTRACT_FAILED, PartDrawingStatus.EXTRACTING),
+        (PartDrawingStatus.EXTRACTED, PartDrawingStatus.EXTRACTING),
+        (PartDrawingStatus.REVIEWING, PartDrawingStatus.EXTRACTING),
         (PartDrawingStatus.EXTRACTED, PartDrawingStatus.REVIEWING),
         (PartDrawingStatus.EXTRACTED, PartDrawingStatus.REVIEWED),
         (PartDrawingStatus.REVIEWING, PartDrawingStatus.REVIEWED),
+        (PartDrawingStatus.REVIEWED, PartDrawingStatus.REVIEWING),
     }
 )
 

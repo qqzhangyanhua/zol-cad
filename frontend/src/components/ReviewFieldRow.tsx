@@ -84,11 +84,36 @@ export function ReviewFieldRow({ drawingId, field, readOnly }: ReviewFieldRowPro
     router.refresh();
   }
 
-  const needsConfirm = field.requires_confirmation && !field.confirmed;
+  async function toggleIgnore(nextIgnored: boolean): Promise<void> {
+    if (pending) {
+      return;
+    }
+    setPending(true);
+    setError(null);
+    const action = nextIgnored ? "ignore" : "unignore";
+    const response = await fetch(`/api/part-drawings/${drawingId}/fields/${field.key}/${action}`, {
+      method: "POST",
+    });
+    const payload: unknown = await response.json().catch(() => null);
+    if (!response.ok) {
+      setError(readErrorDetail(payload) ?? (nextIgnored ? "忽略失败" : "撤销忽略失败"));
+      setPending(false);
+      return;
+    }
+    parsePartDrawing(payload);
+    setPending(false);
+    router.refresh();
+  }
+
+  const needsConfirm = field.requires_confirmation && !field.confirmed && !field.ignored;
   const showEmpty = draft === "";
 
   return (
-    <div className="rounded-lg border border-stone-200 bg-white px-3 py-2.5">
+    <div
+      className={`rounded-lg border px-3 py-2.5 ${
+        field.ignored ? "border-stone-200 bg-stone-50" : "border-stone-200 bg-white"
+      }`}
+    >
       <div className="grid grid-cols-[7rem_minmax(0,1fr)] items-start gap-3">
         <div className="pt-0.5">
           <p className="text-xs font-medium text-stone-800">{field.label}</p>
@@ -96,8 +121,14 @@ export function ReviewFieldRow({ drawingId, field, readOnly }: ReviewFieldRowPro
           {needsConfirm ? (
             <p className="mt-1 text-[11px] font-medium text-amber-700">需确认</p>
           ) : null}
-          {field.confirmed ? (
+          {field.confirmed && !field.ignored ? (
             <p className="mt-1 text-[11px] font-medium text-emerald-700">已确认</p>
+          ) : null}
+          {field.ignored ? (
+            <p className="mt-1 text-[11px] font-medium text-stone-500">已忽略</p>
+          ) : null}
+          {field.source === "added" ? (
+            <p className="mt-1 text-[11px] font-medium text-sky-700">补录</p>
           ) : null}
         </div>
         <div>
@@ -141,6 +172,30 @@ export function ReviewFieldRow({ drawingId, field, readOnly }: ReviewFieldRowPro
                 className="h-8 rounded-md bg-stone-900 px-2.5 text-xs font-medium text-white hover:bg-stone-800 disabled:opacity-50"
               >
                 {pending ? "处理中…" : "确认"}
+              </button>
+            ) : null}
+            {!readOnly && !field.ignored ? (
+              <button
+                type="button"
+                disabled={pending}
+                onClick={() => {
+                  void toggleIgnore(true);
+                }}
+                className="h-8 rounded-md border border-stone-300 px-2.5 text-xs font-medium text-stone-700 hover:bg-stone-100 disabled:opacity-50"
+              >
+                忽略
+              </button>
+            ) : null}
+            {!readOnly && field.ignored ? (
+              <button
+                type="button"
+                disabled={pending}
+                onClick={() => {
+                  void toggleIgnore(false);
+                }}
+                className="h-8 rounded-md border border-stone-300 px-2.5 text-xs font-medium text-stone-700 hover:bg-stone-100 disabled:opacity-50"
+              >
+                撤销忽略
               </button>
             ) : null}
             {saved && !readOnly ? <span className="text-[11px] text-stone-500">已保存</span> : null}

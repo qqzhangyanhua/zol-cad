@@ -12,8 +12,12 @@ from quote_assistant.usecase.issue_original_access_url import IssueOriginalAcces
 from quote_assistant.usecase.list_part_drawing_events import ListPartDrawingEvents
 from quote_assistant.usecase.list_part_drawings import ListPartDrawings
 from quote_assistant.usecase.review_part_drawing import (
+    AddCriticalDimension,
     CompleteReview,
     ConfirmExtractedField,
+    IgnoreExtractedField,
+    ReopenReview,
+    UnignoreExtractedField,
     UpdateExtractedField,
 )
 from quote_assistant.usecase.upload_part_drawings import UploadPartDrawings
@@ -78,6 +82,10 @@ def test_上传与查看原图用例不接受工厂标识参数() -> None:
         ListPartDrawingEvents,
         ConfirmExtractedField,
         UpdateExtractedField,
+        IgnoreExtractedField,
+        UnignoreExtractedField,
+        AddCriticalDimension,
+        ReopenReview,
         CompleteReview,
     ):
         names = list(inspect.signature(cls.execute).parameters)
@@ -119,3 +127,13 @@ def test_甲厂报价员看不到乙厂刚上传的零件图也不能拿原图�
         == 404
     )
     assert client.post(f"/part-drawings/{drawing_id}/complete-review").status_code == 404
+    assert client.post(f"/part-drawings/{drawing_id}/fields/drawing_no/ignore").status_code == 404
+    assert client.post(f"/part-drawings/{drawing_id}/fields/drawing_no/unignore").status_code == 404
+    assert (
+        client.post(
+            f"/part-drawings/{drawing_id}/fields",
+            json={"kind": "deepest_hole", "value": "Ø8×48"},
+        ).status_code
+        == 404
+    )
+    assert client.post(f"/part-drawings/{drawing_id}/reopen-review").status_code == 404

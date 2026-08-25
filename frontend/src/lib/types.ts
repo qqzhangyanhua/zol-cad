@@ -26,6 +26,17 @@ export type PartDrawingStatus = (typeof PART_DRAWING_STATUSES)[number];
 export const FIELD_CATEGORIES = ["标题栏", "关键尺寸", "技术要求"] as const;
 export type FieldCategory = (typeof FIELD_CATEGORIES)[number];
 
+export const FIELD_SOURCES = ["extracted", "added"] as const;
+export type FieldSource = (typeof FIELD_SOURCES)[number];
+
+export const CRITICAL_DIMENSION_KINDS = [
+  { kind: "tightest_tolerance", label: "最严公差" },
+  { kind: "max_envelope", label: "最大外形" },
+  { kind: "deepest_hole", label: "最深孔" },
+  { kind: "thinnest_wall", label: "最薄壁" },
+] as const;
+export type CriticalDimensionKind = (typeof CRITICAL_DIMENSION_KINDS)[number]["kind"];
+
 export type ExtractedField = {
   key: string;
   label: string;
@@ -33,6 +44,8 @@ export type ExtractedField = {
   category: FieldCategory;
   requires_confirmation: boolean;
   confirmed: boolean;
+  ignored: boolean;
+  source: FieldSource;
 };
 
 export const RISK_LABEL_NAMES = ["高精度", "深孔", "薄壁", "细长"] as const;
@@ -148,7 +161,9 @@ function parseExtractedField(data: unknown): ExtractedField {
     !(data.value === null || typeof data.value === "string") ||
     !isFieldCategory(data.category) ||
     typeof data.requires_confirmation !== "boolean" ||
-    typeof data.confirmed !== "boolean"
+    typeof data.confirmed !== "boolean" ||
+    typeof data.ignored !== "boolean" ||
+    !isFieldSource(data.source)
   ) {
     throw new Error("提取字段响应格式不正确");
   }
@@ -159,7 +174,13 @@ function parseExtractedField(data: unknown): ExtractedField {
     category: data.category,
     requires_confirmation: data.requires_confirmation,
     confirmed: data.confirmed,
+    ignored: data.ignored,
+    source: data.source,
   };
+}
+
+function isFieldSource(value: unknown): value is FieldSource {
+  return (FIELD_SOURCES as readonly string[]).includes(value as string);
 }
 
 function isRiskLabelName(value: unknown): value is RiskLabelName {

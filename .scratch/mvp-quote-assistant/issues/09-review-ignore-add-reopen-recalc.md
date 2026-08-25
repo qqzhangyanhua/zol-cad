@@ -8,7 +8,7 @@
 
 **Blocked by:** 08, 07
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] **报价员**能把某一项标记为"忽略"，被忽略项不阻塞标记"已复核"
 - [ ] 被忽略项在界面上仍可见、可撤销忽略

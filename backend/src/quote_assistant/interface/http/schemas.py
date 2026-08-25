@@ -9,7 +9,7 @@ from quote_assistant.domain.entities import PartDrawing, PartDrawingStatus, Role
 from quote_assistant.domain.extraction import (
     LOOK_AT_DRAWING_DISCLAIMER,
     FieldCategory,
-    merge_extracted_fields,
+    FieldSource,
 )
 from quote_assistant.domain.part_drawing_state import auto_prefill_allowed
 from quote_assistant.domain.quality import (
@@ -19,7 +19,11 @@ from quote_assistant.domain.quality import (
     QUALITY_GRADE_DISCLAIMER,
     QualityGrade,
 )
-from quote_assistant.domain.review import review_fields_for, unfinished_confirmation_items
+from quote_assistant.domain.review import (
+    fields_for_risk_labels,
+    review_fields_for,
+    unfinished_confirmation_items,
+)
 from quote_assistant.domain.risk_labels import (
     NO_JUDGABLE_RISK_ITEMS_MESSAGE,
     RiskLabelName,
@@ -49,10 +53,18 @@ class ExtractedFieldResponse(BaseModel):
     category: FieldCategory
     requires_confirmation: bool
     confirmed: bool
+    ignored: bool
+    source: FieldSource
 
 
 class UpdateExtractedFieldRequest(BaseModel):
     value: str | None = Field(default=None, max_length=200)
+
+
+class AddCriticalDimensionRequest(BaseModel):
+    kind: str = Field(min_length=1, max_length=80)
+    value: str = Field(min_length=1, max_length=200)
+    label: str | None = Field(default=None, max_length=80)
 
 
 class RiskLabelResponse(BaseModel):
@@ -131,9 +143,9 @@ def to_part_drawing_response(item: PartDrawing) -> PartDrawingResponse:
     )
     out_of_scope = ASSEMBLY_OUT_OF_SCOPE_TEXT if item.is_assembly_or_exploded else None
     mark = LOW_QUALITY_MARK_TEXT if item.low_quality_unreliable else None
-    merged_fields = merge_extracted_fields(item.extracted_fields)
     review_fields = review_fields_for(item)
     unfinished = unfinished_confirmation_items(item)
+    risk_fields = fields_for_risk_labels(item)
     return PartDrawingResponse(
         id=item.id,
         original_filename=item.original_filename,
@@ -159,6 +171,8 @@ def to_part_drawing_response(item: PartDrawing) -> PartDrawingResponse:
                 category=field.category,
                 requires_confirmation=field.requires_confirmation,
                 confirmed=field.confirmed,
+                ignored=field.ignored,
+                source=field.source,
             )
             for field in review_fields
         ],
@@ -171,7 +185,7 @@ def to_part_drawing_response(item: PartDrawing) -> PartDrawingResponse:
                 triggering_value=label.triggering_value,
                 reason=label.reason,
             )
-            for label in evaluate_risk_labels(merged_fields)
+            for label in evaluate_risk_labels(risk_fields)
         ],
         no_judgable_risk_message=NO_JUDGABLE_RISK_ITEMS_MESSAGE,
         pending_confirmation_count=len(unfinished),
