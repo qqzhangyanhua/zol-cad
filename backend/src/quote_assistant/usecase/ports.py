@@ -21,7 +21,7 @@ class PasswordAuthenticator(Protocol):
 
 class PasswordHasher(Protocol):
     def hash_password(self, password: str) -> str:
-        """Hash a new 报价员 password. Use-case code must not import pwdlib."""
+        """Hash a new 报价员 password. Adapter implements this; use cases stay IO-free."""
 
 
 class UserRepository(Protocol):
