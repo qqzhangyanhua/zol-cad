@@ -43,6 +43,21 @@ _AVERAGE_FIELDS = [
     _field("roughness", "粗糙度", None, _TECH),
 ]
 
+# Wiring fixture for seam-1 risk-label path. Not a ticket-01 factory sample.
+_RISK_WIRE_FIELDS = [
+    _field("drawing_no", "图号", "RL-WIRE-01", _TITLE),
+    _field("part_name", "零件名称", "风险接线件", _TITLE),
+    _field("material", "材料", "45#", _TITLE),
+    _field("quantity", "数量", "1", _TITLE),
+    _field("tightest_tolerance", "最严公差", "IT6", _DIM),
+    _field("max_envelope", "最大外形", "Ø10×120", _DIM),
+    _field("deepest_hole", "最深孔", "Ø8×48", _DIM),
+    _field("thinnest_wall", "最薄壁", "1.5", _DIM),
+    _field("heat_treatment", "热处理", None, _TECH),
+    _field("surface_treatment", "表面处理", None, _TECH),
+    _field("roughness", "粗糙度", None, _TECH),
+]
+
 
 RAW_FIXTURE_RESULTS: dict[str, dict[str, object]] = {
     "FX-TQ-01": {
@@ -84,6 +99,11 @@ RAW_FIXTURE_RESULTS: dict[str, dict[str, object]] = {
         "quality_grade": QualityGrade.CLEAR.value,
         "is_assembly_or_exploded": False,
         "fields": [],
+    },
+    "WIRE-RL-01": {
+        "quality_grade": QualityGrade.CLEAR.value,
+        "is_assembly_or_exploded": False,
+        "fields": _RISK_WIRE_FIELDS,
     },
 }
 

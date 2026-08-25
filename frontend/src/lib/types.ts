@@ -31,6 +31,16 @@ export type ExtractedField = {
   category: FieldCategory;
 };
 
+export const RISK_LABEL_NAMES = ["高精度", "深孔", "薄壁", "细长"] as const;
+export type RiskLabelName = (typeof RISK_LABEL_NAMES)[number];
+
+export type RiskLabel = {
+  name: RiskLabelName;
+  rule_id: string;
+  triggering_value: string;
+  reason: string;
+};
+
 export type PartDrawing = {
   id: string;
   original_filename: string;
@@ -51,6 +61,8 @@ export type PartDrawing = {
   extracted_fields: ExtractedField[];
   extraction_failure_reason: string | null;
   look_at_drawing_disclaimer: string;
+  risk_labels: RiskLabel[];
+  no_judgable_risk_message: string;
 };
 
 export type PartDrawingList = {
@@ -140,6 +152,30 @@ function parseExtractedField(data: unknown): ExtractedField {
   };
 }
 
+function isRiskLabelName(value: unknown): value is RiskLabelName {
+  return (RISK_LABEL_NAMES as readonly string[]).includes(value as string);
+}
+
+function parseRiskLabel(data: unknown): RiskLabel {
+  if (!isRecord(data)) {
+    throw new Error("风险标签响应格式不正确");
+  }
+  if (
+    !isRiskLabelName(data.name) ||
+    typeof data.rule_id !== "string" ||
+    typeof data.triggering_value !== "string" ||
+    typeof data.reason !== "string"
+  ) {
+    throw new Error("风险标签响应格式不正确");
+  }
+  return {
+    name: data.name,
+    rule_id: data.rule_id,
+    triggering_value: data.triggering_value,
+    reason: data.reason,
+  };
+}
+
 export function parsePartDrawing(data: unknown): PartDrawing {
   if (!isRecord(data)) {
     throw new Error("零件图响应格式不正确");
@@ -163,7 +199,9 @@ export function parsePartDrawing(data: unknown): PartDrawing {
     !(data.low_quality_mark === null || typeof data.low_quality_mark === "string") ||
     !Array.isArray(data.extracted_fields) ||
     !(data.extraction_failure_reason === null || typeof data.extraction_failure_reason === "string") ||
-    typeof data.look_at_drawing_disclaimer !== "string"
+    typeof data.look_at_drawing_disclaimer !== "string" ||
+    !Array.isArray(data.risk_labels) ||
+    typeof data.no_judgable_risk_message !== "string"
   ) {
     throw new Error("零件图响应格式不正确");
   }
@@ -187,6 +225,8 @@ export function parsePartDrawing(data: unknown): PartDrawing {
     extracted_fields: data.extracted_fields.map(parseExtractedField),
     extraction_failure_reason: data.extraction_failure_reason,
     look_at_drawing_disclaimer: data.look_at_drawing_disclaimer,
+    risk_labels: data.risk_labels.map(parseRiskLabel),
+    no_judgable_risk_message: data.no_judgable_risk_message,
   };
 }
 

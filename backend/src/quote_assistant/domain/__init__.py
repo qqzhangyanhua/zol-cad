@@ -51,6 +51,14 @@ from quote_assistant.domain.quality import (
     QUALITY_GRADE_DISCLAIMER,
     QualityGrade,
 )
+from quote_assistant.domain.risk_labels import (
+    FORBIDDEN_RISK_LABEL_SEMANTICS,
+    NO_JUDGABLE_RISK_ITEMS_MESSAGE,
+    RISK_LABEL_VOCABULARY,
+    RiskLabel,
+    RiskLabelName,
+    evaluate_risk_labels,
+)
 
 __all__ = [
     "ASSEMBLY_OUT_OF_SCOPE_TEXT",
@@ -61,7 +69,10 @@ __all__ = [
     "MAX_FILE_SIZE_MB",
     "MAX_PDF_PAGES",
     "POOR_GRADE_ADVISE_TEXT",
+    "NO_JUDGABLE_RISK_ITEMS_MESSAGE",
+    "FORBIDDEN_RISK_LABEL_SEMANTICS",
     "QUALITY_GRADE_DISCLAIMER",
+    "RISK_LABEL_VOCABULARY",
     "AcceptedDrawingFile",
     "Actor",
     "ExtractedField",
@@ -78,6 +89,8 @@ __all__ = [
     "PartDrawingStatus",
     "PdfUnreadable",
     "QualityGrade",
+    "RiskLabel",
+    "RiskLabelName",
     "RejectedUpload",
     "Role",
     "Unauthenticated",
@@ -91,6 +104,7 @@ __all__ = [
     "birth_uploaded",
     "detect_media_type",
     "empty_extraction_fields",
+    "evaluate_risk_labels",
     "merge_extracted_fields",
     "record_transition",
     "status_after_grade",
