@@ -6,6 +6,11 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 from quote_assistant.domain.entities import PartDrawing, PartDrawingStatus, Role
+from quote_assistant.domain.extraction import (
+    LOOK_AT_DRAWING_DISCLAIMER,
+    FieldCategory,
+    merge_extracted_fields,
+)
 from quote_assistant.domain.part_drawing_state import auto_prefill_allowed
 from quote_assistant.domain.quality import (
     ASSEMBLY_OUT_OF_SCOPE_TEXT,
@@ -31,6 +36,13 @@ class CurrentUserResponse(BaseModel):
     role: Role
 
 
+class ExtractedFieldResponse(BaseModel):
+    key: str
+    label: str
+    value: str | None
+    category: FieldCategory
+
+
 class PartDrawingResponse(BaseModel):
     id: UUID
     original_filename: str
@@ -48,6 +60,9 @@ class PartDrawingResponse(BaseModel):
     advise_manual_message: str | None
     out_of_scope_message: str | None
     low_quality_mark: str | None
+    extracted_fields: list[ExtractedFieldResponse]
+    extraction_failure_reason: str | None
+    look_at_drawing_disclaimer: str
 
 
 class PartDrawingListResponse(BaseModel):
@@ -110,4 +125,15 @@ def to_part_drawing_response(item: PartDrawing) -> PartDrawingResponse:
         advise_manual_message=advise,
         out_of_scope_message=out_of_scope,
         low_quality_mark=mark,
+        extracted_fields=[
+            ExtractedFieldResponse(
+                key=field.key,
+                label=field.label,
+                value=field.value,
+                category=field.category,
+            )
+            for field in merge_extracted_fields(item.extracted_fields)
+        ],
+        extraction_failure_reason=item.extraction_failure_reason,
+        look_at_drawing_disclaimer=LOOK_AT_DRAWING_DISCLAIMER,
     )

@@ -10,9 +10,36 @@ from sqlalchemy.orm import Session, joinedload
 from quote_assistant.adapter.db.models import PartDrawingEventRow, PartDrawingRow, SessionRow, UserRow
 from quote_assistant.adapter.security.passwords import verify_password
 from quote_assistant.domain.entities import IssuedSession, PartDrawing, PartDrawingStatus, Role, User
+from quote_assistant.domain.extraction import ExtractedField, FieldCategory
 from quote_assistant.domain.part_drawing_state import PartDrawingEvent
 from quote_assistant.domain.quality import QualityGrade
 from quote_assistant.usecase.tenant import TenantScope
+
+
+def _fields_to_json(fields: tuple[ExtractedField, ...]) -> list[dict[str, str | None]]:
+    return [
+        {
+            "key": field.key,
+            "label": field.label,
+            "value": field.value,
+            "category": field.category.value,
+        }
+        for field in fields
+    ]
+
+
+def _fields_from_json(raw: list[dict[str, str | None]] | None) -> tuple[ExtractedField, ...]:
+    if not raw:
+        return ()
+    return tuple(
+        ExtractedField(
+            key=item["key"],
+            label=item["label"],
+            value=item.get("value"),
+            category=FieldCategory(item["category"]),
+        )
+        for item in raw
+    )
 
 
 def _to_part_drawing(row: PartDrawingRow) -> PartDrawing:
@@ -31,6 +58,8 @@ def _to_part_drawing(row: PartDrawingRow) -> PartDrawing:
         quality_grade=QualityGrade(row.quality_grade) if row.quality_grade else None,
         is_assembly_or_exploded=row.is_assembly_or_exploded,
         low_quality_unreliable=row.low_quality_unreliable,
+        extracted_fields=_fields_from_json(row.extracted_fields),
+        extraction_failure_reason=row.extraction_failure_reason,
     )
 
 
@@ -182,6 +211,8 @@ class SqlPartDrawingRepository:
                 quality_grade=drawing.quality_grade.value if drawing.quality_grade else None,
                 is_assembly_or_exploded=drawing.is_assembly_or_exploded,
                 low_quality_unreliable=drawing.low_quality_unreliable,
+                extracted_fields=_fields_to_json(drawing.extracted_fields),
+                extraction_failure_reason=drawing.extraction_failure_reason,
             )
         )
         self._session.flush()
@@ -202,6 +233,8 @@ class SqlPartDrawingRepository:
         row.quality_grade = drawing.quality_grade.value if drawing.quality_grade else None
         row.is_assembly_or_exploded = drawing.is_assembly_or_exploded
         row.low_quality_unreliable = drawing.low_quality_unreliable
+        row.extracted_fields = _fields_to_json(drawing.extracted_fields)
+        row.extraction_failure_reason = drawing.extraction_failure_reason
 
 
 class SqlPartDrawingEventRepository:
@@ -221,6 +254,7 @@ class SqlPartDrawingEventRepository:
                 actor_user_id=event.actor_user_id,
             )
         )
+        self._session.flush()
 
     def list_for_drawing(self, tenant: TenantScope, drawing_id: UUID) -> list[PartDrawingEvent]:
         rows = self._session.execute(
@@ -234,6 +268,7 @@ class SqlPartDrawingEventRepository:
         return [_to_event(row) for row in rows]
 
     def next_sequence(self, drawing_id: UUID) -> int:
+        self._session.flush()
         current = self._session.execute(
             select(func.coalesce(func.max(PartDrawingEventRow.sequence_no), 0)).where(
                 PartDrawingEventRow.part_drawing_id == drawing_id

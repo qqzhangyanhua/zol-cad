@@ -20,6 +20,7 @@ from quote_assistant.domain.entities import (
 )
 from quote_assistant.domain.errors import (
     DomainError,
+    ExtractionValidationFailed,
     IllegalPartDrawingTransition,
     InvalidCredentials,
     PartDrawingNotFound,
@@ -27,10 +28,14 @@ from quote_assistant.domain.errors import (
     Unauthenticated,
 )
 from quote_assistant.domain.extraction import (
+    CANONICAL_FIELD_SPECS,
+    LOOK_AT_DRAWING_DISCLAIMER,
     ExtractedField,
     ExtractionRequest,
     ExtractionResult,
     FieldCategory,
+    empty_extraction_fields,
+    merge_extracted_fields,
 )
 from quote_assistant.domain.part_drawing_state import (
     PartDrawingEvent,
@@ -49,6 +54,8 @@ from quote_assistant.domain.quality import (
 
 __all__ = [
     "ASSEMBLY_OUT_OF_SCOPE_TEXT",
+    "LOOK_AT_DRAWING_DISCLAIMER",
+    "CANONICAL_FIELD_SPECS",
     "LOW_QUALITY_MARK_TEXT",
     "MAX_FILE_BYTES",
     "MAX_FILE_SIZE_MB",
@@ -60,6 +67,7 @@ __all__ = [
     "ExtractedField",
     "ExtractionRequest",
     "ExtractionResult",
+    "ExtractionValidationFailed",
     "FieldCategory",
     "IncomingDrawing",
     "IssuedSession",
@@ -82,6 +90,8 @@ __all__ = [
     "auto_prefill_allowed",
     "birth_uploaded",
     "detect_media_type",
+    "empty_extraction_fields",
+    "merge_extracted_fields",
     "record_transition",
     "status_after_grade",
 ]

@@ -20,3 +20,7 @@ class PdfUnreadable(DomainError):
 
 class IllegalPartDrawingTransition(DomainError):
     pass
+
+
+class ExtractionValidationFailed(DomainError):
+    """Adapter-boundary schema rejected the engine payload. Dirty data must not enter the domain."""

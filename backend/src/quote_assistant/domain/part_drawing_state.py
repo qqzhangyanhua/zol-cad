@@ -6,8 +6,10 @@ from uuid import UUID, uuid4
 
 from quote_assistant.domain.entities import PartDrawing, PartDrawingStatus
 from quote_assistant.domain.errors import IllegalPartDrawingTransition
-from quote_assistant.domain.extraction import ExtractionResult
+from quote_assistant.domain.extraction import ExtractedField, ExtractionResult
 from quote_assistant.domain.quality import QualityGrade
+
+_UNSET = object()
 
 
 LEGAL_TRANSITIONS: frozenset[tuple[PartDrawingStatus | None, PartDrawingStatus]] = frozenset(
@@ -18,6 +20,10 @@ LEGAL_TRANSITIONS: frozenset[tuple[PartDrawingStatus | None, PartDrawingStatus]]
         (PartDrawingStatus.GRADING, PartDrawingStatus.ADVISE_MANUAL),
         (PartDrawingStatus.GRADING, PartDrawingStatus.OUT_OF_SCOPE),
         (PartDrawingStatus.ADVISE_MANUAL, PartDrawingStatus.GRADED),
+        (PartDrawingStatus.GRADED, PartDrawingStatus.EXTRACTING),
+        (PartDrawingStatus.EXTRACTING, PartDrawingStatus.EXTRACTED),
+        (PartDrawingStatus.EXTRACTING, PartDrawingStatus.EXTRACT_FAILED),
+        (PartDrawingStatus.EXTRACT_FAILED, PartDrawingStatus.EXTRACTING),
     }
 )
 
@@ -42,9 +48,19 @@ def status_after_grade(result: ExtractionResult) -> PartDrawingStatus:
     return PartDrawingStatus.GRADED
 
 
+_PREFILL_PATH = frozenset(
+    {
+        PartDrawingStatus.GRADED,
+        PartDrawingStatus.EXTRACTING,
+        PartDrawingStatus.EXTRACTED,
+        PartDrawingStatus.EXTRACT_FAILED,
+    }
+)
+
+
 def auto_prefill_allowed(drawing: PartDrawing) -> bool:
     """差图与装配/爆炸图不自动预填；显式覆盖回到主干后才允许继续处理。"""
-    return drawing.status is PartDrawingStatus.GRADED and not drawing.is_assembly_or_exploded
+    return drawing.status in _PREFILL_PATH and not drawing.is_assembly_or_exploded
 
 
 def _require_legal(from_status: PartDrawingStatus | None, to_status: PartDrawingStatus) -> None:
@@ -84,6 +100,8 @@ def record_transition(
     quality_grade: QualityGrade | None = None,
     is_assembly_or_exploded: bool | None = None,
     low_quality_unreliable: bool | None = None,
+    extracted_fields: tuple[ExtractedField, ...] | None = None,
+    extraction_failure_reason: str | None | object = _UNSET,
 ) -> tuple[PartDrawing, PartDrawingEvent]:
     _require_legal(drawing.status, to_status)
     updates: dict[str, object] = {"status": to_status}
@@ -93,6 +111,10 @@ def record_transition(
         updates["is_assembly_or_exploded"] = is_assembly_or_exploded
     if low_quality_unreliable is not None:
         updates["low_quality_unreliable"] = low_quality_unreliable
+    if extracted_fields is not None:
+        updates["extracted_fields"] = extracted_fields
+    if extraction_failure_reason is not _UNSET:
+        updates["extraction_failure_reason"] = extraction_failure_reason
     updated = replace(drawing, **updates)
     return updated, _event(
         drawing=updated,

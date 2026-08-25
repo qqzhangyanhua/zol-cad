@@ -15,8 +15,21 @@ export const PART_DRAWING_STATUSES = [
   "已分级",
   "建议人工",
   "不在范围",
+  "提取中",
+  "已提取",
+  "提取失败",
 ] as const;
 export type PartDrawingStatus = (typeof PART_DRAWING_STATUSES)[number];
+
+export const FIELD_CATEGORIES = ["标题栏", "关键尺寸", "技术要求"] as const;
+export type FieldCategory = (typeof FIELD_CATEGORIES)[number];
+
+export type ExtractedField = {
+  key: string;
+  label: string;
+  value: string | null;
+  category: FieldCategory;
+};
 
 export type PartDrawing = {
   id: string;
@@ -35,6 +48,9 @@ export type PartDrawing = {
   advise_manual_message: string | null;
   out_of_scope_message: string | null;
   low_quality_mark: string | null;
+  extracted_fields: ExtractedField[];
+  extraction_failure_reason: string | null;
+  look_at_drawing_disclaimer: string;
 };
 
 export type PartDrawingList = {
@@ -97,13 +113,31 @@ function isQualityGrade(value: unknown): value is QualityGrade {
 }
 
 function isPartDrawingStatus(value: unknown): value is PartDrawingStatus {
-  return (
-    value === "已上传" ||
-    value === "分级中" ||
-    value === "已分级" ||
-    value === "建议人工" ||
-    value === "不在范围"
-  );
+  return (PART_DRAWING_STATUSES as readonly string[]).includes(value as string);
+}
+
+function isFieldCategory(value: unknown): value is FieldCategory {
+  return (FIELD_CATEGORIES as readonly string[]).includes(value as string);
+}
+
+function parseExtractedField(data: unknown): ExtractedField {
+  if (!isRecord(data)) {
+    throw new Error("提取字段响应格式不正确");
+  }
+  if (
+    typeof data.key !== "string" ||
+    typeof data.label !== "string" ||
+    !(data.value === null || typeof data.value === "string") ||
+    !isFieldCategory(data.category)
+  ) {
+    throw new Error("提取字段响应格式不正确");
+  }
+  return {
+    key: data.key,
+    label: data.label,
+    value: data.value,
+    category: data.category,
+  };
 }
 
 export function parsePartDrawing(data: unknown): PartDrawing {
@@ -126,7 +160,10 @@ export function parsePartDrawing(data: unknown): PartDrawing {
     typeof data.quality_grade_disclaimer !== "string" ||
     !(data.advise_manual_message === null || typeof data.advise_manual_message === "string") ||
     !(data.out_of_scope_message === null || typeof data.out_of_scope_message === "string") ||
-    !(data.low_quality_mark === null || typeof data.low_quality_mark === "string")
+    !(data.low_quality_mark === null || typeof data.low_quality_mark === "string") ||
+    !Array.isArray(data.extracted_fields) ||
+    !(data.extraction_failure_reason === null || typeof data.extraction_failure_reason === "string") ||
+    typeof data.look_at_drawing_disclaimer !== "string"
   ) {
     throw new Error("零件图响应格式不正确");
   }
@@ -147,6 +184,9 @@ export function parsePartDrawing(data: unknown): PartDrawing {
     advise_manual_message: data.advise_manual_message,
     out_of_scope_message: data.out_of_scope_message,
     low_quality_mark: data.low_quality_mark,
+    extracted_fields: data.extracted_fields.map(parseExtractedField),
+    extraction_failure_reason: data.extraction_failure_reason,
+    look_at_drawing_disclaimer: data.look_at_drawing_disclaimer,
   };
 }
 

@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from quote_assistant.usecase.continue_despite_poor_quality import ContinueDespitePoorQuality
+from quote_assistant.usecase.extract_part_drawing import ExtractPartDrawing
 from quote_assistant.usecase.get_part_drawing import GetPartDrawing
 from quote_assistant.usecase.issue_original_access_url import IssueOriginalAccessUrl
 from quote_assistant.usecase.list_part_drawing_events import ListPartDrawingEvents
@@ -68,6 +69,7 @@ def test_上传与查看原图用例不接受工厂标识参数() -> None:
         GetPartDrawing,
         IssueOriginalAccessUrl,
         ContinueDespitePoorQuality,
+        ExtractPartDrawing,
         ListPartDrawingEvents,
     ):
         names = list(inspect.signature(cls.execute).parameters)
@@ -99,3 +101,4 @@ def test_甲厂报价员看不到乙厂刚上传的零件图也不能拿原图�
     assert client.get(f"/part-drawings/{drawing_id}/original").status_code == 404
     assert client.get(f"/part-drawings/{drawing_id}/events").status_code == 404
     assert client.post(f"/part-drawings/{drawing_id}/continue-despite-quality").status_code == 404
+    assert client.post(f"/part-drawings/{drawing_id}/extract").status_code == 404

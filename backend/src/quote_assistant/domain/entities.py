@@ -5,6 +5,7 @@ from datetime import datetime
 from enum import StrEnum
 from uuid import UUID
 
+from quote_assistant.domain.extraction import ExtractedField
 from quote_assistant.domain.quality import QualityGrade
 
 
@@ -14,6 +15,9 @@ class PartDrawingStatus(StrEnum):
     GRADED = "已分级"
     ADVISE_MANUAL = "建议人工"
     OUT_OF_SCOPE = "不在范围"
+    EXTRACTING = "提取中"
+    EXTRACTED = "已提取"
+    EXTRACT_FAILED = "提取失败"
 
 
 class Role(StrEnum):
@@ -74,6 +78,8 @@ class PartDrawing:
     quality_grade: QualityGrade | None
     is_assembly_or_exploded: bool
     low_quality_unreliable: bool
+    extracted_fields: tuple[ExtractedField, ...]
+    extraction_failure_reason: str | None
 
 
 @dataclass(frozen=True)

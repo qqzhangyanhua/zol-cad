@@ -25,6 +25,7 @@ from quote_assistant.domain.part_drawing_state import (
     record_transition,
     status_after_grade,
 )
+from quote_assistant.usecase.extract_part_drawing import apply_extraction
 from quote_assistant.usecase.ports import (
     ExtractionEngine,
     ObjectStorage,
@@ -139,6 +140,8 @@ class UploadPartDrawings(TenantBoundUseCase):
                     quality_grade=None,
                     is_assembly_or_exploded=False,
                     low_quality_unreliable=False,
+                    extracted_fields=(),
+                    extraction_failure_reason=None,
                 )
                 drawing, born = birth_uploaded(
                     drawing, occurred_at=now, actor_user_id=self.actor.user_id
@@ -176,6 +179,15 @@ class UploadPartDrawings(TenantBoundUseCase):
                 )
                 self._drawings.save(drawing)
                 self._events.add(graded)
+                if next_status is PartDrawingStatus.GRADED:
+                    drawing = apply_extraction(
+                        drawing,
+                        actor_user_id=self.actor.user_id,
+                        drawings=self._drawings,
+                        events=self._events,
+                        storage=self._storage,
+                        engine=self._engine,
+                    )
                 accepted.append(drawing)
             self._uow.commit()
         except Exception:

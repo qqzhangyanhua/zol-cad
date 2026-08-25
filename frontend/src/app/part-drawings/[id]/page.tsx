@@ -2,8 +2,10 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { AppHeader } from "@/components/AppHeader";
+import { ExtractionDisclaimer } from "@/components/ExtractionDisclaimer";
 import { OriginalDrawingViewer } from "@/components/OriginalDrawingViewer";
 import { PartDrawingQualityPanel } from "@/components/PartDrawingQualityPanel";
+import { PartDrawingWorkspace } from "@/components/PartDrawingWorkspace";
 import { fetchBackend } from "@/lib/backend";
 import { parseCurrentUser, parseOriginalAccess, parsePartDrawing, resolveOriginalSrc } from "@/lib/types";
 
@@ -32,6 +34,12 @@ export default async function PartDrawingDetailPage({ params }: PartDrawingDetai
   const user = parseCurrentUser(await meResponse.json());
   const drawing = parsePartDrawing(await drawingResponse.json());
   const original = parseOriginalAccess(await originalResponse.json());
+  const originalSrc = resolveOriginalSrc(original.url);
+  const showWorkspace =
+    drawing.status === "已分级" ||
+    drawing.status === "提取中" ||
+    drawing.status === "已提取" ||
+    drawing.status === "提取失败";
 
   return (
     <div className="flex min-h-full flex-1 flex-col bg-stone-50">
@@ -50,12 +58,17 @@ export default async function PartDrawingDetailPage({ params }: PartDrawingDetai
           </p>
         </div>
       </div>
+      <ExtractionDisclaimer text={drawing.look_at_drawing_disclaimer} />
       <PartDrawingQualityPanel drawing={drawing} />
-      <OriginalDrawingViewer
-        src={resolveOriginalSrc(original.url)}
-        contentType={original.content_type}
-        filename={original.original_filename}
-      />
+      {showWorkspace ? (
+        <PartDrawingWorkspace drawing={drawing} originalSrc={originalSrc} original={original} />
+      ) : (
+        <OriginalDrawingViewer
+          src={originalSrc}
+          contentType={original.content_type}
+          filename={original.original_filename}
+        />
+      )}
     </div>
   );
 }
