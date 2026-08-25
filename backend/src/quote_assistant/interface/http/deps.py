@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from quote_assistant.adapter.db.repositories import (
     SqlCorrectionRecordRepository,
+    SqlManualBaselineRepository,
     SqlPartDrawingEventRepository,
     SqlPartDrawingRepository,
     SqlPasswordAuthenticator,
@@ -19,6 +20,7 @@ from quote_assistant.config import Settings
 from quote_assistant.domain.entities import Actor
 from quote_assistant.domain.errors import Unauthenticated
 from quote_assistant.adapter.pdf.page_counter import PypdfPageCounter
+from quote_assistant.usecase.compare_processing_time import CompareProcessingTime
 from quote_assistant.usecase.continue_despite_poor_quality import ContinueDespitePoorQuality
 from quote_assistant.usecase.extract_part_drawing import ExtractPartDrawing
 from quote_assistant.usecase.get_current_actor import GetCurrentActor
@@ -30,6 +32,7 @@ from quote_assistant.usecase.list_part_drawing_events import ListPartDrawingEven
 from quote_assistant.usecase.list_part_drawings import ListPartDrawings
 from quote_assistant.usecase.login import Login
 from quote_assistant.usecase.logout import Logout
+from quote_assistant.usecase.record_manual_baseline import RecordManualBaseline
 from quote_assistant.usecase.review_part_drawing import (
     AddCriticalDimension,
     CompleteReview,
@@ -276,6 +279,29 @@ def get_current_actor_use_case(
     actor: Actor = Depends(require_actor),
 ) -> GetCurrentActor:
     return GetCurrentActor(actor)
+
+
+def get_compare_processing_time(
+    actor: Actor = Depends(require_actor),
+    session: Session = Depends(get_db),
+) -> CompareProcessingTime:
+    return CompareProcessingTime(
+        actor=actor,
+        drawings=SqlPartDrawingRepository(session),
+        events=SqlPartDrawingEventRepository(session),
+        baselines=SqlManualBaselineRepository(session),
+    )
+
+
+def get_record_manual_baseline(
+    actor: Actor = Depends(require_actor),
+    session: Session = Depends(get_db),
+) -> RecordManualBaseline:
+    return RecordManualBaseline(
+        actor=actor,
+        baselines=SqlManualBaselineRepository(session),
+        uow=SqlAlchemyUnitOfWork(session),
+    )
 
 
 def map_unauthenticated(exc: Unauthenticated) -> HTTPException:

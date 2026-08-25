@@ -97,6 +97,17 @@ class CorrectionRecordRow(Base):
     occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
 
+class ManualBaselineRow(Base):
+    __tablename__ = "manual_baselines"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    factory_id: Mapped[UUID] = mapped_column(ForeignKey("factories.id"), nullable=False, index=True)
+    part_description: Mapped[str] = mapped_column(String(200), nullable=False)
+    manual_duration_seconds: Mapped[int] = mapped_column(Integer, nullable=False)
+    recorded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    recorded_by_user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
+
+
 class SessionRow(Base):
     __tablename__ = "sessions"
     __table_args__ = (UniqueConstraint("token", name="uq_sessions_token"),)

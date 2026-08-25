@@ -5,7 +5,7 @@ from typing import Protocol
 from uuid import UUID
 
 from quote_assistant.domain.correction import CorrectionRecord
-from quote_assistant.domain.entities import IssuedSession, PartDrawing, User
+from quote_assistant.domain.entities import IssuedSession, ManualBaseline, PartDrawing, User
 from quote_assistant.domain.extraction import ExtractionRequest, ExtractionResult
 from quote_assistant.domain.part_drawing_state import PartDrawingEvent
 from quote_assistant.usecase.tenant import TenantScope
@@ -76,6 +76,17 @@ class PartDrawingEventRepository(Protocol):
 
     def next_sequence(self, drawing_id: UUID) -> int:
         """Next sequence_no for this 零件图 (1 if none yet)."""
+
+    def list_for_tenant(self, tenant: TenantScope) -> list[PartDrawingEvent]:
+        """All timestamped events of the Actor's factory, oldest first."""
+
+
+class ManualBaselineRepository(Protocol):
+    def add(self, baseline: ManualBaseline) -> None:
+        """Persist one admin-entered 人工基线. factory_id must already be the tenant's."""
+
+    def list_for_tenant(self, tenant: TenantScope) -> list[ManualBaseline]:
+        """人工基线 belonging to the Actor's factory only, newest first."""
 
 
 class CorrectionRecordRepository(Protocol):

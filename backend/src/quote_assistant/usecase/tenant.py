@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from quote_assistant.domain.entities import Actor
+from quote_assistant.domain.entities import Actor, Role
+from quote_assistant.domain.errors import AdminRequired
 
 
 class TenantScope:
@@ -31,3 +32,9 @@ class TenantBoundUseCase:
     def __init__(self, actor: Actor) -> None:
         self.actor = actor
         self.tenant = TenantScope(actor)
+
+
+def require_admin(actor: Actor) -> None:
+    """处理耗时与人工基线只对管理员开放；租户边界仍由 TenantScope 保证。"""
+    if actor.role is not Role.ADMIN:
+        raise AdminRequired("只有管理员可以查看或录入本厂处理耗时与人工基线")

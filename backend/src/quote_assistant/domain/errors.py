@@ -35,4 +35,8 @@ class IncompleteReview(DomainError):
 
 
 class AdminRequired(DomainError):
-    """Factory-wide 修正记录 stats are for 管理员 only."""
+    """管理员专属能力（全厂修正记录统计、处理耗时与人工基线）。"""
+
+
+class InvalidManualBaseline(DomainError):
+    """管理员录入的人工基线不完整或数值不合法。"""
