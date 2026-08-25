@@ -8,14 +8,27 @@
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-agent
+**Status:** claimed
 
-- [ ] **报价员**能用账号密码登录，未登录访问受保护页面被挡回登录页
-- [ ] 登录后看到空的**零件图**列表页，文案说明还没有内容
-- [ ] 后端按四层分层落地，依赖方向只能向内；领域层无 IO
-- [ ] Postgres 与 Alembic 就位，迁移可正向执行
-- [ ] 缝 1 测试基座可用：pytest 加 FastAPI 的 ASGI 测试客户端直接打进应用，不起真实网络端口
-- [ ] 测试跑在容器化的真实 Postgres 上，启动时真实执行一遍 Alembic 迁移
-- [ ] 租户过滤在用例层统一施加，任何用例都无法绕过；有测试证明 A 厂用户读不到 B 厂数据
-- [ ] 前端为 Next.js + TypeScript（禁用 `any`）+ Tailwind，依赖用 pnpm 管理；服务端只做 BFF 代理，不含任何领域判断
-- [ ] 后端依赖用 uv 管理
+- [x] **报价员**能用账号密码登录，未登录访问受保护页面被挡回登录页
+- [x] 登录后看到空的**零件图**列表页，文案说明还没有内容
+- [x] 后端按四层分层落地，依赖方向只能向内；领域层无 IO
+- [x] Postgres 与 Alembic 就位，迁移可正向执行
+- [x] 缝 1 测试基座可用：pytest 加 FastAPI 的 ASGI 测试客户端直接打进应用，不起真实网络端口
+- [x] 测试跑在容器化的真实 Postgres 上，启动时真实执行一遍 Alembic 迁移
+- [x] 租户过滤在用例层统一施加，任何用例都无法绕过；有测试证明 A 厂用户读不到 B 厂数据
+- [x] 前端为 Next.js + TypeScript（禁用 `any`）+ Tailwind，依赖用 pnpm 管理；服务端只做 BFF 代理，不含任何领域判断
+- [x] 后端依赖用 uv 管理
+
+## Comments
+
+实现已落在 PR：https://github.com/qqzhangyanhua/zol-cad/pull/3
+
+设计要点：
+
+- 租户边界是工厂。`TenantScope` 只能由已认证 `Actor` 构造，`ListPartDrawings.execute()` 不接受 `factory_id`；HTTP 查询参数里的工厂标识会被忽略。
+- 缝 1：pytest + FastAPI `TestClient` 直接打进 ASGI 应用。默认用 testcontainers 拉 `postgres:16`；CI 用 workflow 里的 Postgres service 容器。启动时跑 `alembic upgrade head`。本环境没有 Docker，本地验证时用 `QA_TEST_DATABASE_URL` 指向真实 Postgres（仍跑 Alembic），12 passed。
+- 前端服务端只转发 cookie / JSON，不做领域判断。未登录访问 `/part-drawings` 被 `proxy.ts` 挡回 `/login`。
+- 演示账号：华东精密 `quoter_a` / `change-me-a`；南方模具 `quoter_b` / `change-me-b`。
+
+浏览器已走通：错误密码提示 → 登录看到空列表「你还没有上传过零件图」→ 退出后再打开列表被挡回登录页。
