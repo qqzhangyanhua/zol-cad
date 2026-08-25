@@ -32,6 +32,7 @@ class UserRow(Base):
     password_hash: Mapped[str] = mapped_column(Text, nullable=False)
     role: Mapped[str] = mapped_column(String(20), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    disabled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     factory: Mapped[FactoryRow] = relationship(back_populates="users")
 
@@ -110,6 +111,16 @@ class QuoteTaskRow(Base):
     customer_name: Mapped[str] = mapped_column(String(200), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     created_by_user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
+
+
+class FactoryPreferenceRow(Base):
+    """Per-factory 常用材料 and 风险标签 display priority. No 报价底稿 mapping here."""
+
+    __tablename__ = "factory_preferences"
+
+    factory_id: Mapped[UUID] = mapped_column(ForeignKey("factories.id"), primary_key=True)
+    common_materials: Mapped[list[str]] = mapped_column(JSONB, nullable=False)
+    risk_label_priority: Mapped[list[str]] = mapped_column(JSONB, nullable=False)
 
 
 class QuoteSheetTemplateRow(Base):

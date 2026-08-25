@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from quote_assistant.adapter.db.models import (
     CorrectionRecordRow,
+    FactoryPreferenceRow,
     ManualBaselineRow,
     PartDrawingEventRow,
     PartDrawingRow,
@@ -17,7 +18,7 @@ from quote_assistant.adapter.db.models import (
     SessionRow,
     UserRow,
 )
-from quote_assistant.adapter.security.passwords import verify_password
+from quote_assistant.adapter.security.passwords import hash_password, verify_password
 from quote_assistant.domain.correction import CorrectionRecord
 from quote_assistant.domain.entities import (
     IssuedSession,
@@ -30,8 +31,10 @@ from quote_assistant.domain.entities import (
 from quote_assistant.domain.extraction import ExtractedField, FieldCategory, FieldSource
 from quote_assistant.domain.part_drawing_state import PartDrawingEvent
 from quote_assistant.domain.quality import QualityGrade
+from quote_assistant.domain.factory_preferences import FactoryPreferences
 from quote_assistant.domain.quote_sheet import QuoteSheetTemplate, parse_quote_sheet_columns
 from quote_assistant.domain.quote_task import QuoteTask
+from quote_assistant.domain.risk_labels import RiskLabelName
 from quote_assistant.usecase.tenant import TenantScope
 
 
@@ -117,12 +120,20 @@ def _to_event(row: PartDrawingEventRow) -> PartDrawingEvent:
 
 
 def _to_user(row: UserRow) -> User:
+    created_at = row.created_at
+    if created_at.tzinfo is None:
+        created_at = created_at.replace(tzinfo=UTC)
+    disabled_at = row.disabled_at
+    if disabled_at is not None and disabled_at.tzinfo is None:
+        disabled_at = disabled_at.replace(tzinfo=UTC)
     return User(
         id=row.id,
         factory_id=row.factory_id,
         factory_name=row.factory.name,
         username=row.username,
         role=Role(row.role),
+        created_at=created_at,
+        disabled_at=disabled_at,
     )
 
 
@@ -147,6 +158,51 @@ class SqlUserRepository:
         if row is None:
             return None
         return _to_user(row)
+
+    def list_for_tenant(self, tenant: TenantScope) -> list[User]:
+        rows = (
+            self._session.execute(
+                select(UserRow)
+                .options(joinedload(UserRow.factory))
+                .where(UserRow.factory_id == tenant.factory_id)
+                .order_by(UserRow.created_at.desc())
+            )
+            .unique()
+            .scalars()
+        )
+        return [_to_user(row) for row in rows]
+
+    def add(self, user: User, password_hash: str) -> None:
+        self._session.add(
+            UserRow(
+                id=user.id,
+                factory_id=user.factory_id,
+                username=user.username,
+                password_hash=password_hash,
+                role=user.role.value,
+                created_at=user.created_at,
+                disabled_at=user.disabled_at,
+            )
+        )
+        self._session.flush()
+
+    def disable(self, tenant: TenantScope, user_id: UUID) -> User | None:
+        row = self._session.execute(
+            select(UserRow)
+            .options(joinedload(UserRow.factory))
+            .where(UserRow.id == user_id, UserRow.factory_id == tenant.factory_id)
+        ).unique().scalar_one_or_none()
+        if row is None:
+            return None
+        if row.disabled_at is None:
+            row.disabled_at = datetime.now(UTC)
+            self._session.flush()
+        return _to_user(row)
+
+
+class SqlPasswordHasher:
+    def hash_password(self, password: str) -> str:
+        return hash_password(password)
 
 
 class SqlPasswordAuthenticator:
@@ -205,6 +261,13 @@ class SqlSessionRepository:
             select(SessionRow).where(SessionRow.token == token)
         ).scalar_one_or_none()
         if row is not None:
+            self._session.delete(row)
+
+    def revoke_for_user(self, user_id: UUID) -> None:
+        rows = self._session.execute(
+            select(SessionRow).where(SessionRow.user_id == user_id)
+        ).scalars()
+        for row in rows:
             self._session.delete(row)
 
 
@@ -500,6 +563,44 @@ class SqlQuoteTaskRepository:
 def _to_quote_sheet_template(row: QuoteSheetTemplateRow) -> QuoteSheetTemplate:
     columns = parse_quote_sheet_columns(row.columns)
     return QuoteSheetTemplate(columns=columns)
+
+
+def _to_factory_preferences(row: FactoryPreferenceRow) -> FactoryPreferences:
+    return FactoryPreferences(
+        factory_id=row.factory_id,
+        common_materials=tuple(str(name) for name in row.common_materials),
+        risk_label_priority=tuple(RiskLabelName(name) for name in row.risk_label_priority),
+    )
+
+
+class SqlFactoryPreferenceRepository:
+    def __init__(self, session: Session) -> None:
+        self._session = session
+
+    def get_for_tenant(self, tenant: TenantScope) -> FactoryPreferences | None:
+        row = self._session.execute(
+            select(FactoryPreferenceRow).where(FactoryPreferenceRow.factory_id == tenant.factory_id)
+        ).scalar_one_or_none()
+        if row is None:
+            return None
+        return _to_factory_preferences(row)
+
+    def save_for_tenant(self, tenant: TenantScope, preferences: FactoryPreferences) -> None:
+        payload_materials = list(preferences.common_materials)
+        payload_priority = [name.value for name in preferences.risk_label_priority]
+        row = self._session.get(FactoryPreferenceRow, tenant.factory_id)
+        if row is None:
+            self._session.add(
+                FactoryPreferenceRow(
+                    factory_id=tenant.factory_id,
+                    common_materials=payload_materials,
+                    risk_label_priority=payload_priority,
+                )
+            )
+        else:
+            row.common_materials = payload_materials
+            row.risk_label_priority = payload_priority
+        self._session.flush()
 
 
 class SqlQuoteSheetTemplateRepository:

@@ -6,6 +6,7 @@ from uuid import UUID
 
 from quote_assistant.domain.correction import CorrectionRecord
 from quote_assistant.domain.entities import IssuedSession, ManualBaseline, PartDrawing, User
+from quote_assistant.domain.factory_preferences import FactoryPreferences
 from quote_assistant.domain.quote_sheet import QuoteSheetFileFormat, QuoteSheetTemplate
 from quote_assistant.domain.quote_task import QuoteTask
 from quote_assistant.domain.extraction import ExtractionRequest, ExtractionResult
@@ -18,9 +19,26 @@ class PasswordAuthenticator(Protocol):
         """Return the user when credentials match; otherwise None."""
 
 
+class PasswordHasher(Protocol):
+    def hash_password(self, password: str) -> str:
+        """Hash a new 报价员 password. Adapter implements this; use cases stay IO-free."""
+
+
 class UserRepository(Protocol):
     def get_by_id(self, user_id: UUID) -> User | None:
         """Load a user by id, including factory name."""
+
+    def get_by_username(self, username: str) -> User | None:
+        """Load a user by username, including factory name."""
+
+    def list_for_tenant(self, tenant: TenantScope) -> list[User]:
+        """Users of the Actor's factory, newest first."""
+
+    def add(self, user: User, password_hash: str) -> None:
+        """Persist a newly created 报价员. factory_id must already be the tenant's."""
+
+    def disable(self, tenant: TenantScope, user_id: UUID) -> User | None:
+        """Set disabled_at if the user belongs to the tenant. Idempotent when already disabled."""
 
 
 class SessionRepository(Protocol):
@@ -32,6 +50,9 @@ class SessionRepository(Protocol):
 
     def revoke(self, token: str) -> None:
         """Invalidate the session. Missing tokens are ignored."""
+
+    def revoke_for_user(self, user_id: UUID) -> None:
+        """Invalidate every session of this user. Used when 停用账号."""
 
 
 class PartDrawingRepository(Protocol):
@@ -121,6 +142,14 @@ class QuoteTaskRepository(Protocol):
         created_to: datetime | None = None,
     ) -> list[QuoteTask]:
         """报价任务 of the Actor's factory, newest first. Optional customer/time filters."""
+
+
+class FactoryPreferenceRepository(Protocol):
+    def get_for_tenant(self, tenant: TenantScope) -> FactoryPreferences | None:
+        """本厂常用材料与风险标签优先级。Missing row means defaults."""
+
+    def save_for_tenant(self, tenant: TenantScope, preferences: FactoryPreferences) -> None:
+        """Upsert this factory's preferences. Tenant comes from Actor."""
 
 
 class QuoteSheetTemplateRepository(Protocol):

@@ -4,9 +4,13 @@ from dataclasses import replace
 from uuid import UUID
 
 from quote_assistant.domain.entities import Actor, PartDrawing
-from quote_assistant.domain.errors import PartDrawingNotFound, QuoteTaskNotFound
+from quote_assistant.domain.errors import PartDrawingNotFound
 from quote_assistant.usecase.ports import PartDrawingRepository, QuoteTaskRepository, UnitOfWork
-from quote_assistant.usecase.tenant import TenantBoundUseCase
+from quote_assistant.usecase.tenant import (
+    TenantBoundUseCase,
+    require_visible_drawing,
+    require_visible_quote_task,
+)
 
 
 class AssignPartDrawingToQuoteTask(TenantBoundUseCase):
@@ -25,13 +29,13 @@ class AssignPartDrawingToQuoteTask(TenantBoundUseCase):
         self._uow = uow
 
     def execute(self, drawing_id: UUID, quote_task_id: UUID | None) -> PartDrawing:
-        drawing = self._drawings.get_for_tenant(self.tenant, drawing_id)
-        if drawing is None:
-            raise PartDrawingNotFound()
+        drawing = require_visible_drawing(
+            self.actor, self._drawings.get_for_tenant(self.tenant, drawing_id)
+        )
         if quote_task_id is not None:
-            task = self._quote_tasks.get_for_tenant(self.tenant, quote_task_id)
-            if task is None:
-                raise QuoteTaskNotFound()
+            require_visible_quote_task(
+                self.actor, self._quote_tasks.get_for_tenant(self.tenant, quote_task_id)
+            )
         updated = replace(drawing, quote_task_id=quote_task_id)
         self._drawings.save(updated)
         self._uow.commit()
@@ -59,9 +63,12 @@ class RemovePartDrawingFromQuoteTask(TenantBoundUseCase):
         self._quote_tasks = quote_tasks
 
     def execute(self, quote_task_id: UUID, drawing_id: UUID) -> PartDrawing:
-        if self._quote_tasks.get_for_tenant(self.tenant, quote_task_id) is None:
-            raise QuoteTaskNotFound()
-        drawing = self._drawings.get_for_tenant(self.tenant, drawing_id)
-        if drawing is None or drawing.quote_task_id != quote_task_id:
+        require_visible_quote_task(
+            self.actor, self._quote_tasks.get_for_tenant(self.tenant, quote_task_id)
+        )
+        drawing = require_visible_drawing(
+            self.actor, self._drawings.get_for_tenant(self.tenant, drawing_id)
+        )
+        if drawing.quote_task_id != quote_task_id:
             raise PartDrawingNotFound()
         return self._assign.execute(drawing_id, None)

@@ -5,7 +5,7 @@ from datetime import datetime
 from quote_assistant.domain.entities import Actor
 from quote_assistant.domain.quote_task import QuoteTaskReviewStatus, QuoteTaskView, assemble_quote_task_view
 from quote_assistant.usecase.ports import PartDrawingRepository, QuoteTaskRepository
-from quote_assistant.usecase.tenant import TenantBoundUseCase
+from quote_assistant.usecase.tenant import TenantBoundUseCase, filter_owned_by_actor
 
 
 class ListQuoteTasks(TenantBoundUseCase):
@@ -28,13 +28,21 @@ class ListQuoteTasks(TenantBoundUseCase):
         created_to: datetime | None = None,
         review_status: QuoteTaskReviewStatus | None = None,
     ) -> list[QuoteTaskView]:
-        tasks = self._quote_tasks.list_for_tenant(
-            self.tenant,
-            customer_name=customer_name.strip() if customer_name else None,
-            created_from=created_from,
-            created_to=created_to,
+        tasks = filter_owned_by_actor(
+            self.actor,
+            self._quote_tasks.list_for_tenant(
+                self.tenant,
+                customer_name=customer_name.strip() if customer_name else None,
+                created_from=created_from,
+                created_to=created_to,
+            ),
+            lambda task: task.created_by_user_id,
         )
-        drawings = self._drawings.list_for_tenant(self.tenant)
+        drawings = filter_owned_by_actor(
+            self.actor,
+            self._drawings.list_for_tenant(self.tenant),
+            lambda drawing: drawing.uploaded_by_user_id,
+        )
         views = [assemble_quote_task_view(task, drawings) for task in tasks]
         if review_status is None:
             return views

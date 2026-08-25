@@ -5,7 +5,6 @@ from uuid import UUID
 
 from quote_assistant.domain.correction import records_for_value_changes
 from quote_assistant.domain.entities import Actor, PartDrawing
-from quote_assistant.domain.errors import PartDrawingNotFound
 from quote_assistant.domain.review import (
     add_critical_dimension,
     begin_reviewing,
@@ -22,18 +21,20 @@ from quote_assistant.usecase.ports import (
     PartDrawingRepository,
     UnitOfWork,
 )
-from quote_assistant.usecase.tenant import TenantBoundUseCase, TenantScope
+from quote_assistant.usecase.tenant import (
+    TenantBoundUseCase,
+    TenantScope,
+    require_visible_drawing,
+)
 
 
 def _load_for_tenant(
+    actor: Actor,
     drawings: PartDrawingRepository,
     tenant: TenantScope,
     drawing_id: UUID,
 ) -> PartDrawing:
-    drawing = drawings.get_for_tenant(tenant, drawing_id)
-    if drawing is None:
-        raise PartDrawingNotFound()
-    return drawing
+    return require_visible_drawing(actor, drawings.get_for_tenant(tenant, drawing_id))
 
 
 def _save_review_action(
@@ -71,7 +72,7 @@ class ConfirmExtractedField(TenantBoundUseCase):
         self._uow = uow
 
     def execute(self, drawing_id: UUID, field_key: str) -> PartDrawing:
-        drawing = _load_for_tenant(self._drawings, self.tenant, drawing_id)
+        drawing = _load_for_tenant(self.actor, self._drawings, self.tenant, drawing_id)
         drawing = _save_review_action(
             confirm_extracted_field(drawing, field_key),
             actor_user_id=self.actor.user_id,
@@ -100,7 +101,7 @@ class UpdateExtractedField(TenantBoundUseCase):
         self._uow = uow
 
     def execute(self, drawing_id: UUID, field_key: str, value: str | None) -> PartDrawing:
-        drawing = _load_for_tenant(self._drawings, self.tenant, drawing_id)
+        drawing = _load_for_tenant(self.actor, self._drawings, self.tenant, drawing_id)
         before = drawing
         drawing = _save_review_action(
             edit_extracted_field(drawing, field_key, value),
@@ -136,7 +137,7 @@ class IgnoreExtractedField(TenantBoundUseCase):
         self._uow = uow
 
     def execute(self, drawing_id: UUID, field_key: str) -> PartDrawing:
-        drawing = _load_for_tenant(self._drawings, self.tenant, drawing_id)
+        drawing = _load_for_tenant(self.actor, self._drawings, self.tenant, drawing_id)
         drawing = _save_review_action(
             ignore_extracted_field(drawing, field_key),
             actor_user_id=self.actor.user_id,
@@ -163,7 +164,7 @@ class UnignoreExtractedField(TenantBoundUseCase):
         self._uow = uow
 
     def execute(self, drawing_id: UUID, field_key: str) -> PartDrawing:
-        drawing = _load_for_tenant(self._drawings, self.tenant, drawing_id)
+        drawing = _load_for_tenant(self.actor, self._drawings, self.tenant, drawing_id)
         drawing = _save_review_action(
             unignore_extracted_field(drawing, field_key),
             actor_user_id=self.actor.user_id,
@@ -198,7 +199,7 @@ class AddCriticalDimension(TenantBoundUseCase):
         value: str,
         label: str | None = None,
     ) -> PartDrawing:
-        drawing = _load_for_tenant(self._drawings, self.tenant, drawing_id)
+        drawing = _load_for_tenant(self.actor, self._drawings, self.tenant, drawing_id)
         before = drawing
         drawing = _save_review_action(
             add_critical_dimension(drawing, kind, value, label),
@@ -234,7 +235,7 @@ class ReopenReview(TenantBoundUseCase):
         self._uow = uow
 
     def execute(self, drawing_id: UUID) -> PartDrawing:
-        drawing = _load_for_tenant(self._drawings, self.tenant, drawing_id)
+        drawing = _load_for_tenant(self.actor, self._drawings, self.tenant, drawing_id)
         drawing, event = reopen_review(
             drawing,
             occurred_at=datetime.now(UTC),
@@ -263,7 +264,7 @@ class CompleteReview(TenantBoundUseCase):
         self._uow = uow
 
     def execute(self, drawing_id: UUID) -> PartDrawing:
-        drawing = _load_for_tenant(self._drawings, self.tenant, drawing_id)
+        drawing = _load_for_tenant(self.actor, self._drawings, self.tenant, drawing_id)
         drawing, event = complete_review(
             drawing,
             occurred_at=datetime.now(UTC),

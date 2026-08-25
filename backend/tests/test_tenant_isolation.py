@@ -32,6 +32,14 @@ from quote_assistant.usecase.review_part_drawing import (
     UnignoreExtractedField,
     UpdateExtractedField,
 )
+from quote_assistant.usecase.create_quoter import CreateQuoter
+from quote_assistant.usecase.disable_quoter import DisableQuoter
+from quote_assistant.usecase.get_factory_preferences import GetFactoryPreferences
+from quote_assistant.usecase.list_factory_accounts import ListFactoryAccounts
+from quote_assistant.usecase.list_factory_processing_records import ListFactoryProcessingRecords
+from quote_assistant.usecase.list_risk_rules import ListRiskRules
+from quote_assistant.usecase.replace_common_materials import ReplaceCommonMaterials
+from quote_assistant.usecase.replace_risk_label_priority import ReplaceRiskLabelPriority
 from quote_assistant.usecase.upload_part_drawings import UploadPartDrawings
 from drawing_fixtures import PNG_1X1
 from helpers import create_factory, create_quoter, insert_part_drawing, insert_quote_task, login
@@ -48,8 +56,10 @@ def test_甲厂报价员读不到乙厂的零件图(client: TestClient, db_sessi
     factory_a = create_factory(db_session, "华东精密")
     factory_b = create_factory(db_session, "南方模具")
     create_quoter(db_session, factory_a, "quoter_a", "secret-a")
-    create_quoter(db_session, factory_b, "quoter_b", "secret-b")
-    drawing_b = insert_part_drawing(db_session, factory_b, "乙厂-轴套.pdf")
+    user_b = create_quoter(db_session, factory_b, "quoter_b", "secret-b")
+    drawing_b = insert_part_drawing(
+        db_session, factory_b, "乙厂-轴套.pdf", uploaded_by_user_id=user_b
+    )
     db_session.commit()
 
     assert login(client, "quoter_a", "secret-a").status_code == 200
@@ -71,7 +81,8 @@ def test_零件图列表忽略调用方传入的工厂标识(client: TestClient,
     factory_a = create_factory(db_session, "华东精密")
     factory_b = create_factory(db_session, "南方模具")
     create_quoter(db_session, factory_a, "quoter_a", "secret-a")
-    insert_part_drawing(db_session, factory_b, "乙厂-法兰.pdf")
+    user_b = create_quoter(db_session, factory_b, "quoter_b", "secret-b")
+    insert_part_drawing(db_session, factory_b, "乙厂-法兰.pdf", uploaded_by_user_id=user_b)
     db_session.commit()
 
     assert login(client, "quoter_a", "secret-a").status_code == 200
@@ -109,6 +120,14 @@ def test_上传与查看原图用例不接受工厂标识参数() -> None:
         AssignPartDrawingToQuoteTask,
         RemovePartDrawingFromQuoteTask,
         ExportQuoteSheet,
+        CreateQuoter,
+        DisableQuoter,
+        ListFactoryAccounts,
+        ListFactoryProcessingRecords,
+        GetFactoryPreferences,
+        ReplaceCommonMaterials,
+        ReplaceRiskLabelPriority,
+        ListRiskRules,
     ):
         names = list(inspect.signature(cls.execute).parameters)
         assert "factory_id" not in names
@@ -178,7 +197,9 @@ def test_甲厂报价员看不到乙厂的报价任务也不能归入乙厂零�
     factory_b = create_factory(db_session, "南方模具")
     create_quoter(db_session, factory_a, "quoter_a", "secret-a")
     user_b = create_quoter(db_session, factory_b, "quoter_b", "secret-b")
-    drawing_b = insert_part_drawing(db_session, factory_b, "乙厂-轴套.pdf")
+    drawing_b = insert_part_drawing(
+        db_session, factory_b, "乙厂-轴套.pdf", uploaded_by_user_id=user_b
+    )
     task_b = insert_quote_task(db_session, factory_b, "乙厂询价", "乙厂客户", user_b)
     db_session.commit()
 

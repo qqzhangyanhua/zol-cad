@@ -10,6 +10,7 @@ import { PartDrawingWorkspace } from "@/components/PartDrawingWorkspace";
 import { fetchBackend } from "@/lib/backend";
 import {
   parseCurrentUser,
+  parseFactoryPreferences,
   parseOriginalAccess,
   parsePartDrawing,
   parseQuoteTaskList,
@@ -22,20 +23,32 @@ type PartDrawingDetailPageProps = {
 
 export default async function PartDrawingDetailPage({ params }: PartDrawingDetailPageProps) {
   const { id } = await params;
-  const [meResponse, drawingResponse, originalResponse, tasksResponse] = await Promise.all([
+  const [meResponse, drawingResponse, originalResponse, tasksResponse, prefsResponse] = await Promise.all([
     fetchBackend("/auth/me"),
     fetchBackend(`/part-drawings/${id}`),
     fetchBackend(`/part-drawings/${id}/original`),
     fetchBackend("/quote-tasks"),
+    fetchBackend("/factory-preferences"),
   ]);
 
-  if (meResponse.status === 401 || drawingResponse.status === 401 || tasksResponse.status === 401) {
+  if (
+    meResponse.status === 401 ||
+    drawingResponse.status === 401 ||
+    tasksResponse.status === 401 ||
+    prefsResponse.status === 401
+  ) {
     redirect("/login");
   }
   if (drawingResponse.status === 404 || originalResponse.status === 404) {
     notFound();
   }
-  if (!meResponse.ok || !drawingResponse.ok || !originalResponse.ok || !tasksResponse.ok) {
+  if (
+    !meResponse.ok ||
+    !drawingResponse.ok ||
+    !originalResponse.ok ||
+    !tasksResponse.ok ||
+    !prefsResponse.ok
+  ) {
     throw new Error("无法读取零件图原图");
   }
 
@@ -43,6 +56,7 @@ export default async function PartDrawingDetailPage({ params }: PartDrawingDetai
   const drawing = parsePartDrawing(await drawingResponse.json());
   const original = parseOriginalAccess(await originalResponse.json());
   const tasks = parseQuoteTaskList(await tasksResponse.json());
+  const prefs = parseFactoryPreferences(await prefsResponse.json());
   const originalSrc = resolveOriginalSrc(original.url);
   const showWorkspace =
     drawing.status === "已分级" ||
@@ -77,7 +91,13 @@ export default async function PartDrawingDetailPage({ params }: PartDrawingDetai
       <ExtractionDisclaimer text={drawing.look_at_drawing_disclaimer} />
       <PartDrawingQualityPanel drawing={drawing} />
       {showWorkspace ? (
-        <PartDrawingWorkspace drawing={drawing} originalSrc={originalSrc} original={original} />
+        <PartDrawingWorkspace
+          drawing={drawing}
+          originalSrc={originalSrc}
+          original={original}
+          materialCandidates={prefs.common_materials}
+          riskLabelPriority={prefs.risk_label_priority}
+        />
       ) : (
         <OriginalDrawingViewer
           src={originalSrc}

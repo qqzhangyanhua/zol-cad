@@ -7,7 +7,6 @@ from quote_assistant.domain.entities import Actor, PartDrawing, PartDrawingStatu
 from quote_assistant.domain.errors import (
     ExtractionValidationFailed,
     IllegalPartDrawingTransition,
-    PartDrawingNotFound,
 )
 from quote_assistant.domain.extraction import ExtractionRequest, merge_extraction_preserving_review
 from quote_assistant.domain.part_drawing_state import record_transition
@@ -18,7 +17,7 @@ from quote_assistant.usecase.ports import (
     PartDrawingRepository,
     UnitOfWork,
 )
-from quote_assistant.usecase.tenant import TenantBoundUseCase
+from quote_assistant.usecase.tenant import TenantBoundUseCase, require_visible_drawing
 
 _RETRYABLE = frozenset(
     {
@@ -122,9 +121,9 @@ class ExtractPartDrawing(TenantBoundUseCase):
         self._uow = uow
 
     def execute(self, drawing_id: UUID) -> PartDrawing:
-        drawing = self._drawings.get_for_tenant(self.tenant, drawing_id)
-        if drawing is None:
-            raise PartDrawingNotFound()
+        drawing = require_visible_drawing(
+            self.actor, self._drawings.get_for_tenant(self.tenant, drawing_id)
+        )
         updated = apply_extraction(
             drawing,
             actor_user_id=self.actor.user_id,

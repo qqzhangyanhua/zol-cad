@@ -4,9 +4,8 @@ from uuid import UUID
 
 from quote_assistant.domain.correction import CorrectionRecord
 from quote_assistant.domain.entities import Actor
-from quote_assistant.domain.errors import PartDrawingNotFound
 from quote_assistant.usecase.ports import CorrectionRecordRepository, PartDrawingRepository
-from quote_assistant.usecase.tenant import TenantBoundUseCase
+from quote_assistant.usecase.tenant import TenantBoundUseCase, require_visible_drawing
 
 
 class ListCorrectionRecords(TenantBoundUseCase):
@@ -23,7 +22,7 @@ class ListCorrectionRecords(TenantBoundUseCase):
         self._corrections = corrections
 
     def execute(self, drawing_id: UUID) -> list[CorrectionRecord]:
-        drawing = self._drawings.get_for_tenant(self.tenant, drawing_id)
-        if drawing is None:
-            raise PartDrawingNotFound()
+        drawing = require_visible_drawing(
+            self.actor, self._drawings.get_for_tenant(self.tenant, drawing_id)
+        )
         return self._corrections.list_for_drawing(self.tenant, drawing.id)

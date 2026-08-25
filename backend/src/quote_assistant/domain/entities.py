@@ -34,6 +34,8 @@ class User:
     factory_name: str
     username: str
     role: Role
+    created_at: datetime
+    disabled_at: datetime | None
 
 
 @dataclass(frozen=True)
@@ -138,6 +140,20 @@ class DrawingProcessingTime:
     grading_seconds: float | None
     extraction_seconds: float | None
     review_seconds: float | None
+
+
+@dataclass(frozen=True)
+class FactoryProcessingRecord:
+    """管理员看到的一条全厂处理记录：谁上传了哪张零件图、当前状态。"""
+
+    part_drawing_id: UUID
+    original_filename: str
+    uploaded_at: datetime
+    status: PartDrawingStatus
+    uploaded_by_user_id: UUID | None
+    uploaded_by_username: str | None
+    quote_task_id: UUID | None
+    quality_grade: QualityGrade | None
 
 
 @dataclass(frozen=True)

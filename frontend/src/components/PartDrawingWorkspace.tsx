@@ -5,18 +5,22 @@ import { ExtractionInProgress } from "@/components/ExtractionInProgress";
 import { OriginalDrawingViewer } from "@/components/OriginalDrawingViewer";
 import { ReviewForm } from "@/components/ReviewForm";
 import { RiskLabelList } from "@/components/RiskLabelList";
-import type { OriginalAccess, PartDrawing } from "@/lib/types";
+import type { OriginalAccess, PartDrawing, RiskLabelName } from "@/lib/types";
 
 type PartDrawingWorkspaceProps = {
   drawing: PartDrawing;
   originalSrc: string;
   original: OriginalAccess;
+  materialCandidates: string[];
+  riskLabelPriority: readonly RiskLabelName[];
 };
 
 export function PartDrawingWorkspace({
   drawing,
   originalSrc,
   original,
+  materialCandidates,
+  riskLabelPriority,
 }: PartDrawingWorkspaceProps) {
   return (
     <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
@@ -36,8 +40,9 @@ export function PartDrawingWorkspace({
             <RiskLabelList
               labels={drawing.risk_labels}
               emptyMessage={drawing.no_judgable_risk_message}
+              priority={riskLabelPriority}
             />
-            <ReviewForm drawing={drawing} />
+            <ReviewForm drawing={drawing} materialCandidates={materialCandidates} />
           </div>
         ) : null}
         {drawing.status === "提取失败" ? (

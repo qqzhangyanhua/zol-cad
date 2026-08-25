@@ -9,13 +9,19 @@ type ReviewFieldRowProps = {
   drawingId: string;
   field: ExtractedField;
   readOnly: boolean;
+  materialCandidates: string[];
 };
 
 function displayValue(value: string | null): string {
   return value ?? "";
 }
 
-export function ReviewFieldRow({ drawingId, field, readOnly }: ReviewFieldRowProps) {
+export function ReviewFieldRow({
+  drawingId,
+  field,
+  readOnly,
+  materialCandidates,
+}: ReviewFieldRowProps) {
   const router = useRouter();
   const [draft, setDraft] = useState(displayValue(field.value));
   const [pending, setPending] = useState(false);
@@ -141,25 +147,35 @@ export function ReviewFieldRow({ drawingId, field, readOnly }: ReviewFieldRowPro
               )}
             </p>
           ) : (
-            <input
-              aria-label={field.label}
-              value={draft}
-              placeholder="（空）"
-              onChange={(event) => {
-                const next = event.target.value;
-                setSaved(false);
-                setDraft(next);
-                scheduleSave(next);
-              }}
-              onBlur={() => {
-                if (draft !== displayValue(field.value)) {
-                  void persistValue(draft);
-                }
-              }}
-              className={`h-9 w-full rounded-md border px-2.5 text-sm text-stone-900 outline-none focus:border-stone-400 ${
-                showEmpty ? "border-stone-200 bg-stone-50 placeholder:text-stone-400" : "border-stone-200 bg-white"
-              }`}
-            />
+            <>
+              <input
+                aria-label={field.label}
+                value={draft}
+                placeholder="（空）"
+                list={field.key === "material" && materialCandidates.length > 0 ? "material-candidates" : undefined}
+                onChange={(event) => {
+                  const next = event.target.value;
+                  setSaved(false);
+                  setDraft(next);
+                  scheduleSave(next);
+                }}
+                onBlur={() => {
+                  if (draft !== displayValue(field.value)) {
+                    void persistValue(draft);
+                  }
+                }}
+                className={`h-9 w-full rounded-md border px-2.5 text-sm text-stone-900 outline-none focus:border-stone-400 ${
+                  showEmpty ? "border-stone-200 bg-stone-50 placeholder:text-stone-400" : "border-stone-200 bg-white"
+                }`}
+              />
+              {field.key === "material" && materialCandidates.length > 0 ? (
+                <datalist id="material-candidates">
+                  {materialCandidates.map((name) => (
+                    <option key={name} value={name} />
+                  ))}
+                </datalist>
+              ) : null}
+            </>
           )}
           <div className="mt-2 flex flex-wrap items-center gap-2">
             {!readOnly && needsConfirm ? (
