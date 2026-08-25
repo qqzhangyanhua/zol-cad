@@ -18,6 +18,8 @@ class PartDrawingStatus(StrEnum):
     EXTRACTING = "提取中"
     EXTRACTED = "已提取"
     EXTRACT_FAILED = "提取失败"
+    REVIEWING = "复核中"
+    REVIEWED = "已复核"
 
 
 class Role(StrEnum):

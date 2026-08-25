@@ -39,7 +39,9 @@ export default async function PartDrawingDetailPage({ params }: PartDrawingDetai
     drawing.status === "已分级" ||
     drawing.status === "提取中" ||
     drawing.status === "已提取" ||
-    drawing.status === "提取失败";
+    drawing.status === "提取失败" ||
+    drawing.status === "复核中" ||
+    drawing.status === "已复核";
 
   return (
     <div className="flex min-h-full flex-1 flex-col bg-stone-50">

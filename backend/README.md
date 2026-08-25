@@ -29,6 +29,8 @@ QA_LOCAL_OBJECT_DIR=/tmp/quote-assistant-objects \
 
 风险标签：领域层纯函数 `evaluate_risk_labels`，输入当前结构化字段，输出标签列表（规则标识 / 触发值 / 理由）。词表不含「安全 / 无风险 / 通过」。门槛为 ADR-0007 示例与接线占位，待票 01 调研替换。标签现算不落库。
 
+复核：领域层静态表 `FIELD_RISK_CLASS_BY_KEY` 判定高风险字段（尺寸类 / 公差类）一律需确认，分级只影响低风险字段。前端只展示后端给出的 `requires_confirmation`，不参与判断。存在未处理需确认项时，标记已复核被拒绝。
+
 ## 缝 1 测试
 
 pytest + FastAPI ASGI 测试客户端（不起端口）。启动时对真实 Postgres 执行 Alembic。

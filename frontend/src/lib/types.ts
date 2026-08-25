@@ -18,6 +18,8 @@ export const PART_DRAWING_STATUSES = [
   "提取中",
   "已提取",
   "提取失败",
+  "复核中",
+  "已复核",
 ] as const;
 export type PartDrawingStatus = (typeof PART_DRAWING_STATUSES)[number];
 
@@ -29,6 +31,8 @@ export type ExtractedField = {
   label: string;
   value: string | null;
   category: FieldCategory;
+  requires_confirmation: boolean;
+  confirmed: boolean;
 };
 
 export const RISK_LABEL_NAMES = ["高精度", "深孔", "薄壁", "细长"] as const;
@@ -63,6 +67,8 @@ export type PartDrawing = {
   look_at_drawing_disclaimer: string;
   risk_labels: RiskLabel[];
   no_judgable_risk_message: string;
+  pending_confirmation_count: number;
+  pending_confirmation_labels: string[];
 };
 
 export type PartDrawingList = {
@@ -140,7 +146,9 @@ function parseExtractedField(data: unknown): ExtractedField {
     typeof data.key !== "string" ||
     typeof data.label !== "string" ||
     !(data.value === null || typeof data.value === "string") ||
-    !isFieldCategory(data.category)
+    !isFieldCategory(data.category) ||
+    typeof data.requires_confirmation !== "boolean" ||
+    typeof data.confirmed !== "boolean"
   ) {
     throw new Error("提取字段响应格式不正确");
   }
@@ -149,6 +157,8 @@ function parseExtractedField(data: unknown): ExtractedField {
     label: data.label,
     value: data.value,
     category: data.category,
+    requires_confirmation: data.requires_confirmation,
+    confirmed: data.confirmed,
   };
 }
 
@@ -201,7 +211,10 @@ export function parsePartDrawing(data: unknown): PartDrawing {
     !(data.extraction_failure_reason === null || typeof data.extraction_failure_reason === "string") ||
     typeof data.look_at_drawing_disclaimer !== "string" ||
     !Array.isArray(data.risk_labels) ||
-    typeof data.no_judgable_risk_message !== "string"
+    typeof data.no_judgable_risk_message !== "string" ||
+    typeof data.pending_confirmation_count !== "number" ||
+    !Array.isArray(data.pending_confirmation_labels) ||
+    !data.pending_confirmation_labels.every((label) => typeof label === "string")
   ) {
     throw new Error("零件图响应格式不正确");
   }
@@ -227,6 +240,10 @@ export function parsePartDrawing(data: unknown): PartDrawing {
     look_at_drawing_disclaimer: data.look_at_drawing_disclaimer,
     risk_labels: data.risk_labels.map(parseRiskLabel),
     no_judgable_risk_message: data.no_judgable_risk_message,
+    pending_confirmation_count: data.pending_confirmation_count,
+    pending_confirmation_labels: data.pending_confirmation_labels.filter(
+      (label): label is string => typeof label === "string",
+    ),
   };
 }
 

@@ -3,6 +3,7 @@ import { ExtractionFailedPanel } from "@/components/ExtractionFailedPanel";
 import { ExtractionForm } from "@/components/ExtractionForm";
 import { ExtractionInProgress } from "@/components/ExtractionInProgress";
 import { OriginalDrawingViewer } from "@/components/OriginalDrawingViewer";
+import { ReviewForm } from "@/components/ReviewForm";
 import { RiskLabelList } from "@/components/RiskLabelList";
 import type { OriginalAccess, PartDrawing } from "@/lib/types";
 
@@ -30,13 +31,13 @@ export function PartDrawingWorkspace({
             reason={drawing.extraction_failure_reason}
           />
         ) : null}
-        {drawing.status === "已提取" ? (
-          <div className="mt-5">
+        {drawing.status === "已提取" || drawing.status === "复核中" || drawing.status === "已复核" ? (
+          <div className="mt-5 space-y-5">
             <RiskLabelList
               labels={drawing.risk_labels}
               emptyMessage={drawing.no_judgable_risk_message}
             />
-            <ExtractionForm fields={drawing.extracted_fields} />
+            <ReviewForm drawing={drawing} />
           </div>
         ) : null}
         {drawing.status === "提取失败" ? (
