@@ -83,6 +83,7 @@ class PartDrawing:
     extracted_fields: tuple[ExtractedField, ...]
     extraction_failure_reason: str | None
     part_family_id: str
+    quote_task_id: UUID | None
 
 
 @dataclass(frozen=True)

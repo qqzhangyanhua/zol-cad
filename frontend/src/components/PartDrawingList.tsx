@@ -7,9 +7,10 @@ import type { PartDrawing } from "@/lib/types";
 
 type PartDrawingListProps = {
   items: PartDrawing[];
+  quoteTaskNames?: Record<string, string>;
 };
 
-export function PartDrawingList({ items }: PartDrawingListProps) {
+export function PartDrawingList({ items, quoteTaskNames = {} }: PartDrawingListProps) {
   return (
     <ul className="divide-y divide-stone-200 border-t border-stone-200">
       {items.map((item) => (
@@ -25,6 +26,11 @@ export function PartDrawingList({ items }: PartDrawingListProps) {
               <span className="mt-1 flex flex-wrap items-center gap-2">
                 <QualityGradeBadge grade={item.quality_grade} />
                 <span className="text-xs text-stone-500">{item.status}</span>
+                <span className="text-xs text-stone-500">
+                  {item.quote_task_id
+                    ? `已归入 ${quoteTaskNames[item.quote_task_id] ?? "报价任务"}`
+                    : "未归集"}
+                </span>
                 {item.content_type === "application/pdf" ? (
                   <span className="text-xs text-stone-500">
                     指定第 {item.selected_page} 页（共 {item.page_count} 页）

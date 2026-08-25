@@ -2,12 +2,19 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { AppHeader } from "@/components/AppHeader";
+import { AssignQuoteTaskPanel } from "@/components/AssignQuoteTaskPanel";
 import { ExtractionDisclaimer } from "@/components/ExtractionDisclaimer";
 import { OriginalDrawingViewer } from "@/components/OriginalDrawingViewer";
 import { PartDrawingQualityPanel } from "@/components/PartDrawingQualityPanel";
 import { PartDrawingWorkspace } from "@/components/PartDrawingWorkspace";
 import { fetchBackend } from "@/lib/backend";
-import { parseCurrentUser, parseOriginalAccess, parsePartDrawing, resolveOriginalSrc } from "@/lib/types";
+import {
+  parseCurrentUser,
+  parseOriginalAccess,
+  parsePartDrawing,
+  parseQuoteTaskList,
+  resolveOriginalSrc,
+} from "@/lib/types";
 
 type PartDrawingDetailPageProps = {
   params: Promise<{ id: string }>;
@@ -15,25 +22,27 @@ type PartDrawingDetailPageProps = {
 
 export default async function PartDrawingDetailPage({ params }: PartDrawingDetailPageProps) {
   const { id } = await params;
-  const [meResponse, drawingResponse, originalResponse] = await Promise.all([
+  const [meResponse, drawingResponse, originalResponse, tasksResponse] = await Promise.all([
     fetchBackend("/auth/me"),
     fetchBackend(`/part-drawings/${id}`),
     fetchBackend(`/part-drawings/${id}/original`),
+    fetchBackend("/quote-tasks"),
   ]);
 
-  if (meResponse.status === 401 || drawingResponse.status === 401) {
+  if (meResponse.status === 401 || drawingResponse.status === 401 || tasksResponse.status === 401) {
     redirect("/login");
   }
   if (drawingResponse.status === 404 || originalResponse.status === 404) {
     notFound();
   }
-  if (!meResponse.ok || !drawingResponse.ok || !originalResponse.ok) {
+  if (!meResponse.ok || !drawingResponse.ok || !originalResponse.ok || !tasksResponse.ok) {
     throw new Error("无法读取零件图原图");
   }
 
   const user = parseCurrentUser(await meResponse.json());
   const drawing = parsePartDrawing(await drawingResponse.json());
   const original = parseOriginalAccess(await originalResponse.json());
+  const tasks = parseQuoteTaskList(await tasksResponse.json());
   const originalSrc = resolveOriginalSrc(original.url);
   const showWorkspace =
     drawing.status === "已分级" ||
@@ -60,6 +69,11 @@ export default async function PartDrawingDetailPage({ params }: PartDrawingDetai
           </p>
         </div>
       </div>
+      <AssignQuoteTaskPanel
+        drawingId={drawing.id}
+        currentTaskId={drawing.quote_task_id}
+        tasks={tasks.items}
+      />
       <ExtractionDisclaimer text={drawing.look_at_drawing_disclaimer} />
       <PartDrawingQualityPanel drawing={drawing} />
       {showWorkspace ? (

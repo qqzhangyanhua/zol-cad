@@ -16,6 +16,9 @@ export function AppHeader({ user }: AppHeaderProps) {
           <Link href="/part-drawings" className="hover:text-stone-800">
             零件图
           </Link>
+          <Link href="/quote-tasks" className="hover:text-stone-800">
+            报价任务
+          </Link>
           {user.role === "admin" ? (
             <>
               <Link href="/processing-time" className="hover:text-stone-800">

@@ -8,7 +8,7 @@
 
 **Blocked by:** 04
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] **报价员**能创建**报价任务**，填写任务名称与客户名称
 - [ ] 能把已上传的**零件图**归入某个**报价任务**

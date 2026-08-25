@@ -1,5 +1,12 @@
+from quote_assistant.usecase.assign_part_drawing_to_quote_task import (
+    AssignPartDrawingToQuoteTask,
+    RemovePartDrawingFromQuoteTask,
+)
 from quote_assistant.usecase.compare_processing_time import CompareProcessingTime
 from quote_assistant.usecase.continue_despite_poor_quality import ContinueDespitePoorQuality
+from quote_assistant.usecase.create_quote_task import CreateQuoteTask
+from quote_assistant.usecase.get_quote_task import GetQuoteTask
+from quote_assistant.usecase.list_quote_tasks import ListQuoteTasks
 from quote_assistant.usecase.extract_part_drawing import ExtractPartDrawing
 from quote_assistant.usecase.get_current_actor import GetCurrentActor
 from quote_assistant.usecase.get_part_drawing import GetPartDrawing
@@ -25,7 +32,12 @@ from quote_assistant.usecase.upload_part_drawings import UploadPartDrawings
 
 __all__ = [
     "AddCriticalDimension",
+    "AssignPartDrawingToQuoteTask",
     "CompareProcessingTime",
+    "CreateQuoteTask",
+    "GetQuoteTask",
+    "ListQuoteTasks",
+    "RemovePartDrawingFromQuoteTask",
     "CompleteReview",
     "ConfirmExtractedField",
     "CorrectionStatsResult",

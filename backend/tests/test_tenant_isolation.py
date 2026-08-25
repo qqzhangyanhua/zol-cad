@@ -5,8 +5,15 @@ import inspect
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
+from quote_assistant.usecase.assign_part_drawing_to_quote_task import (
+    AssignPartDrawingToQuoteTask,
+    RemovePartDrawingFromQuoteTask,
+)
 from quote_assistant.usecase.compare_processing_time import CompareProcessingTime
 from quote_assistant.usecase.continue_despite_poor_quality import ContinueDespitePoorQuality
+from quote_assistant.usecase.create_quote_task import CreateQuoteTask
+from quote_assistant.usecase.get_quote_task import GetQuoteTask
+from quote_assistant.usecase.list_quote_tasks import ListQuoteTasks
 from quote_assistant.usecase.extract_part_drawing import ExtractPartDrawing
 from quote_assistant.usecase.get_part_drawing import GetPartDrawing
 from quote_assistant.usecase.issue_original_access_url import IssueOriginalAccessUrl
@@ -26,7 +33,7 @@ from quote_assistant.usecase.review_part_drawing import (
 )
 from quote_assistant.usecase.upload_part_drawings import UploadPartDrawings
 from drawing_fixtures import PNG_1X1
-from helpers import create_factory, create_quoter, insert_part_drawing, login
+from helpers import create_factory, create_quoter, insert_part_drawing, insert_quote_task, login
 
 
 def test_列出零件图用例不接受工厂标识参数() -> None:
@@ -95,6 +102,11 @@ def test_上传与查看原图用例不接受工厂标识参数() -> None:
         ListCorrectionStats,
         CompareProcessingTime,
         RecordManualBaseline,
+        CreateQuoteTask,
+        ListQuoteTasks,
+        GetQuoteTask,
+        AssignPartDrawingToQuoteTask,
+        RemovePartDrawingFromQuoteTask,
     ):
         names = list(inspect.signature(cls.execute).parameters)
         assert "factory_id" not in names
@@ -146,3 +158,48 @@ def test_甲厂报价员看不到乙厂刚上传的零件图也不能拿原图�
     )
     assert client.post(f"/part-drawings/{drawing_id}/reopen-review").status_code == 404
     assert client.get(f"/part-drawings/{drawing_id}/correction-records").status_code == 404
+    assert client.get("/quote-tasks").json() == {"items": []}
+    assert client.get(f"/quote-tasks/{drawing_id}").status_code == 404
+    assert (
+        client.post(
+            f"/quote-tasks/{drawing_id}/part-drawings",
+            json={"part_drawing_id": drawing_id},
+        ).status_code
+        == 404
+    )
+
+
+def test_甲厂报价员看不到乙厂的报价任务也不能归入乙厂零件图(
+    client: TestClient, db_session: Session
+) -> None:
+    factory_a = create_factory(db_session, "华东精密")
+    factory_b = create_factory(db_session, "南方模具")
+    create_quoter(db_session, factory_a, "quoter_a", "secret-a")
+    user_b = create_quoter(db_session, factory_b, "quoter_b", "secret-b")
+    drawing_b = insert_part_drawing(db_session, factory_b, "乙厂-轴套.pdf")
+    task_b = insert_quote_task(db_session, factory_b, "乙厂询价", "乙厂客户", user_b)
+    db_session.commit()
+
+    assert login(client, "quoter_a", "secret-a").status_code == 200
+    listed = client.get("/quote-tasks", params={"factory_id": str(factory_b)})
+    assert listed.status_code == 200
+    assert listed.json() == {"items": []}
+    assert client.get(f"/quote-tasks/{task_b}").status_code == 404
+    assert (
+        client.post(
+            f"/quote-tasks/{task_b}/part-drawings",
+            json={"part_drawing_id": str(drawing_b)},
+        ).status_code
+        == 404
+    )
+    assert client.delete(f"/quote-tasks/{task_b}/part-drawings/{drawing_b}").status_code == 404
+
+    created = client.post("/quote-tasks", json={"name": "甲厂任务", "customer_name": "甲厂客户"})
+    assert created.status_code == 200
+    assert (
+        client.post(
+            f"/quote-tasks/{created.json()['id']}/part-drawings",
+            json={"part_drawing_id": str(drawing_b)},
+        ).status_code
+        == 404
+    )
