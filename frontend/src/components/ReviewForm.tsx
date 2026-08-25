@@ -42,7 +42,7 @@ export function ReviewForm({ drawing }: ReviewFormProps) {
             <div className="space-y-2">
               {items.map((field) => (
                 <ReviewFieldRow
-                  key={field.key}
+                  key={`${field.key}:${field.value ?? ""}:${String(field.confirmed)}`}
                   drawingId={drawing.id}
                   field={field}
                   readOnly={readOnly}

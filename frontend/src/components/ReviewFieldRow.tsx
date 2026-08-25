@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { parsePartDrawing, readErrorDetail, type ExtractedField } from "@/lib/types";
@@ -21,40 +21,47 @@ export function ReviewFieldRow({ drawingId, field, readOnly }: ReviewFieldRowPro
   const [pending, setPending] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const skipNextSave = useRef(false);
+  const saveTimer = useRef<number | null>(null);
 
-  useEffect(() => {
-    skipNextSave.current = true;
-    setDraft(displayValue(field.value));
-  }, [field.value]);
-
-  const persistValue = useCallback(
-    async (next: string): Promise<boolean> => {
-      setPending(true);
-      setError(null);
-      const response = await fetch(`/api/part-drawings/${drawingId}/fields/${field.key}`, {
-        method: "PATCH",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ value: next === "" ? null : next }),
-      });
-      const payload: unknown = await response.json().catch(() => null);
-      if (!response.ok) {
-        setError(readErrorDetail(payload) ?? "保存失败");
-        setPending(false);
-        return false;
-      }
-      parsePartDrawing(payload);
-      setSaved(true);
+  async function persistValue(next: string): Promise<boolean> {
+    setPending(true);
+    setError(null);
+    const response = await fetch(`/api/part-drawings/${drawingId}/fields/${field.key}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ value: next === "" ? null : next }),
+    });
+    const payload: unknown = await response.json().catch(() => null);
+    if (!response.ok) {
+      setError(readErrorDetail(payload) ?? "保存失败");
       setPending(false);
-      router.refresh();
-      return true;
-    },
-    [drawingId, field.key, router],
-  );
+      return false;
+    }
+    parsePartDrawing(payload);
+    setSaved(true);
+    setPending(false);
+    router.refresh();
+    return true;
+  }
+
+  function scheduleSave(next: string): void {
+    if (saveTimer.current !== null) {
+      window.clearTimeout(saveTimer.current);
+    }
+    saveTimer.current = window.setTimeout(() => {
+      if (next !== displayValue(field.value)) {
+        void persistValue(next);
+      }
+    }, 400);
+  }
 
   async function confirmField(): Promise<void> {
     if (pending) {
       return;
+    }
+    if (saveTimer.current !== null) {
+      window.clearTimeout(saveTimer.current);
+      saveTimer.current = null;
     }
     if (draft !== displayValue(field.value)) {
       await persistValue(draft);
@@ -76,22 +83,6 @@ export function ReviewFieldRow({ drawingId, field, readOnly }: ReviewFieldRowPro
     setPending(false);
     router.refresh();
   }
-
-  useEffect(() => {
-    if (readOnly || draft === displayValue(field.value)) {
-      return;
-    }
-    if (skipNextSave.current) {
-      skipNextSave.current = false;
-      return;
-    }
-    const timer = window.setTimeout(() => {
-      void persistValue(draft);
-    }, 400);
-    return () => {
-      window.clearTimeout(timer);
-    };
-  }, [draft, field.value, persistValue, readOnly]);
 
   const needsConfirm = field.requires_confirmation && !field.confirmed;
   const showEmpty = draft === "";
@@ -124,8 +115,10 @@ export function ReviewFieldRow({ drawingId, field, readOnly }: ReviewFieldRowPro
               value={draft}
               placeholder="（空）"
               onChange={(event) => {
+                const next = event.target.value;
                 setSaved(false);
-                setDraft(event.target.value);
+                setDraft(next);
+                scheduleSave(next);
               }}
               onBlur={() => {
                 if (draft !== displayValue(field.value)) {
