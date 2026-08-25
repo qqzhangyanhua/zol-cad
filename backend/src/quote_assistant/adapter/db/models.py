@@ -42,6 +42,14 @@ class PartDrawingRow(Base):
     factory_id: Mapped[UUID] = mapped_column(ForeignKey("factories.id"), nullable=False, index=True)
     original_filename: Mapped[str] = mapped_column(String(500), nullable=False)
     uploaded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    storage_key: Mapped[str] = mapped_column(String(800), nullable=False)
+    content_type: Mapped[str] = mapped_column(String(100), nullable=False)
+    byte_size: Mapped[int] = mapped_column(nullable=False)
+    page_count: Mapped[int] = mapped_column(nullable=False)
+    selected_page: Mapped[int] = mapped_column(nullable=False)
+    uploaded_by_user_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("users.id"), nullable=True, index=True
+    )
 
 
 class SessionRow(Base):

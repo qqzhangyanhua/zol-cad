@@ -27,7 +27,30 @@ class PartDrawingResponse(BaseModel):
     id: UUID
     original_filename: str
     uploaded_at: datetime
+    content_type: str
+    byte_size: int
+    page_count: int
+    selected_page: int
 
 
 class PartDrawingListResponse(BaseModel):
     items: list[PartDrawingResponse]
+
+
+class RejectedUploadResponse(BaseModel):
+    original_filename: str
+    detail: str
+
+
+class UploadPartDrawingsResponse(BaseModel):
+    items: list[PartDrawingResponse]
+    rejected: list[RejectedUploadResponse]
+
+
+class OriginalAccessResponse(BaseModel):
+    url: str
+    expires_at: datetime
+    content_type: str
+    original_filename: str
+    page_count: int
+    selected_page: int

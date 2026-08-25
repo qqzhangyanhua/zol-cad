@@ -12,7 +12,7 @@ const notoSansSc = Noto_Sans_SC({
 
 export const metadata: Metadata = {
   title: "机加工报价辅助",
-  description: "报价员登录后查看本厂零件图",
+  description: "报价员上传并查看本厂零件图",
 };
 
 export default function RootLayout({

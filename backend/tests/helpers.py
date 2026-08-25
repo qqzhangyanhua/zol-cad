@@ -32,11 +32,18 @@ def create_quoter(session: Session, factory_id: UUID, username: str, password: s
 
 
 def insert_part_drawing(session: Session, factory_id: UUID, filename: str) -> UUID:
+    drawing_id = uuid4()
     row = PartDrawingRow(
-        id=uuid4(),
+        id=drawing_id,
         factory_id=factory_id,
         original_filename=filename,
         uploaded_at=datetime.now(UTC),
+        storage_key=f"part-drawings/{factory_id}/{drawing_id}/original.pdf",
+        content_type="application/pdf",
+        byte_size=0,
+        page_count=1,
+        selected_page=1,
+        uploaded_by_user_id=None,
     )
     session.add(row)
     session.flush()

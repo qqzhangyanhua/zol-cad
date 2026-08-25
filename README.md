@@ -1,6 +1,6 @@
 # 机加工报价辅助
 
-面向服务型机加工厂的报价辅助工具。本仓库当前落地的是票 03：报价员登录后看到空的零件图列表，并完成工厂租户隔离。
+面向服务型机加工厂的报价辅助工具。本仓库当前落地到票 04：报价员上传零件图、在列表中看到本厂文件，并打开原图缩放平移。对象存储走窄接口；测试与本地开发指向临时目录，生产使用阿里云 OSS（Bucket 禁止公共读，开启服务端加密）。
 
 ## 结构
 
@@ -17,7 +17,10 @@ cd backend
 uv sync --group dev
 QA_DATABASE_URL=postgresql+psycopg://quote:quote@127.0.0.1:5432/quote_assistant \
   uv run alembic upgrade head
-QA_SEED_DEMO_DATA=true uv run uvicorn quote_assistant.interface.http.app:app --reload --app-dir src
+QA_SEED_DEMO_DATA=true \
+QA_OBJECT_STORE_BACKEND=local \
+QA_LOCAL_OBJECT_DIR=/tmp/quote-assistant-objects \
+  uv run uvicorn quote_assistant.interface.http.app:app --reload --app-dir src
 ```
 
 另开一个终端：

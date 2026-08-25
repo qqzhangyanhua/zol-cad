@@ -11,6 +11,9 @@ dependencies = [
   "psycopg[binary]>=3.2",
   "pwdlib[argon2]>=0.2",
   "pydantic-settings>=2.6",
+  "python-multipart>=0.0.17",
+  "pypdf>=5.1",
+  "oss2>=2.19",
 ]
 
 [dependency-groups]
