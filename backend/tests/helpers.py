@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from quote_assistant.adapter.db.models import FactoryRow, PartDrawingRow, UserRow
 from quote_assistant.adapter.security.passwords import hash_password
-from quote_assistant.domain.entities import Role
+from quote_assistant.domain.entities import PartDrawingStatus, Role
 
 
 def create_factory(session: Session, name: str) -> UUID:
@@ -44,6 +44,10 @@ def insert_part_drawing(session: Session, factory_id: UUID, filename: str) -> UU
         page_count=1,
         selected_page=1,
         uploaded_by_user_id=None,
+        status=PartDrawingStatus.UPLOADED.value,
+        quality_grade=None,
+        is_assembly_or_exploded=False,
+        low_quality_unreliable=False,
     )
     session.add(row)
     session.flush()

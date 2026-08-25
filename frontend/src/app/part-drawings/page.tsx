@@ -4,6 +4,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { EmptyPartDrawingState } from "@/components/EmptyPartDrawingState";
 import { PartDrawingList } from "@/components/PartDrawingList";
 import { PartDrawingUploadPanel } from "@/components/PartDrawingUploadPanel";
+import { QualityGradeDisclaimer } from "@/components/QualityGradeDisclaimer";
 import { fetchBackend } from "@/lib/backend";
 import { parseCurrentUser, parsePartDrawingList } from "@/lib/types";
 
@@ -30,6 +31,14 @@ export default async function PartDrawingsPage() {
         <div className="px-6 py-5">
           <h1 className="text-xl font-semibold text-stone-900">零件图</h1>
           <p className="mt-1 text-sm text-stone-500">本厂已上传的零件图</p>
+          <div className="mt-2">
+            <QualityGradeDisclaimer
+              text={
+                list.items[0]?.quality_grade_disclaimer ??
+                "图纸质量分级只表示图纸本身的质量，不代表结果可以免核。"
+              }
+            />
+          </div>
         </div>
         <PartDrawingUploadPanel />
         {list.items.length === 0 ? (

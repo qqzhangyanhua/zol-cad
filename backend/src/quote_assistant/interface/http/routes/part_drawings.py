@@ -5,39 +5,34 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 
-from quote_assistant.domain.entities import IncomingDrawing, PartDrawing
-from quote_assistant.domain.errors import PartDrawingNotFound
+from quote_assistant.domain.entities import IncomingDrawing
+from quote_assistant.domain.errors import IllegalPartDrawingTransition, PartDrawingNotFound
 from quote_assistant.interface.http.deps import (
+    get_continue_despite_poor_quality,
     get_get_part_drawing,
     get_issue_original_access_url,
+    get_list_part_drawing_events,
     get_list_part_drawings,
     get_upload_part_drawings,
 )
 from quote_assistant.interface.http.schemas import (
     OriginalAccessResponse,
+    PartDrawingEventListResponse,
+    PartDrawingEventResponse,
     PartDrawingListResponse,
     PartDrawingResponse,
     RejectedUploadResponse,
     UploadPartDrawingsResponse,
+    to_part_drawing_response,
 )
+from quote_assistant.usecase.continue_despite_poor_quality import ContinueDespitePoorQuality
 from quote_assistant.usecase.get_part_drawing import GetPartDrawing
 from quote_assistant.usecase.issue_original_access_url import IssueOriginalAccessUrl
+from quote_assistant.usecase.list_part_drawing_events import ListPartDrawingEvents
 from quote_assistant.usecase.list_part_drawings import ListPartDrawings
 from quote_assistant.usecase.upload_part_drawings import UploadPartDrawings
 
 router = APIRouter(prefix="/part-drawings", tags=["part-drawings"])
-
-
-def _to_response(item: PartDrawing) -> PartDrawingResponse:
-    return PartDrawingResponse(
-        id=item.id,
-        original_filename=item.original_filename,
-        uploaded_at=item.uploaded_at,
-        content_type=item.content_type,
-        byte_size=item.byte_size,
-        page_count=item.page_count,
-        selected_page=item.selected_page,
-    )
 
 
 def _parse_selected_pages(raw: str | None, file_count: int) -> list[int]:
@@ -60,7 +55,7 @@ def list_part_drawings(
 ) -> PartDrawingListResponse:
     # factory_id query/body args are intentionally not accepted.
     items = use_case.execute()
-    return PartDrawingListResponse(items=[_to_response(item) for item in items])
+    return PartDrawingListResponse(items=[to_part_drawing_response(item) for item in items])
 
 
 @router.post("", response_model=UploadPartDrawingsResponse)
@@ -84,7 +79,7 @@ async def upload_part_drawings(
         )
     result = use_case.execute(incoming)
     return UploadPartDrawingsResponse(
-        items=[_to_response(item) for item in result.items],
+        items=[to_part_drawing_response(item) for item in result.items],
         rejected=[
             RejectedUploadResponse(
                 original_filename=item.original_filename,
@@ -104,7 +99,44 @@ def get_part_drawing(
         drawing = use_case.execute(drawing_id)
     except PartDrawingNotFound as exc:
         raise HTTPException(status_code=404, detail="零件图不存在") from exc
-    return _to_response(drawing)
+    return to_part_drawing_response(drawing)
+
+
+@router.get("/{drawing_id}/events", response_model=PartDrawingEventListResponse)
+def list_part_drawing_events(
+    drawing_id: UUID,
+    use_case: ListPartDrawingEvents = Depends(get_list_part_drawing_events),
+) -> PartDrawingEventListResponse:
+    try:
+        events = use_case.execute(drawing_id)
+    except PartDrawingNotFound as exc:
+        raise HTTPException(status_code=404, detail="零件图不存在") from exc
+    return PartDrawingEventListResponse(
+        items=[
+            PartDrawingEventResponse(
+                id=event.id,
+                from_status=event.from_status,
+                to_status=event.to_status,
+                occurred_at=event.occurred_at,
+                sequence_no=event.sequence_no,
+            )
+            for event in events
+        ]
+    )
+
+
+@router.post("/{drawing_id}/continue-despite-quality", response_model=PartDrawingResponse)
+def continue_despite_poor_quality(
+    drawing_id: UUID,
+    use_case: ContinueDespitePoorQuality = Depends(get_continue_despite_poor_quality),
+) -> PartDrawingResponse:
+    try:
+        drawing = use_case.execute(drawing_id)
+    except PartDrawingNotFound as exc:
+        raise HTTPException(status_code=404, detail="零件图不存在") from exc
+    except IllegalPartDrawingTransition as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return to_part_drawing_response(drawing)
 
 
 @router.get("/{drawing_id}/original", response_model=OriginalAccessResponse)

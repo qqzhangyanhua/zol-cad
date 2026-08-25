@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import DateTime, ForeignKey, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -50,6 +50,28 @@ class PartDrawingRow(Base):
     uploaded_by_user_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("users.id"), nullable=True, index=True
     )
+    status: Mapped[str] = mapped_column(String(20), nullable=False)
+    quality_grade: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    is_assembly_or_exploded: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    low_quality_unreliable: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
+
+class PartDrawingEventRow(Base):
+    __tablename__ = "part_drawing_events"
+    __table_args__ = (
+        UniqueConstraint("part_drawing_id", "sequence_no", name="uq_part_drawing_events_sequence"),
+    )
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    part_drawing_id: Mapped[UUID] = mapped_column(
+        ForeignKey("part_drawings.id"), nullable=False, index=True
+    )
+    factory_id: Mapped[UUID] = mapped_column(ForeignKey("factories.id"), nullable=False, index=True)
+    from_status: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    to_status: Mapped[str] = mapped_column(String(20), nullable=False)
+    occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    sequence_no: Mapped[int] = mapped_column(Integer, nullable=False)
+    actor_user_id: Mapped[UUID | None] = mapped_column(ForeignKey("users.id"), nullable=True)
 
 
 class SessionRow(Base):

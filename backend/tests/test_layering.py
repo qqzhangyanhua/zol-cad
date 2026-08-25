@@ -57,6 +57,20 @@ def test_对象存储端口只暴露存取签删() -> None:
     assert "aliyun" not in source.lower()
 
 
+def test_用例层只依赖提取引擎抽象() -> None:
+    ports = (SRC / "usecase" / "ports.py").read_text(encoding="utf-8")
+    assert "class ExtractionEngine" in ports
+    assert "ExtractionRequest" in ports
+    assert "ExtractionResult" in ports
+    extraction = (SRC / "domain" / "extraction.py").read_text(encoding="utf-8")
+    assert "input_drawing_id" in extraction
+    assert "quality_grade" in extraction
+    upload = (SRC / "usecase" / "upload_part_drawings.py").read_text(encoding="utf-8")
+    assert "ExtractionEngine" in upload
+    assert "FixtureExtractionEngine" not in upload
+    assert "quote_assistant.adapter.extraction" not in upload
+
+
 def test_用例层不依赖框架与适配器() -> None:
     usecase_dir = SRC / "usecase"
     offenders: list[str] = []

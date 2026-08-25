@@ -6,6 +6,18 @@ export type CurrentUser = {
   role: UserRole;
 };
 
+export const QUALITY_GRADES = ["清晰", "一般", "差"] as const;
+export type QualityGrade = (typeof QUALITY_GRADES)[number];
+
+export const PART_DRAWING_STATUSES = [
+  "已上传",
+  "分级中",
+  "已分级",
+  "建议人工",
+  "不在范围",
+] as const;
+export type PartDrawingStatus = (typeof PART_DRAWING_STATUSES)[number];
+
 export type PartDrawing = {
   id: string;
   original_filename: string;
@@ -14,6 +26,15 @@ export type PartDrawing = {
   byte_size: number;
   page_count: number;
   selected_page: number;
+  status: PartDrawingStatus;
+  quality_grade: QualityGrade | null;
+  is_assembly_or_exploded: boolean;
+  low_quality_unreliable: boolean;
+  auto_prefill_allowed: boolean;
+  quality_grade_disclaimer: string;
+  advise_manual_message: string | null;
+  out_of_scope_message: string | null;
+  low_quality_mark: string | null;
 };
 
 export type PartDrawingList = {
@@ -71,6 +92,20 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
+function isQualityGrade(value: unknown): value is QualityGrade {
+  return value === "清晰" || value === "一般" || value === "差";
+}
+
+function isPartDrawingStatus(value: unknown): value is PartDrawingStatus {
+  return (
+    value === "已上传" ||
+    value === "分级中" ||
+    value === "已分级" ||
+    value === "建议人工" ||
+    value === "不在范围"
+  );
+}
+
 export function parsePartDrawing(data: unknown): PartDrawing {
   if (!isRecord(data)) {
     throw new Error("零件图响应格式不正确");
@@ -82,7 +117,16 @@ export function parsePartDrawing(data: unknown): PartDrawing {
     typeof data.content_type !== "string" ||
     typeof data.byte_size !== "number" ||
     typeof data.page_count !== "number" ||
-    typeof data.selected_page !== "number"
+    typeof data.selected_page !== "number" ||
+    !isPartDrawingStatus(data.status) ||
+    !(data.quality_grade === null || isQualityGrade(data.quality_grade)) ||
+    typeof data.is_assembly_or_exploded !== "boolean" ||
+    typeof data.low_quality_unreliable !== "boolean" ||
+    typeof data.auto_prefill_allowed !== "boolean" ||
+    typeof data.quality_grade_disclaimer !== "string" ||
+    !(data.advise_manual_message === null || typeof data.advise_manual_message === "string") ||
+    !(data.out_of_scope_message === null || typeof data.out_of_scope_message === "string") ||
+    !(data.low_quality_mark === null || typeof data.low_quality_mark === "string")
   ) {
     throw new Error("零件图响应格式不正确");
   }
@@ -94,6 +138,15 @@ export function parsePartDrawing(data: unknown): PartDrawing {
     byte_size: data.byte_size,
     page_count: data.page_count,
     selected_page: data.selected_page,
+    status: data.status,
+    quality_grade: data.quality_grade,
+    is_assembly_or_exploded: data.is_assembly_or_exploded,
+    low_quality_unreliable: data.low_quality_unreliable,
+    auto_prefill_allowed: data.auto_prefill_allowed,
+    quality_grade_disclaimer: data.quality_grade_disclaimer,
+    advise_manual_message: data.advise_manual_message,
+    out_of_scope_message: data.out_of_scope_message,
+    low_quality_mark: data.low_quality_mark,
   };
 }
 

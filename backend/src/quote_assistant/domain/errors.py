@@ -16,3 +16,7 @@ class PartDrawingNotFound(DomainError):
 
 class PdfUnreadable(DomainError):
     pass
+
+
+class IllegalPartDrawingTransition(DomainError):
+    pass

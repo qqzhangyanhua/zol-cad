@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { AppHeader } from "@/components/AppHeader";
 import { OriginalDrawingViewer } from "@/components/OriginalDrawingViewer";
+import { PartDrawingQualityPanel } from "@/components/PartDrawingQualityPanel";
 import { fetchBackend } from "@/lib/backend";
 import { parseCurrentUser, parseOriginalAccess, parsePartDrawing, resolveOriginalSrc } from "@/lib/types";
 
@@ -49,6 +50,7 @@ export default async function PartDrawingDetailPage({ params }: PartDrawingDetai
           </p>
         </div>
       </div>
+      <PartDrawingQualityPanel drawing={drawing} />
       <OriginalDrawingViewer
         src={resolveOriginalSrc(original.url)}
         contentType={original.content_type}
