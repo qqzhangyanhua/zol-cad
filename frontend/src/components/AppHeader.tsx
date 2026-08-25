@@ -39,6 +39,9 @@ export function AppHeader({ user }: AppHeaderProps) {
               <Link href="/admin/tenant-data" className="hover:text-stone-800">
                 本厂数据
               </Link>
+              <Link href="/admin/confidentiality" className="hover:text-stone-800">
+                保密说明
+              </Link>
             </>
           ) : null}
         </nav>

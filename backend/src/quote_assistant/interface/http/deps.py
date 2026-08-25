@@ -21,6 +21,7 @@ from quote_assistant.adapter.db.repositories import (
     SqlTenantDeleteChallengeRepository,
     SqlUserRepository,
 )
+from quote_assistant.adapter.confidentiality.adr0009 import Adr0009ConfidentialitySource
 from quote_assistant.adapter.export.quote_sheet_writer import OpenpyxlQuoteSheetFileWriter
 from quote_assistant.adapter.export.tenant_archive_writer import ZipTenantArchiveWriter
 from quote_assistant.adapter.db.session import SqlAlchemyUnitOfWork
@@ -66,6 +67,7 @@ from quote_assistant.usecase.list_factory_processing_records import ListFactoryP
 from quote_assistant.usecase.list_risk_rules import ListRiskRules
 from quote_assistant.usecase.delete_tenant_data import DeleteTenantData
 from quote_assistant.usecase.export_tenant_data import ExportTenantData
+from quote_assistant.usecase.get_confidentiality_notice import GetConfidentialityNotice
 from quote_assistant.usecase.replace_common_materials import ReplaceCommonMaterials
 from quote_assistant.usecase.replace_risk_label_priority import ReplaceRiskLabelPriority
 from quote_assistant.usecase.request_tenant_delete import RequestTenantDelete
@@ -528,6 +530,16 @@ def get_delete_tenant_data(
         purge=SqlTenantDataPurge(session),
         storage=request.app.state.object_storage,
         uow=SqlAlchemyUnitOfWork(session),
+    )
+
+
+def get_get_confidentiality_notice(
+    request: Request,
+    actor: Actor = Depends(require_actor),
+) -> GetConfidentialityNotice:
+    return GetConfidentialityNotice(
+        actor=actor,
+        source=Adr0009ConfidentialitySource(request.app.state.settings),
     )
 
 

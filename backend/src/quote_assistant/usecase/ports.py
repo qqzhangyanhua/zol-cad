@@ -9,6 +9,7 @@ from quote_assistant.domain.entities import IssuedSession, ManualBaseline, PartD
 from quote_assistant.domain.factory_preferences import FactoryPreferences
 from quote_assistant.domain.quote_sheet import QuoteSheetFileFormat, QuoteSheetTemplate
 from quote_assistant.domain.quote_task import QuoteTask
+from quote_assistant.domain.confidentiality import ConfidentialityNotice
 from quote_assistant.domain.extraction import ExtractionRequest, ExtractionResult
 from quote_assistant.domain.part_drawing_state import PartDrawingEvent
 from quote_assistant.domain.tenant_data import TenantArchiveFile, TenantDeleteChallenge
@@ -195,10 +196,22 @@ class TenantDataPurge(Protocol):
 
 
 class ExtractionEngine(Protocol):
-    """Port for 读图取数. Use-case code must not import a concrete vendor SDK."""
+    """Port for 读图取数. Use-case code must not import a concrete vendor SDK.
+
+    extract() returns a validated ExtractionResult, or raises:
+    - ExtractionValidationFailed: adapter-boundary schema rejected the payload
+    - ExtractionEngineFailed: transport / timeout / rate-limit / vendor-unselected
+    """
 
     def extract(self, request: ExtractionRequest) -> ExtractionResult:
         """Return structured extraction plus the 图纸质量分级 signal."""
+
+
+class ConfidentialityPolicySource(Protocol):
+    """Read-only source for the admin 保密说明. Adapter parses ADR-0009; use-case stays IO-free."""
+
+    def load(self) -> ConfidentialityNotice:
+        """Current honesty-first notice. Must not invent DPA / training / region promises."""
 
 
 class UnitOfWork(Protocol):

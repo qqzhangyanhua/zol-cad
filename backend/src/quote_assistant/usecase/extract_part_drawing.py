@@ -5,6 +5,7 @@ from uuid import UUID
 
 from quote_assistant.domain.entities import Actor, PartDrawing, PartDrawingStatus
 from quote_assistant.domain.errors import (
+    ExtractionEngineFailed,
     ExtractionValidationFailed,
     IllegalPartDrawingTransition,
 )
@@ -79,6 +80,15 @@ def apply_extraction(
             extraction_failure_reason=None,
         )
     except ExtractionValidationFailed as exc:
+        drawing, finished = record_transition(
+            drawing,
+            PartDrawingStatus.EXTRACT_FAILED,
+            occurred_at=datetime.now(UTC),
+            sequence_no=events.next_sequence(drawing.id),
+            actor_user_id=actor_user_id,
+            extraction_failure_reason=str(exc),
+        )
+    except ExtractionEngineFailed as exc:
         drawing, finished = record_transition(
             drawing,
             PartDrawingStatus.EXTRACT_FAILED,

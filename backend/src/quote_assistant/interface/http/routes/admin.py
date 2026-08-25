@@ -19,6 +19,7 @@ from quote_assistant.interface.http.deps import (
     get_delete_tenant_data,
     get_disable_quoter,
     get_export_tenant_data,
+    get_get_confidentiality_notice,
     get_get_factory_preferences,
     get_list_factory_accounts,
     get_list_factory_processing_records,
@@ -29,6 +30,7 @@ from quote_assistant.interface.http.deps import (
 )
 from quote_assistant.interface.http.schemas import (
     CommonMaterialsRequest,
+    ConfidentialityNoticeResponse,
     CreateQuoterRequest,
     FactoryAccountListResponse,
     FactoryAccountResponse,
@@ -39,6 +41,7 @@ from quote_assistant.interface.http.schemas import (
     TenantDeleteChallengeResponse,
     TenantDeleteRequest,
     TenantDeleteResponse,
+    to_confidentiality_notice_response,
     to_factory_account_response,
     to_factory_preferences_response,
     to_factory_processing_record_response,
@@ -48,6 +51,7 @@ from quote_assistant.usecase.create_quoter import CreateQuoter
 from quote_assistant.usecase.delete_tenant_data import DeleteTenantData
 from quote_assistant.usecase.disable_quoter import DisableQuoter
 from quote_assistant.usecase.export_tenant_data import ExportTenantData
+from quote_assistant.usecase.get_confidentiality_notice import GetConfidentialityNotice
 from quote_assistant.usecase.get_factory_preferences import GetFactoryPreferences
 from quote_assistant.usecase.list_factory_accounts import ListFactoryAccounts
 from quote_assistant.usecase.list_factory_processing_records import ListFactoryProcessingRecords
@@ -202,3 +206,14 @@ def delete_tenant_data(
     except TenantDeleteConfirmationInvalid as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     return TenantDeleteResponse()
+
+
+@router.get("/admin/confidentiality", response_model=ConfidentialityNoticeResponse)
+def get_confidentiality_notice(
+    use_case: GetConfidentialityNotice = Depends(get_get_confidentiality_notice),
+) -> ConfidentialityNoticeResponse:
+    try:
+        notice = use_case.execute()
+    except AdminRequired as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    return to_confidentiality_notice_response(notice)

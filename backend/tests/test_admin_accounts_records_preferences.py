@@ -125,6 +125,7 @@ def test_报价员不能管理账号也不能读到其他厂数据(client: TestC
         "/admin/accounts", json={"username": "intruder", "password": "secret-xx"}
     ).status_code == 403
     assert client.get("/admin/processing-records").status_code == 403
+    assert client.get("/admin/confidentiality").status_code == 403
     assert client.get("/admin/risk-rules").status_code == 403
     assert client.put("/admin/common-materials", json={"materials": ["45#"]}).status_code == 403
 
