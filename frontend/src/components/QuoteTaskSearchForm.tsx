@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import type { QuoteTaskReviewStatus, QuoteTaskSearchParams } from "@/lib/types";
 import { QUOTE_TASK_REVIEW_STATUSES } from "@/lib/types";
 
@@ -62,12 +64,12 @@ export function QuoteTaskSearchForm({ values }: QuoteTaskSearchFormProps) {
         >
           检索
         </button>
-        <a
+        <Link
           href="/quote-tasks"
           className="inline-flex h-10 items-center rounded-lg px-3 text-sm text-stone-600 hover:bg-stone-100"
         >
           清除
-        </a>
+        </Link>
       </div>
     </form>
   );
