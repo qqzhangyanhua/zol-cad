@@ -82,6 +82,7 @@ class PartDrawing:
     low_quality_unreliable: bool
     extracted_fields: tuple[ExtractedField, ...]
     extraction_failure_reason: str | None
+    part_family_id: str
 
 
 @dataclass(frozen=True)

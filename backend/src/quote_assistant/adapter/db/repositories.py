@@ -91,6 +91,7 @@ def _to_part_drawing(row: PartDrawingRow) -> PartDrawing:
         low_quality_unreliable=row.low_quality_unreliable,
         extracted_fields=_fields_from_json(row.extracted_fields),
         extraction_failure_reason=row.extraction_failure_reason,
+        part_family_id=row.part_family_id,
     )
 
 
@@ -244,6 +245,7 @@ class SqlPartDrawingRepository:
                 low_quality_unreliable=drawing.low_quality_unreliable,
                 extracted_fields=_fields_to_json(drawing.extracted_fields),
                 extraction_failure_reason=drawing.extraction_failure_reason,
+                part_family_id=drawing.part_family_id,
             )
         )
         self._session.flush()
@@ -266,6 +268,7 @@ class SqlPartDrawingRepository:
         row.low_quality_unreliable = drawing.low_quality_unreliable
         row.extracted_fields = _fields_to_json(drawing.extracted_fields)
         row.extraction_failure_reason = drawing.extraction_failure_reason
+        row.part_family_id = drawing.part_family_id
 
 
 class SqlPartDrawingEventRepository:

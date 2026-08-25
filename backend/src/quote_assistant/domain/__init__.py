@@ -55,6 +55,16 @@ from quote_assistant.domain.extraction import (
     merge_extraction_preserving_review,
     reviewable_fields,
 )
+from quote_assistant.domain.part_family import (
+    EXPERIMENTAL_MARK_TEXT,
+    PROVISIONAL_OTHER_PART_FAMILY_ID,
+    TARGET_PART_FAMILY_ID,
+    UNKNOWN_PART_FAMILY_ID,
+    classify_part_family,
+    experimental_mark_for,
+    is_target_part_family,
+)
+from quote_assistant.domain.prompt_templates import PromptTemplate, prompt_template_for
 from quote_assistant.domain.part_drawing_state import (
     PartDrawingEvent,
     auto_prefill_allowed,
@@ -96,6 +106,10 @@ from quote_assistant.domain.risk_labels import (
 __all__ = [
     "ASSEMBLY_OUT_OF_SCOPE_TEXT",
     "LOOK_AT_DRAWING_DISCLAIMER",
+    "EXPERIMENTAL_MARK_TEXT",
+    "PROVISIONAL_OTHER_PART_FAMILY_ID",
+    "TARGET_PART_FAMILY_ID",
+    "UNKNOWN_PART_FAMILY_ID",
     "CANONICAL_FIELD_SPECS",
     "LOW_QUALITY_MARK_TEXT",
     "MAX_FILE_BYTES",
@@ -131,6 +145,7 @@ __all__ = [
     "OriginalAccess",
     "PartDrawing",
     "PartDrawingEvent",
+    "PromptTemplate",
     "PartDrawingNotFound",
     "PartDrawingStatus",
     "PdfUnreadable",
@@ -149,6 +164,10 @@ __all__ = [
     "InvalidCredentials",
     "aggregate_correction_stats",
     "assess_drawing_upload",
+    "classify_part_family",
+    "experimental_mark_for",
+    "is_target_part_family",
+    "prompt_template_for",
     "auto_prefill_allowed",
     "birth_uploaded",
     "compare_processing_time",

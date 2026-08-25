@@ -78,6 +78,9 @@ export type PartDrawing = {
   extracted_fields: ExtractedField[];
   extraction_failure_reason: string | null;
   look_at_drawing_disclaimer: string;
+  part_family_id: string;
+  is_target_part_family: boolean;
+  experimental_mark: string | null;
   risk_labels: RiskLabel[];
   no_judgable_risk_message: string;
   pending_confirmation_count: number;
@@ -256,6 +259,9 @@ export function parsePartDrawing(data: unknown): PartDrawing {
     !Array.isArray(data.extracted_fields) ||
     !(data.extraction_failure_reason === null || typeof data.extraction_failure_reason === "string") ||
     typeof data.look_at_drawing_disclaimer !== "string" ||
+    typeof data.part_family_id !== "string" ||
+    typeof data.is_target_part_family !== "boolean" ||
+    !(data.experimental_mark === null || typeof data.experimental_mark === "string") ||
     !Array.isArray(data.risk_labels) ||
     typeof data.no_judgable_risk_message !== "string" ||
     typeof data.pending_confirmation_count !== "number" ||
@@ -284,6 +290,9 @@ export function parsePartDrawing(data: unknown): PartDrawing {
     extracted_fields: data.extracted_fields.map(parseExtractedField),
     extraction_failure_reason: data.extraction_failure_reason,
     look_at_drawing_disclaimer: data.look_at_drawing_disclaimer,
+    part_family_id: data.part_family_id,
+    is_target_part_family: data.is_target_part_family,
+    experimental_mark: data.experimental_mark,
     risk_labels: data.risk_labels.map(parseRiskLabel),
     no_judgable_risk_message: data.no_judgable_risk_message,
     pending_confirmation_count: data.pending_confirmation_count,

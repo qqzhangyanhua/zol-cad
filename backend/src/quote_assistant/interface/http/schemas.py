@@ -19,6 +19,7 @@ from quote_assistant.domain.extraction import (
     FieldCategory,
     FieldSource,
 )
+from quote_assistant.domain.part_family import experimental_mark_for, is_target_part_family
 from quote_assistant.domain.part_drawing_state import auto_prefill_allowed
 from quote_assistant.domain.quality import (
     ASSEMBLY_OUT_OF_SCOPE_TEXT,
@@ -102,6 +103,9 @@ class PartDrawingResponse(BaseModel):
     extracted_fields: list[ExtractedFieldResponse]
     extraction_failure_reason: str | None
     look_at_drawing_disclaimer: str
+    part_family_id: str
+    is_target_part_family: bool
+    experimental_mark: str | None
     risk_labels: list[RiskLabelResponse]
     no_judgable_risk_message: str
     pending_confirmation_count: int
@@ -268,6 +272,9 @@ def to_part_drawing_response(item: PartDrawing) -> PartDrawingResponse:
         ],
         extraction_failure_reason=item.extraction_failure_reason,
         look_at_drawing_disclaimer=LOOK_AT_DRAWING_DISCLAIMER,
+        part_family_id=item.part_family_id,
+        is_target_part_family=is_target_part_family(item.part_family_id),
+        experimental_mark=experimental_mark_for(item.part_family_id),
         risk_labels=[
             RiskLabelResponse(
                 name=label.name,
