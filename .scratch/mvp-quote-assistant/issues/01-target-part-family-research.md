@@ -4,9 +4,11 @@
 
 这是调研票，产出是文档与素材，不是代码。ADR-0008 明确要求族类由真实样本分布决定，不能凭空选；提示词模板、风险规则库、缝 1 的假引擎输入全都依赖这个结论。
 
-**Blocked by:** None — can start immediately.
+**Blocked by:** None for starting the research framework. **Remaining acceptance work is blocked on real factory samples**（结论 / 族类选定 / 阈值 / 标注均不可凭空完成）.
 
-**Status:** ready-for-agent
+**Status:** ready-for-human
+
+**Research framework:** `.scratch/mvp-quote-assistant/research/01-target-part-family/`（填空模板已就绪；见该目录 `README.md`）
 
 - [ ] 收集到 2~3 家目标工厂的真实**零件图**样本，数量足以看出族类分布（不是三五张）
 - [ ] 样本按族类（回转体车件 / 棱柱铣削件 / 其他）统计分布，结论写明选定哪一族及理由
@@ -14,4 +16,14 @@
 - [ ] 列出该族的**风险标签**规则草案，每条含判定条件与阈值（如"公差 ≤ IT6 → 高精度"、"孔深/孔径 > 5 → 深孔"）
 - [ ] 整理出 fixture 图集，覆盖清晰 / 一般 / 差三档**图纸质量分级**，以及目标族与非目标族各若干张
 - [ ] 每张 fixture 配一份人工标注的期望提取结果，供假引擎与缝 1 测试使用
-- [ ] 结论落成一条 ADR 或补充进现有 ADR-0008
+- [ ] 结论落成一条 ADR 或补充进现有 ADR-0008（选定族 + 样本依据；框架执行备注已写入 ADR-0008，**不**等于本条完成）
+
+## Framework progress（非验收完成）
+
+- [x] 调研产出目录与填空模板已建立（样本库存、分布统计、关键尺寸、风险规则草案、fixture 图集槽位、标注模板）
+- [x] ADR-0008 已补充调研执行备注；**未**改变「由真实样本决定族类」的决定
+- [ ] 真实样本入库并完成上表全部验收项
+
+## Comments
+
+- 2026-08-25: 仅落地 RESEARCH FRAMEWORK（文档/模板）。未编造样本数量、未选定零件族、未定风险阈值、未填写标注。后续工作待真实样本。
