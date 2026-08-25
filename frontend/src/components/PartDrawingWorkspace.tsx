@@ -1,8 +1,9 @@
+import { AutoStartExtraction } from "@/components/AutoStartExtraction";
 import { ExtractionFailedPanel } from "@/components/ExtractionFailedPanel";
 import { ExtractionForm } from "@/components/ExtractionForm";
 import { ExtractionInProgress } from "@/components/ExtractionInProgress";
-import { AutoStartExtraction } from "@/components/AutoStartExtraction";
 import { OriginalDrawingViewer } from "@/components/OriginalDrawingViewer";
+import { RiskLabelList } from "@/components/RiskLabelList";
 import type { OriginalAccess, PartDrawing } from "@/lib/types";
 
 type PartDrawingWorkspaceProps = {
@@ -29,7 +30,16 @@ export function PartDrawingWorkspace({
             reason={drawing.extraction_failure_reason}
           />
         ) : null}
-        {drawing.status === "已提取" || drawing.status === "提取失败" ? (
+        {drawing.status === "已提取" ? (
+          <div className="mt-5">
+            <RiskLabelList
+              labels={drawing.risk_labels}
+              emptyMessage={drawing.no_judgable_risk_message}
+            />
+            <ExtractionForm fields={drawing.extracted_fields} />
+          </div>
+        ) : null}
+        {drawing.status === "提取失败" ? (
           <div className="mt-5">
             <ExtractionForm fields={drawing.extracted_fields} />
           </div>

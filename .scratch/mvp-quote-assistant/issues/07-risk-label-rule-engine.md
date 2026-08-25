@@ -11,7 +11,7 @@
 
 **Blocked by:** 06, 01
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] 规则引擎为纯函数，位于领域层，无 IO、无随机、无时间依赖
 - [ ] 每个**风险标签**携带触发规则标识、触发值与人类可读理由

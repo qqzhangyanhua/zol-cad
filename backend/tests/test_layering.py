@@ -75,6 +75,19 @@ def test_用例层只依赖提取引擎抽象() -> None:
     assert "quote_assistant.adapter.extraction" not in extract
 
 
+def test_风险规则引擎在领域层且用例不自行判断() -> None:
+    risk = (SRC / "domain" / "risk_labels.py").read_text(encoding="utf-8")
+    assert "def evaluate_risk_labels" in risk
+    assert "class RiskLabel" in risk
+    assert "FORBIDDEN_RISK_LABEL_SEMANTICS" in risk
+    schemas = (SRC / "interface" / "http" / "schemas.py").read_text(encoding="utf-8")
+    assert "evaluate_risk_labels" in schemas
+    for path in (SRC / "usecase").rglob("*.py"):
+        source = path.read_text(encoding="utf-8")
+        assert "高精度" not in source
+        assert "evaluate_risk_labels" not in source
+
+
 def test_用例层不依赖框架与适配器() -> None:
     usecase_dir = SRC / "usecase"
     offenders: list[str] = []

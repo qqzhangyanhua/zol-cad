@@ -27,6 +27,8 @@ QA_LOCAL_OBJECT_DIR=/tmp/quote-assistant-objects \
 
 提取引擎：用例层只依赖 `ExtractionEngine` Port（输入图像/PDF 页 + 零件族标识 + 输入图标识，输出结构化提取与图纸质量分级）。当前接入 fixture 驱动的假实现，按文件名中的 fixture id（如 `FX-TP-01`）返回预置结果；生产实现见票 17。引擎原始输出在适配器边界用 Pydantic 严格校验，校验失败按提取失败处理，脏数据不进领域层。
 
+风险标签：领域层纯函数 `evaluate_risk_labels`，输入当前结构化字段，输出标签列表（规则标识 / 触发值 / 理由）。词表不含「安全 / 无风险 / 通过」。门槛为 ADR-0007 示例与接线占位，待票 01 调研替换。标签现算不落库。
+
 ## 缝 1 测试
 
 pytest + FastAPI ASGI 测试客户端（不起端口）。启动时对真实 Postgres 执行 Alembic。
