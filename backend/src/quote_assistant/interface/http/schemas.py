@@ -6,7 +6,14 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 from quote_assistant.domain.correction import CorrectionFieldTypeStat, CorrectionRecord
-from quote_assistant.domain.entities import PartDrawing, PartDrawingStatus, Role
+from quote_assistant.domain.entities import (
+    DrawingProcessingTime,
+    ManualBaseline,
+    PartDrawing,
+    PartDrawingStatus,
+    ProcessingTimeComparison,
+    Role,
+)
 from quote_assistant.domain.extraction import (
     LOOK_AT_DRAWING_DISCLAIMER,
     FieldCategory,
@@ -181,6 +188,43 @@ def to_correction_stat_response(stat: CorrectionFieldTypeStat) -> CorrectionFiel
     )
 
 
+class RecordManualBaselineRequest(BaseModel):
+    part_description: str = Field(min_length=1, max_length=200)
+    manual_duration_seconds: int = Field(gt=0, le=24 * 60 * 60)
+
+
+class ManualBaselineResponse(BaseModel):
+    id: UUID
+    part_description: str
+    manual_duration_seconds: int
+    recorded_at: datetime
+
+
+class DrawingProcessingTimeResponse(BaseModel):
+    part_drawing_id: UUID
+    original_filename: str
+    uploaded_at: datetime
+    reviewed_at: datetime
+    processing_seconds: float
+    grading_seconds: float | None
+    extraction_seconds: float | None
+    review_seconds: float | None
+
+
+class ProcessingTimeComparisonResponse(BaseModel):
+    reviewed_count: int
+    excluded_unreviewed_count: int
+    average_processing_seconds: float | None
+    average_grading_seconds: float | None
+    average_extraction_seconds: float | None
+    average_review_seconds: float | None
+    baseline_count: int
+    average_baseline_seconds: float | None
+    saved_seconds: float | None
+    items: list[DrawingProcessingTimeResponse]
+    baselines: list[ManualBaselineResponse]
+
+
 def to_part_drawing_response(item: PartDrawing) -> PartDrawingResponse:
     advise = (
         POOR_GRADE_ADVISE_TEXT
@@ -236,4 +280,44 @@ def to_part_drawing_response(item: PartDrawing) -> PartDrawingResponse:
         no_judgable_risk_message=NO_JUDGABLE_RISK_ITEMS_MESSAGE,
         pending_confirmation_count=len(unfinished),
         pending_confirmation_labels=[field.label for field in unfinished],
+    )
+
+
+def to_manual_baseline_response(item: ManualBaseline) -> ManualBaselineResponse:
+    return ManualBaselineResponse(
+        id=item.id,
+        part_description=item.part_description,
+        manual_duration_seconds=item.manual_duration_seconds,
+        recorded_at=item.recorded_at,
+    )
+
+
+def to_drawing_processing_time_response(item: DrawingProcessingTime) -> DrawingProcessingTimeResponse:
+    return DrawingProcessingTimeResponse(
+        part_drawing_id=item.part_drawing_id,
+        original_filename=item.original_filename,
+        uploaded_at=item.uploaded_at,
+        reviewed_at=item.reviewed_at,
+        processing_seconds=item.processing_seconds,
+        grading_seconds=item.grading_seconds,
+        extraction_seconds=item.extraction_seconds,
+        review_seconds=item.review_seconds,
+    )
+
+
+def to_processing_time_comparison_response(
+    item: ProcessingTimeComparison,
+) -> ProcessingTimeComparisonResponse:
+    return ProcessingTimeComparisonResponse(
+        reviewed_count=item.reviewed_count,
+        excluded_unreviewed_count=item.excluded_unreviewed_count,
+        average_processing_seconds=item.average_processing_seconds,
+        average_grading_seconds=item.average_grading_seconds,
+        average_extraction_seconds=item.average_extraction_seconds,
+        average_review_seconds=item.average_review_seconds,
+        baseline_count=item.baseline_count,
+        average_baseline_seconds=item.average_baseline_seconds,
+        saved_seconds=item.saved_seconds,
+        items=[to_drawing_processing_time_response(row) for row in item.items],
+        baselines=[to_manual_baseline_response(row) for row in item.baselines],
     )

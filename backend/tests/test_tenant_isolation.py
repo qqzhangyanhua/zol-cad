@@ -5,6 +5,7 @@ import inspect
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
+from quote_assistant.usecase.compare_processing_time import CompareProcessingTime
 from quote_assistant.usecase.continue_despite_poor_quality import ContinueDespitePoorQuality
 from quote_assistant.usecase.extract_part_drawing import ExtractPartDrawing
 from quote_assistant.usecase.get_part_drawing import GetPartDrawing
@@ -13,6 +14,7 @@ from quote_assistant.usecase.list_correction_records import ListCorrectionRecord
 from quote_assistant.usecase.list_correction_stats import ListCorrectionStats
 from quote_assistant.usecase.list_part_drawing_events import ListPartDrawingEvents
 from quote_assistant.usecase.list_part_drawings import ListPartDrawings
+from quote_assistant.usecase.record_manual_baseline import RecordManualBaseline
 from quote_assistant.usecase.review_part_drawing import (
     AddCriticalDimension,
     CompleteReview,
@@ -91,6 +93,8 @@ def test_上传与查看原图用例不接受工厂标识参数() -> None:
         CompleteReview,
         ListCorrectionRecords,
         ListCorrectionStats,
+        CompareProcessingTime,
+        RecordManualBaseline,
     ):
         names = list(inspect.signature(cls.execute).parameters)
         assert "factory_id" not in names

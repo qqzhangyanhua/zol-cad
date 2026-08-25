@@ -5,7 +5,7 @@ from uuid import UUID, uuid4
 
 from sqlalchemy.orm import Session
 
-from quote_assistant.adapter.db.models import FactoryRow, PartDrawingRow, UserRow
+from quote_assistant.adapter.db.models import FactoryRow, PartDrawingEventRow, PartDrawingRow, UserRow
 from quote_assistant.adapter.security.passwords import hash_password
 from quote_assistant.domain.entities import PartDrawingStatus, Role
 
@@ -18,26 +18,22 @@ def create_factory(session: Session, name: str) -> UUID:
 
 
 def create_quoter(session: Session, factory_id: UUID, username: str, password: str) -> UUID:
-    row = UserRow(
-        id=uuid4(),
-        factory_id=factory_id,
-        username=username,
-        password_hash=hash_password(password),
-        role=Role.QUOTER.value,
-        created_at=datetime.now(UTC),
-    )
-    session.add(row)
-    session.flush()
-    return row.id
+    return _create_user(session, factory_id, username, password, Role.QUOTER)
 
 
 def create_admin(session: Session, factory_id: UUID, username: str, password: str) -> UUID:
+    return _create_user(session, factory_id, username, password, Role.ADMIN)
+
+
+def _create_user(
+    session: Session, factory_id: UUID, username: str, password: str, role: Role
+) -> UUID:
     row = UserRow(
         id=uuid4(),
         factory_id=factory_id,
         username=username,
         password_hash=hash_password(password),
-        role=Role.ADMIN.value,
+        role=role.value,
         created_at=datetime.now(UTC),
     )
     session.add(row)
@@ -45,7 +41,13 @@ def create_admin(session: Session, factory_id: UUID, username: str, password: st
     return row.id
 
 
-def insert_part_drawing(session: Session, factory_id: UUID, filename: str) -> UUID:
+def insert_part_drawing(
+    session: Session,
+    factory_id: UUID,
+    filename: str,
+    *,
+    status: PartDrawingStatus = PartDrawingStatus.UPLOADED,
+) -> UUID:
     drawing_id = uuid4()
     row = PartDrawingRow(
         id=drawing_id,
@@ -58,7 +60,7 @@ def insert_part_drawing(session: Session, factory_id: UUID, filename: str) -> UU
         page_count=1,
         selected_page=1,
         uploaded_by_user_id=None,
-        status=PartDrawingStatus.UPLOADED.value,
+        status=status.value,
         quality_grade=None,
         is_assembly_or_exploded=False,
         low_quality_unreliable=False,
@@ -68,6 +70,33 @@ def insert_part_drawing(session: Session, factory_id: UUID, filename: str) -> UU
     session.add(row)
     session.flush()
     return row.id
+
+
+def insert_event(
+    session: Session,
+    *,
+    drawing_id: UUID,
+    factory_id: UUID,
+    to_status: PartDrawingStatus,
+    occurred_at: datetime,
+    sequence_no: int,
+    from_status: PartDrawingStatus | None = None,
+) -> UUID:
+    event_id = uuid4()
+    session.add(
+        PartDrawingEventRow(
+            id=event_id,
+            part_drawing_id=drawing_id,
+            factory_id=factory_id,
+            from_status=from_status.value if from_status else None,
+            to_status=to_status.value,
+            occurred_at=occurred_at,
+            sequence_no=sequence_no,
+            actor_user_id=None,
+        )
+    )
+    session.flush()
+    return event_id
 
 
 def login(client, username: str, password: str):

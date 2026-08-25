@@ -17,9 +17,14 @@ export function AppHeader({ user }: AppHeaderProps) {
             零件图
           </Link>
           {user.role === "admin" ? (
-            <Link href="/admin/correction-stats" className="hover:text-stone-800">
-              修正记录
-            </Link>
+            <>
+              <Link href="/processing-time" className="hover:text-stone-800">
+                处理耗时
+              </Link>
+              <Link href="/admin/correction-stats" className="hover:text-stone-800">
+                修正记录
+              </Link>
+            </>
           ) : null}
         </nav>
       </div>

@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from quote_assistant.adapter.db.models import (
     CorrectionRecordRow,
+    ManualBaselineRow,
     PartDrawingEventRow,
     PartDrawingRow,
     SessionRow,
@@ -16,7 +17,14 @@ from quote_assistant.adapter.db.models import (
 )
 from quote_assistant.adapter.security.passwords import verify_password
 from quote_assistant.domain.correction import CorrectionRecord
-from quote_assistant.domain.entities import IssuedSession, PartDrawing, PartDrawingStatus, Role, User
+from quote_assistant.domain.entities import (
+    IssuedSession,
+    ManualBaseline,
+    PartDrawing,
+    PartDrawingStatus,
+    Role,
+    User,
+)
 from quote_assistant.domain.extraction import ExtractedField, FieldCategory, FieldSource
 from quote_assistant.domain.part_drawing_state import PartDrawingEvent
 from quote_assistant.domain.quality import QualityGrade
@@ -299,6 +307,14 @@ class SqlPartDrawingEventRepository:
         ).scalar_one()
         return int(current) + 1
 
+    def list_for_tenant(self, tenant: TenantScope) -> list[PartDrawingEvent]:
+        rows = self._session.execute(
+            select(PartDrawingEventRow)
+            .where(PartDrawingEventRow.factory_id == tenant.factory_id)
+            .order_by(PartDrawingEventRow.occurred_at.asc(), PartDrawingEventRow.sequence_no.asc())
+        ).scalars()
+        return [_to_event(row) for row in rows]
+
 
 def _to_correction(row: CorrectionRecordRow) -> CorrectionRecord:
     occurred_at = row.occurred_at
@@ -357,3 +373,43 @@ class SqlCorrectionRecordRepository:
             .order_by(CorrectionRecordRow.occurred_at.asc(), CorrectionRecordRow.id.asc())
         ).scalars()
         return [_to_correction(row) for row in rows]
+
+
+def _to_manual_baseline(row: ManualBaselineRow) -> ManualBaseline:
+    recorded_at = row.recorded_at
+    if recorded_at.tzinfo is None:
+        recorded_at = recorded_at.replace(tzinfo=UTC)
+    return ManualBaseline(
+        id=row.id,
+        factory_id=row.factory_id,
+        part_description=row.part_description,
+        manual_duration_seconds=row.manual_duration_seconds,
+        recorded_at=recorded_at,
+        recorded_by_user_id=row.recorded_by_user_id,
+    )
+
+
+class SqlManualBaselineRepository:
+    def __init__(self, session: Session) -> None:
+        self._session = session
+
+    def add(self, baseline: ManualBaseline) -> None:
+        self._session.add(
+            ManualBaselineRow(
+                id=baseline.id,
+                factory_id=baseline.factory_id,
+                part_description=baseline.part_description,
+                manual_duration_seconds=baseline.manual_duration_seconds,
+                recorded_at=baseline.recorded_at,
+                recorded_by_user_id=baseline.recorded_by_user_id,
+            )
+        )
+        self._session.flush()
+
+    def list_for_tenant(self, tenant: TenantScope) -> list[ManualBaseline]:
+        rows = self._session.execute(
+            select(ManualBaselineRow)
+            .where(ManualBaselineRow.factory_id == tenant.factory_id)
+            .order_by(ManualBaselineRow.recorded_at.desc())
+        ).scalars()
+        return [_to_manual_baseline(row) for row in rows]

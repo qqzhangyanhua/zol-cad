@@ -110,3 +110,46 @@ class OriginalAccess:
     drawing: PartDrawing
     url: str
     expires_at: datetime
+
+
+@dataclass(frozen=True)
+class ManualBaseline:
+    """一条管理员录入的纯人工作业计时，作为处理耗时的对照。"""
+
+    id: UUID
+    factory_id: UUID
+    part_description: str
+    manual_duration_seconds: int
+    recorded_at: datetime
+    recorded_by_user_id: UUID
+
+
+@dataclass(frozen=True)
+class DrawingProcessingTime:
+    """一张已复核零件图由事件时间戳算出的处理耗时。"""
+
+    part_drawing_id: UUID
+    original_filename: str
+    uploaded_at: datetime
+    reviewed_at: datetime
+    processing_seconds: float
+    grading_seconds: float | None
+    extraction_seconds: float | None
+    review_seconds: float | None
+
+
+@dataclass(frozen=True)
+class ProcessingTimeComparison:
+    """本厂处理耗时与人工基线的对照。未复核零件图不计入。"""
+
+    reviewed_count: int
+    excluded_unreviewed_count: int
+    average_processing_seconds: float | None
+    average_grading_seconds: float | None
+    average_extraction_seconds: float | None
+    average_review_seconds: float | None
+    baseline_count: int
+    average_baseline_seconds: float | None
+    saved_seconds: float | None
+    items: tuple[DrawingProcessingTime, ...]
+    baselines: tuple[ManualBaseline, ...]
