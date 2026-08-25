@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -68,7 +69,7 @@ def test_走完全流程后上传与已复核时间戳都在且处理耗时可�
     assert computed["grading_seconds"] is not None
     assert computed["extraction_seconds"] is not None
     assert computed["review_seconds"] is not None
-    assert computed["processing_seconds"] == (
+    assert computed["processing_seconds"] == pytest.approx(
         computed["grading_seconds"] + computed["extraction_seconds"] + computed["review_seconds"]
     )
 
