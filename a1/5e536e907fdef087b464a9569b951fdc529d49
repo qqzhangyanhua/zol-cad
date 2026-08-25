@@ -1,0 +1,52 @@
+docs/adr/0001-scope-extraction-not-judgment.md
+  s_17d9402584e5b6::t_4b43a3c7974e63 1-7
+docs/adr/0004-verification-ux-and-value-boundary.md
+  s_17d9402584e5b6::t_d241d323292dba 1-9
+docs/adr/0007-risk-labels-rule-based-never-assert-safe.md
+  s_17d9402584e5b6::t_b3898858f26d93 1-9
+docs/agents/triage-labels.md
+  s_17d9402584e5b6::t_a446f8b954f737 1-15
+CONTEXT.md
+  s_17d9402584e5b6::t_97c18f78d64956 30,39-49
+  s_17d9402584e5b6::t_d2c257db7288a7 31-34
+  s_17d9402584e5b6::t_6e67ea4cc2a830 55-58
+  s_17d9402584e5b6::t_afa678781a32b0 54,59-61
+  s_17d9402584e5b6::t_72be1a2b222eee 8,10-13
+  s_17d9402584e5b6::t_45c60c683b3806 1-7,9,14-29
+  s_17d9402584e5b6::t_4931b2b12d73fe 35-38
+  s_17d9402584e5b6::t_c7b1a94d3af7bb 50-53
+  s_17d9402584e5b6::t_15792d916ab176 62-65
+docs/agents/domain.md
+  s_17d9402584e5b6::t_5d47ab437fa70f 1-51
+docs/adr/0003-extraction-engine-buy-multimodal-llm.md
+  s_17d9402584e5b6::t_b2905ebe573f6b 12-13
+  s_17d9402584e5b6::t_9ce7e120792ba2 1-11,14
+docs/adr/0005-data-confidentiality-cloud-with-privatization-narrative.md
+  s_17d9402584e5b6::t_b84573985e4ae6 1-10
+docs/adr/0002-trust-model-quality-grade-plus-high-risk-rule.md
+  s_17d9402584e5b6::t_aa08a52d773fab 1-9
+docs/adr/0006-validation-objective-timing-and-real-payment.md
+  s_17d9402584e5b6::t_70058b4032a59b 1-9
+docs/agents/issue-tracker.md
+  s_17d9402584e5b6::t_a47aed8f11ac9b 1-30
+docs/adr/0008-focus-on-one-target-part-family.md
+  s_17d9402584e5b6::t_d86c03011d445e 1-12
+AGENTS.md
+  s_17d9402584e5b6::t_a9f5faaf75a77e 1-15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.6.23",
+  "base_commit_sha": "a15e536e907fdef087b464a9569b951fdc529d49",
+  "prompts": {},
+  "sessions": {
+    "s_17d9402584e5b6": {
+      "agent_id": {
+        "tool": "droid",
+        "id": "05bf4e6f-a2bb-4e40-a708-7b75a3e7f8ab",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "张艳华 <939593210@qq.com>"
+    }
+  }
+}
