@@ -4,6 +4,7 @@ import inspect
 import json
 import zipfile
 from io import BytesIO
+from urllib.parse import unquote
 
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
@@ -115,7 +116,7 @@ def test_管理员能导出可读压缩包且删除需服务端二次确认_删�
     exported = client.get("/admin/tenant-data/export", params={"factory_id": str(factory_b)})
     assert exported.status_code == 200
     assert exported.headers["content-type"].startswith("application/zip")
-    assert "本厂数据导出" in exported.headers["content-disposition"]
+    assert "本厂数据导出" in unquote(exported.headers["content-disposition"])
 
     with _open_zip(exported.content) as archive:
         names = set(archive.namelist())
