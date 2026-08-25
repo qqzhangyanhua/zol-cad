@@ -6,6 +6,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+from quote_assistant.domain.confidentiality import ConfidentialityNotice, HardGateStatus
 from quote_assistant.domain.correction import CorrectionFieldTypeStat, CorrectionRecord
 from quote_assistant.domain.entities import (
     DrawingProcessingTime,
@@ -517,4 +518,70 @@ def to_processing_time_comparison_response(
         saved_seconds=item.saved_seconds,
         items=[to_drawing_processing_time_response(row) for row in item.items],
         baselines=[to_manual_baseline_response(row) for row in item.baselines],
+    )
+
+
+class HardGateStatusResponse(BaseModel):
+    key: str
+    name: str
+    verdict: str
+    evidence: str
+
+
+class DrawingStorageNoticeResponse(BaseModel):
+    backend: str
+    location_summary: str
+    notes: str
+
+
+class ConfidentialityNoticeResponse(BaseModel):
+    ticket_02_closed: bool
+    ticket_02_status: str
+    adr_status: str
+    adr_path: str
+    research_notes_path: str
+    vendor_selected: bool
+    selected_vendor: str | None
+    vendor_decision_line: str
+    hard_gates: list[HardGateStatusResponse]
+    implementation_constraints: list[str]
+    drawing_storage: DrawingStorageNoticeResponse
+    processor_summary: str
+    current_extraction_engine: str
+    used_for_training_statement: str
+    dpa_statement: str
+    caveats: list[str]
+
+
+def to_hard_gate_response(gate: HardGateStatus) -> HardGateStatusResponse:
+    return HardGateStatusResponse(
+        key=gate.key,
+        name=gate.name,
+        verdict=gate.verdict,
+        evidence=gate.evidence,
+    )
+
+
+def to_confidentiality_notice_response(notice: ConfidentialityNotice) -> ConfidentialityNoticeResponse:
+    return ConfidentialityNoticeResponse(
+        ticket_02_closed=notice.ticket_02_closed,
+        ticket_02_status=notice.ticket_02_status,
+        adr_status=notice.adr_status,
+        adr_path=notice.adr_path,
+        research_notes_path=notice.research_notes_path,
+        vendor_selected=notice.vendor_selected,
+        selected_vendor=notice.selected_vendor,
+        vendor_decision_line=notice.vendor_decision_line,
+        hard_gates=[to_hard_gate_response(gate) for gate in notice.hard_gates],
+        implementation_constraints=list(notice.implementation_constraints),
+        drawing_storage=DrawingStorageNoticeResponse(
+            backend=notice.drawing_storage.backend,
+            location_summary=notice.drawing_storage.location_summary,
+            notes=notice.drawing_storage.notes,
+        ),
+        processor_summary=notice.processor_summary,
+        current_extraction_engine=notice.current_extraction_engine,
+        used_for_training_statement=notice.used_for_training_statement,
+        dpa_statement=notice.dpa_statement,
+        caveats=list(notice.caveats),
     )

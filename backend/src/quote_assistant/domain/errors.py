@@ -26,6 +26,26 @@ class ExtractionValidationFailed(DomainError):
     """Adapter-boundary schema rejected the engine payload. Dirty data must not enter the domain."""
 
 
+class ExtractionEngineFailed(DomainError):
+    """Adapter-mapped 提取引擎 failure. Use-case maps this to 提取失败 and keeps the retry path."""
+
+
+class ExtractionTimeout(ExtractionEngineFailed):
+    """Vendor transport timed out. Retryable."""
+
+
+class ExtractionRateLimited(ExtractionEngineFailed):
+    """Vendor transport returned a rate-limit. Retryable."""
+
+
+class ExtractionTransportFailed(ExtractionEngineFailed):
+    """Vendor transport failed (network / HTTP / protocol). Retryable."""
+
+
+class ExtractionVendorNotConfigured(ExtractionEngineFailed):
+    """票 02 / ADR-0009 has not selected a vendor. The skeleton must not call a paid API."""
+
+
 class ExtractedFieldNotFound(DomainError):
     pass
 
@@ -35,7 +55,7 @@ class IncompleteReview(DomainError):
 
 
 class AdminRequired(DomainError):
-    """管理员专属能力（账号、全厂记录、偏好配置、修正统计、处理耗时、本厂数据导出与删除）。"""
+    """管理员专属能力（账号、全厂记录、偏好配置、修正统计、处理耗时、本厂数据导出与删除、保密说明）。"""
 
 
 class AccountDisabled(DomainError):

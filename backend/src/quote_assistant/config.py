@@ -21,3 +21,6 @@ class Settings(BaseSettings):
     oss_access_key_secret: str = ""
     oss_endpoint: str = ""
     oss_bucket: str = ""
+
+    # fixture = seam-1 fake engine (default). vendor = unpaid skeleton; no live paid API.
+    extraction_engine: str = "fixture"

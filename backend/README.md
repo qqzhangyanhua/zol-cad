@@ -25,7 +25,7 @@ QA_LOCAL_OBJECT_DIR=/tmp/quote-assistant-objects \
 
 对象存储：用例层只依赖 `ObjectStorage` 窄接口（存 / 取 / 签发临时 URL / 删）。`QA_OBJECT_STORE_BACKEND=local` 时写入本地目录；`oss` 时走阿里云 OSS，put 时带 `x-oss-server-side-encryption: AES256` 与 private ACL，Bucket 本身不得公共读。
 
-提取引擎：用例层只依赖 `ExtractionEngine` Port（输入图像/PDF 页 + 零件族标识 + 输入图标识，输出结构化提取与图纸质量分级）。当前接入 fixture 驱动的假实现，按文件名中的 fixture id（如 `FX-TP-01`）返回预置结果；生产实现见票 17。引擎原始输出在适配器边界用 Pydantic 严格校验，校验失败按提取失败处理，脏数据不进领域层。
+提取引擎：用例层只依赖 `ExtractionEngine` Port（输入图像/PDF 页 + 零件族标识 + 输入图标识，输出结构化提取与图纸质量分级）。`QA_EXTRACTION_ENGINE` 默认 `fixture`（假实现，缝 1 用）；`vendor` 打开未选定供应商的骨架适配器，**不会调用付费 API**。票 02 / ADR-0009 关闭前不得把骨架当成已选定供应商。引擎原始输出在适配器边界用 Pydantic 严格校验，校验失败按提取失败处理，脏数据不进领域层。调用日志只记 `input_drawing_id` / 介质 / 字节数，不落图像内容。单张调用走 `ExtractionCostRecorder` 计数钩子，供应商未定时费用字段为 `None`。
 
 风险标签：领域层纯函数 `evaluate_risk_labels`，输入当前结构化字段，输出标签列表（规则标识 / 触发值 / 理由）。词表不含「安全 / 无风险 / 通过」。门槛为 ADR-0007 示例与接线占位，待票 01 调研替换。标签现算不落库。
 
@@ -45,5 +45,7 @@ pytest + FastAPI ASGI 测试客户端（不起端口）。启动时对真实 Pos
 
 ```bash
 cd backend
-uv run pytest
+uv run pytest -m "not vendor_contract"
+# 供应商契约测试（票 02 关闭后手工跑；默认 CI 不执行）：
+# uv run pytest -m vendor_contract
 ```

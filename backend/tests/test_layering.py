@@ -78,8 +78,13 @@ def test_用例层只依赖提取引擎抽象() -> None:
     assert "part_family_id" in extract
     assert "FixtureExtractionEngine" not in upload
     assert "FixtureExtractionEngine" not in extract
+    assert "VendorExtractionEngine" not in upload
+    assert "VendorExtractionEngine" not in extract
     assert "quote_assistant.adapter.extraction" not in upload
     assert "quote_assistant.adapter.extraction" not in extract
+    factory = (SRC / "adapter" / "extraction" / "factory.py").read_text(encoding="utf-8")
+    assert "ENGINE_FIXTURE" in factory
+    assert "def build_extraction_engine" in factory
     assert "prompt_template_for" not in upload
     assert "prompt_template_for" not in extract
     assert "【专用模板" not in upload
@@ -191,6 +196,26 @@ def test_本厂数据导出打包在适配器_确认短语在领域层() -> None
     assert "evaluate_risk_labels" not in export_use_case
     writer = (SRC / "adapter" / "export" / "tenant_archive_writer.py").read_text(encoding="utf-8")
     assert "zipfile" in writer
+
+
+def test_保密说明用例只读端口且不写承诺() -> None:
+    notice = (SRC / "usecase" / "get_confidentiality_notice.py").read_text(encoding="utf-8")
+    ports = (SRC / "usecase" / "ports.py").read_text(encoding="utf-8")
+    domain = (SRC / "domain" / "confidentiality.py").read_text(encoding="utf-8")
+    assert "class GetConfidentialityNotice" in notice
+    assert "ConfidentialityPolicySource" in notice
+    assert "quote_assistant.adapter" not in notice
+    assert "class ConfidentialityPolicySource" in ports
+    assert "class ConfidentialityNotice" in domain
+    frontend = SRC.parents[2] / "frontend" / "src"
+    offenders: list[str] = []
+    forbidden = ("已签署 DPA", "数据保证在中国大陆", "承诺不用于训练")
+    for path in list(frontend.rglob("*.ts")) + list(frontend.rglob("*.tsx")):
+        source = path.read_text(encoding="utf-8")
+        for needle in forbidden:
+            if needle in source:
+                offenders.append(f"{path.relative_to(frontend)} 含有 {needle}")
+    assert offenders == []
 
 
 def test_用例层不依赖框架与适配器() -> None:

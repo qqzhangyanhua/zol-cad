@@ -33,7 +33,7 @@ jobs:
         working-directory: backend
         run: |
           uv sync --group dev
-          uv run pytest
+          uv run pytest -m "not vendor_contract"
 
   frontend:
     runs-on: ubuntu-latest

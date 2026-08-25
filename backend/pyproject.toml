@@ -31,3 +31,6 @@ package = false
 pythonpath = ["src"]
 testpaths = ["tests"]
 addopts = "-q"
+markers = [
+  "vendor_contract: live vendor contract tests; excluded from default CI",
+]
