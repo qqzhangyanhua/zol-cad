@@ -143,8 +143,11 @@ export function PartDrawingUploadPanel() {
                   />
                   页
                 </label>
-              ) : (
+              ) : item.file.type.startsWith("image/") ||
+                /\.(png|jpe?g|webp|tiff?)$/i.test(item.file.name) ? (
                 <span className="text-xs text-stone-400">图片</span>
+              ) : (
+                <span className="text-xs text-stone-400">待校验</span>
               )}
               <button
                 type="button"
