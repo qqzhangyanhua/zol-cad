@@ -1,0 +1,123 @@
+frontend/src/app/part-drawings/page.tsx
+  s_09cab0ec53fe9a::t_390037cbedca13 5
+  s_09cab0ec53fe9a::t_deee82c3515919 47
+backend/src/quote_assistant/domain/extraction.py
+  s_09cab0ec53fe9a::t_d2d8b29ec39a5e 62-72
+  s_09cab0ec53fe9a::t_9912be7803a6c7 61
+backend/src/quote_assistant/domain/part_drawing_state.py
+  s_09cab0ec53fe9a::t_3847cd1d203285 19-20
+  s_09cab0ec53fe9a::t_1ed6356b5d508f 24-27
+backend/src/quote_assistant/usecase/recover_stranded_part_drawings.py
+  s_09cab0ec53fe9a::t_b7e26f9c60e387 15-21
+  s_09cab0ec53fe9a::t_b460ef2cc92190 1-14,22-63
+backend/tests/test_quality_grading.py
+  s_09cab0ec53fe9a::t_8b4087b3c284ec 41
+  s_09cab0ec53fe9a::t_272af8d1c466ea 18
+backend/src/quote_assistant/adapter/pdf/renderer.py
+  s_09cab0ec53fe9a::t_11b0e7a8c6df2a 1-63
+backend/src/quote_assistant/interface/http/app.py
+  s_09cab0ec53fe9a::t_0389f86e15ed30 56
+  s_09cab0ec53fe9a::t_cec84ae2cbcccc 8-11,13-17,21-22
+  s_09cab0ec53fe9a::t_5a9e0c40e6eccd 32-43
+  s_09cab0ec53fe9a::t_9f78765e2cab69 57,61-63
+frontend/src/app/part-drawings/[id]/page.tsx
+  s_09cab0ec53fe9a::t_461c8f19188542 63-64
+backend/src/quote_assistant/usecase/process_part_drawing.py
+  s_09cab0ec53fe9a::t_3eeb18efbbdcbe 93-101
+  s_09cab0ec53fe9a::t_e9d4edbf8d3119 126-138
+  s_09cab0ec53fe9a::t_4bfa0ab9a9a5de 1-92,102-125,139-149
+frontend/src/components/InFlightRefresh.tsx
+  s_09cab0ec53fe9a::t_94c4ad3217b7b7 1-27
+.scratch/mvp-quote-assistant/issues/19-async-extraction-pipeline.md
+  s_09cab0ec53fe9a::t_6dd49ccd5ecb70 15-22,25-32
+  s_09cab0ec53fe9a::t_447c2c4dbc1ac6 1-14,23-24
+backend/src/quote_assistant/domain/errors.py
+  s_09cab0ec53fe9a::t_83704e326a2e2c 49-52
+backend/src/quote_assistant/adapter/db/repositories.py
+  s_09cab0ec53fe9a::t_100e5bd723fc53 361
+  s_09cab0ec53fe9a::t_bce18b6c8ead6d 357-360,362-374
+frontend/src/components/ExtractionInProgress.tsx
+  s_09cab0ec53fe9a::t_b52821b435edba 22,24
+frontend/src/components/AutoStartExtraction.tsx
+  s_09cab0ec53fe9a::t_67ca7d501d736b 26-29
+backend/tests/test_tenant_isolation.py
+  s_09cab0ec53fe9a::t_d5e81dd70497e7 18
+  s_09cab0ec53fe9a::t_fbe4f5c69a8d48 107
+backend/tests/test_async_extraction.py
+  s_09cab0ec53fe9a::t_8f85d1996074fb 95,97-101,104-108,111-115
+  s_09cab0ec53fe9a::t_499bbc74805f02 1-94,96,102-103,109-110,116-134
+frontend/src/lib/types.ts
+  s_09cab0ec53fe9a::t_e15bb49c3a4f8e 26-35
+backend/src/quote_assistant/usecase/continue_despite_poor_quality.py
+  s_09cab0ec53fe9a::t_de28327889ad33 71
+  s_09cab0ec53fe9a::t_a7cbd560bf4fd5 12
+  s_09cab0ec53fe9a::t_9c01b94d48f3e0 31,39
+backend/src/quote_assistant/interface/http/deps.py
+  s_09cab0ec53fe9a::t_54b92fd1b819e3 183
+  s_09cab0ec53fe9a::t_90abf4afe2b47d 43
+  s_09cab0ec53fe9a::t_2ce9a071ab0a15 167
+  s_09cab0ec53fe9a::t_27643ef726c9e9 177-178
+  s_09cab0ec53fe9a::t_abb7bbfaef1c3e 32
+  s_09cab0ec53fe9a::t_e82f29a1795305 152
+frontend/src/components/PartDrawingWorkspace.tsx
+  s_09cab0ec53fe9a::t_1871e6ec59f8b1 31-35
+backend/src/quote_assistant/config.py
+  s_09cab0ec53fe9a::t_2d10614fd7002c 27-31
+backend/tests/test_page_rasterization.py
+  s_09cab0ec53fe9a::t_6eb2df3e235500 1-125
+backend/pyproject.toml
+  s_09cab0ec53fe9a::t_f64f71cb14dd28 18-19
+backend/src/quote_assistant/usecase/ports.py
+  s_09cab0ec53fe9a::t_9f5529085bbdfe 104-114
+  s_09cab0ec53fe9a::t_d06970482d2e41 8-14
+  s_09cab0ec53fe9a::t_03b602533986c2 115-139
+  s_09cab0ec53fe9a::t_3ca248015ab961 19
+backend/src/quote_assistant/usecase/extract_part_drawing.py
+  s_09cab0ec53fe9a::t_0f0f2500c09924 15
+  s_09cab0ec53fe9a::t_42975e7ef28332 82
+  s_09cab0ec53fe9a::t_2f2c085062ccd2 33-52,60
+  s_09cab0ec53fe9a::t_d46aacc26dd4f3 6
+backend/src/quote_assistant/usecase/__init__.py
+  s_09cab0ec53fe9a::t_5384f166a9aa78 13
+  s_09cab0ec53fe9a::t_5a85ff95814e02 57
+backend/tests/test_layering.py
+  s_09cab0ec53fe9a::t_0af238d8efbce5 67-68
+  s_09cab0ec53fe9a::t_ef42cce4e6059f 107-116,118-130
+  s_09cab0ec53fe9a::t_34cc7b2b3c4960 17,33
+  s_09cab0ec53fe9a::t_0bb70dfae45986 117
+  s_09cab0ec53fe9a::t_8516b3e04b7539 100
+  s_09cab0ec53fe9a::t_b2f283fd70d700 79-81,83,88,91,94
+backend/src/quote_assistant/interface/http/routes/part_drawings.py
+  s_09cab0ec53fe9a::t_b70f5e065db7e4 49
+  s_09cab0ec53fe9a::t_e13f03bed54fb2 198
+backend/tests/conftest.py
+  s_09cab0ec53fe9a::t_6c3891d97cf38a 102
+frontend/src/components/PartDrawingUploadPanel.tsx
+  s_09cab0ec53fe9a::t_7b5b0da313d762 182
+.scratch/mvp-quote-assistant/issues/18-page-rasterization-for-extraction.md
+  s_09cab0ec53fe9a::t_4f2118df8d11b0 1-12,20-21
+  s_09cab0ec53fe9a::t_7e7ba3f29a58c9 13-19,22-33
+backend/src/quote_assistant/usecase/upload_part_drawings.py
+  s_09cab0ec53fe9a::t_f55bf08cb4c087 23,27,58-63,72,80,84,89-90,117,125,131-164
+backend/src/quote_assistant/interface/http/background.py
+  s_09cab0ec53fe9a::t_764a836df93f27 7,25-26,28-33,36,42,44,54,69,85-101,106,108
+  s_09cab0ec53fe9a::t_5e81c1f5d9deef 1-6,8-24,27,34-35,37-41,43,45-53,55-68,70-84,102-105,107,109-111
+backend/uv.lock
+  s_09cab0ec53fe9a::t_c44924a265a9c2 2,18,20,32,42,44,51,53,60,62,73,75,85,87,97,99-130,137,139,149,151-224,231,233-355,365,367,374,376,383,392,394-432,444,446,453,455,469,471,478,480-538,545,547,558,560,567,569-596,609,611,618,620,627,629,636,638,648,650,657,659-713,723,725,740,746,748-819,826,828,839,841,854-886,893,895,907,909,916,918-939,952,954,964,966-1029,1041,1043,1050,1052,1059-1068,1070-1090,1104,1106,1113,1115,1122,1124,1132-1143,1150,1152-1189,1201,1206,1225,1230,1253,1255,1262,1264,1275,1277-1299,1310,1312,1326,1328,1335,1337,1347,1349,1356,1358,1365,1367,1378,1380,1397,1399-1422,1432,1434-1508,1515,1517-1597,1604,1606-1661
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.6.23",
+  "base_commit_sha": "57772d868607f70be7b159f30fc6b5b6fecd934f",
+  "prompts": {},
+  "sessions": {
+    "s_09cab0ec53fe9a": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "bf8e21da-2845-453a-9506-68a6998e32c4",
+        "model": "claude-opus-5"
+      },
+      "human_author": "张艳华 <939593210@qq.com>"
+    }
+  }
+}
