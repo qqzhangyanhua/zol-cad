@@ -1,3 +1,4 @@
+import { presentRiskRuleDescription } from "@/lib/confidentiality-copy";
 import type { RiskRule } from "@/lib/types";
 
 type RiskRuleCatalogProps = {
@@ -9,7 +10,7 @@ export function RiskRuleCatalog({ items }: RiskRuleCatalogProps) {
     <section className="rounded-xl border border-stone-200 bg-white p-4">
       <h2 className="text-sm font-semibold text-stone-900">当前生效的风险规则</h2>
       <p className="mt-1 text-xs text-stone-500">
-        只读。规则由规则引擎算出，永不输出「无风险 / 安全」。阈值仍是暂定值，不是票 01 样本结论。
+        只读。规则由规则引擎算出，永不输出「无风险 / 安全」。阈值仍是暂定值，尚未用本厂真实样本核定。
       </p>
       <table className="mt-3 w-full text-left text-sm">
         <thead className="text-xs text-stone-500">
@@ -26,7 +27,9 @@ export function RiskRuleCatalog({ items }: RiskRuleCatalogProps) {
               <td className="py-2.5 font-mono text-xs text-stone-600">{rule.rule_id}</td>
               <td className="py-2.5">
                 <p className="text-stone-800">{rule.threshold}</p>
-                <p className="mt-1 text-xs leading-5 text-stone-500">{rule.description}</p>
+                <p className="mt-1 text-xs leading-5 text-stone-500">
+                  {presentRiskRuleDescription(rule.description)}
+                </p>
               </td>
             </tr>
           ))}

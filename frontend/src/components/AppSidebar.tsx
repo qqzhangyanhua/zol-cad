@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  CalendarIcon,
   DrawingAnalysisIcon,
   HistoryQuoteIcon,
   KnowledgeIcon,
@@ -16,6 +17,15 @@ import {
 import { LogoutButton } from "@/components/LogoutButton";
 import type { CurrentUser } from "@/lib/types";
 
+type SidebarIcon = typeof DrawingAnalysisIcon;
+
+type SidebarItem = {
+  label: string;
+  href: string;
+  icon: SidebarIcon;
+  match: (path: string) => boolean;
+};
+
 type AppSidebarProps = {
   user: CurrentUser;
 };
@@ -23,24 +33,21 @@ type AppSidebarProps = {
 export function AppSidebar({ user }: AppSidebarProps) {
   const pathname = usePathname();
 
-  const navItems = [
+  const navItems: SidebarItem[] = [
     {
       label: "零件图",
-      subtitle: "图纸分析",
       href: "/part-drawings",
       icon: DrawingAnalysisIcon,
       match: (path: string) => path.startsWith("/part-drawings"),
     },
     {
       label: "报价任务",
-      subtitle: "任务管理",
       href: "/quote-tasks",
       icon: ProjectManageIcon,
       match: (path: string) => path.startsWith("/quote-tasks"),
     },
     {
       label: "处理耗时",
-      subtitle: "工时评估",
       href: "/processing-time",
       icon: QuoteCalcIcon,
       match: (path: string) => path.startsWith("/processing-time"),
@@ -49,31 +56,36 @@ export function AppSidebar({ user }: AppSidebarProps) {
       ? [
           {
             label: "本厂偏好",
-            subtitle: "风险规则",
             href: "/admin/preferences",
             icon: RiskAssessIcon,
             match: (path: string) => path.startsWith("/admin/preferences"),
           },
           {
             label: "修正统计",
-            subtitle: "复核洞察",
             href: "/admin/correction-stats",
             icon: HistoryQuoteIcon,
             match: (path: string) => path.startsWith("/admin/correction-stats"),
           },
           {
             label: "本厂数据",
-            subtitle: "数据存储",
             href: "/admin/tenant-data",
             icon: KnowledgeIcon,
-            match: (path: string) =>
-              path.startsWith("/admin/tenant-data") ||
-              path.startsWith("/admin/processing-records") ||
-              path.startsWith("/admin/confidentiality"),
+            match: (path: string) => path.startsWith("/admin/tenant-data"),
+          },
+          {
+            label: "全厂处理记录",
+            href: "/admin/processing-records",
+            icon: CalendarIcon,
+            match: (path: string) => path.startsWith("/admin/processing-records"),
+          },
+          {
+            label: "保密说明",
+            href: "/admin/confidentiality",
+            icon: ShieldCheckIcon,
+            match: (path: string) => path.startsWith("/admin/confidentiality"),
           },
           {
             label: "系统设置",
-            subtitle: "账号管理",
             href: "/admin/accounts",
             icon: SettingsIcon,
             match: (path: string) => path.startsWith("/admin/accounts"),

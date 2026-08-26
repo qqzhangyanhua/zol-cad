@@ -3,13 +3,16 @@ import { AppHeader } from "@/components/AppHeader";
 import { AppShell } from "@/components/AppShell";
 import { AssignQuoteTaskPanel } from "@/components/AssignQuoteTaskPanel";
 import { CadDrawingReviewSummary } from "@/components/CadDrawingReviewSummary";
+import { CorrectionTrail } from "@/components/CorrectionTrail";
 import { ExtractionDisclaimer } from "@/components/ExtractionDisclaimer";
 import { OriginalDrawingViewer } from "@/components/OriginalDrawingViewer";
 import { PartDrawingQualityPanel } from "@/components/PartDrawingQualityPanel";
 import { PartDrawingWorkspace } from "@/components/PartDrawingWorkspace";
 import { fetchBackend } from "@/lib/backend";
 import {
+  parseCorrectionRecordList,
   parseCurrentUser,
+  parseFactoryAccountList,
   parseFactoryPreferences,
   parseOriginalAccess,
   parsePartDrawing,
@@ -23,23 +26,32 @@ type PartDrawingDetailPageProps = {
 
 export default async function PartDrawingDetailPage({ params }: PartDrawingDetailPageProps) {
   const { id } = await params;
-  const [meResponse, drawingResponse, originalResponse, tasksResponse, prefsResponse] = await Promise.all([
+  const [
+    meResponse,
+    drawingResponse,
+    originalResponse,
+    tasksResponse,
+    prefsResponse,
+    recordsResponse,
+  ] = await Promise.all([
     fetchBackend("/auth/me"),
     fetchBackend(`/part-drawings/${id}`),
     fetchBackend(`/part-drawings/${id}/original`),
     fetchBackend("/quote-tasks"),
     fetchBackend("/factory-preferences"),
+    fetchBackend(`/part-drawings/${id}/correction-records`),
   ]);
 
   if (
     meResponse.status === 401 ||
     drawingResponse.status === 401 ||
     tasksResponse.status === 401 ||
-    prefsResponse.status === 401
+    prefsResponse.status === 401 ||
+    recordsResponse.status === 401
   ) {
     redirect("/login");
   }
-  if (drawingResponse.status === 404 || originalResponse.status === 404) {
+  if (drawingResponse.status === 404 || originalResponse.status === 404 || recordsResponse.status === 404) {
     notFound();
   }
   if (
@@ -47,7 +59,8 @@ export default async function PartDrawingDetailPage({ params }: PartDrawingDetai
     !drawingResponse.ok ||
     !originalResponse.ok ||
     !tasksResponse.ok ||
-    !prefsResponse.ok
+    !prefsResponse.ok ||
+    !recordsResponse.ok
   ) {
     throw new Error("无法读取零件图原图");
   }
@@ -57,6 +70,16 @@ export default async function PartDrawingDetailPage({ params }: PartDrawingDetai
   const original = parseOriginalAccess(await originalResponse.json());
   const tasks = parseQuoteTaskList(await tasksResponse.json());
   const prefs = parseFactoryPreferences(await prefsResponse.json());
+  const records = parseCorrectionRecordList(await recordsResponse.json());
+  const actorNames: Record<string, string> = {};
+  if (user.role === "admin") {
+    const accountsResponse = await fetchBackend("/admin/accounts");
+    if (accountsResponse.ok) {
+      for (const account of parseFactoryAccountList(await accountsResponse.json()).items) {
+        actorNames[account.id] = account.username;
+      }
+    }
+  }
   const originalSrc = resolveOriginalSrc(original.url);
   const showWorkspace =
     drawing.status === "已上传" ||
@@ -120,6 +143,12 @@ export default async function PartDrawingDetailPage({ params }: PartDrawingDetai
             </div>
           )}
         </div>
+
+        <CorrectionTrail
+          records={records.items}
+          fields={drawing.extracted_fields}
+          actorNames={actorNames}
+        />
       </main>
     </AppShell>
   );

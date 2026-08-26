@@ -225,3 +225,21 @@ def test_界面与用途文案不暗示实时模型优化() -> None:
         assert phrase not in blob
     assert CORRECTION_STATS_PURPOSE in blob
     assert "闭源" in CORRECTION_STATS_PURPOSE
+
+
+def test_零件图详情会拉取并展示修正记录() -> None:
+    detail = (REPO_ROOT / "frontend" / "src" / "app" / "part-drawings" / "[id]" / "page.tsx").read_text(
+        encoding="utf-8"
+    )
+    trail = (REPO_ROOT / "frontend" / "src" / "components" / "CorrectionTrail.tsx").read_text(
+        encoding="utf-8"
+    )
+    assert "correction-records" in detail
+    assert "CorrectionTrail" in detail
+    assert "修正记录" in trail
+    assert "字段类型" in trail
+    assert "原值" in trail
+    assert "操作人" in trail
+    assert "<details" in trail
+    assert "<details open" not in trail
+    assert "这张零件图还没有修正记录" in trail
