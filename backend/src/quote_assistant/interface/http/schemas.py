@@ -334,6 +334,7 @@ class QuoteTaskDetailResponse(BaseModel):
     customer_name: str
     created_at: datetime
     review_status: QuoteTaskReviewStatus
+    unreviewed_member_count: int
     drawings: list[PartDrawingResponse]
 
 
@@ -359,6 +360,7 @@ def to_quote_task_detail_response(
         customer_name=view.task.customer_name,
         created_at=view.task.created_at,
         review_status=view.review_status,
+        unreviewed_member_count=view.unreviewed_member_count,
         drawings=[
             to_part_drawing_response(drawing, risk_label_priority=risk_label_priority)
             for drawing in view.drawings

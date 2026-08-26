@@ -68,6 +68,7 @@ def test_报价员能创建报价任务并填写名称与客户(client: TestClie
     assert created["name"] == "南方汽配八月询价"
     assert created["customer_name"] == "南方汽配"
     assert created["review_status"] == "无零件图"
+    assert created["unreviewed_member_count"] == 0
     assert created["drawings"] == []
     assert "amount" not in created
     assert "price" not in created
@@ -220,6 +221,7 @@ def test_详情列出零件图及各自复核状态(client: TestClient, db_sessi
     assert detail.status_code == 200
     body = detail.json()
     assert body["review_status"] == "复核未完成"
+    assert body["unreviewed_member_count"] == 1
     statuses = {row["id"]: row["status"] for row in body["drawings"]}
     assert statuses[reviewed["id"]] == "已复核"
     assert statuses[pending["id"]] == "已提取"
@@ -242,6 +244,7 @@ def test_报价任务模型没有金额和审批字段() -> None:
     assert "approval" not in QuoteTaskSummaryResponse.model_fields
     assert "amount" not in QuoteTaskDetailResponse.model_fields
     assert "approval" not in QuoteTaskDetailResponse.model_fields
+    assert "unreviewed_member_count" in QuoteTaskDetailResponse.model_fields
 
 
 def test_插入辅助可指定创建时间(db_session: Session) -> None:

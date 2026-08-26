@@ -30,7 +30,7 @@
 
 顺带：前端已经算出了 `unfinished` 并渲染了明确警告，但导出按钮的 `disabled` 只绑了 `pending`，不受 `unfinished` 影响。用户看完警告点下去，走一遍网络拿回 409 再变红字。警告已经说清楚了就别让用户再撞一次墙。
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] 有一个 onboarding 用的 CLI 能为指定工厂写入 / 更新 / 查看**报价底稿**模板，走领域校验，不经过 HTTP
 - [ ] CLI 的存在与用法写进 `backend/README.md`，写明它是团队工具不是产品功能

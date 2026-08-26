@@ -35,7 +35,32 @@ QA_LOCAL_OBJECT_DIR=/tmp/quote-assistant-objects \
 
 报价任务：轻量归集层，字段只有名称、客户名称、创建时间与创建人。零件图通过可空的 `quote_task_id` 归入，一张图同时最多属于一个任务，也可以不属于任何任务。历史检索按客户名称、创建时间、以及由成员零件图复核状态推导的进度（无零件图 / 复核未完成 / 已复核）。任务本身没有金额字段，也没有审批或状态流转。
 
-报价底稿导出：`GET /quote-tasks/{id}/quote-sheet?format=xlsx|csv`。每个零件一行。列与顺序读该工厂 `quote_sheet_templates` 行（没有则用默认底稿）。模板是 onboarding 后台配置，没有 HTTP 写入入口，管理员界面也没有字段映射。导出必须带风险标签、非目标族的「实验性、不保证」、以及票 05 的低质量图标记。任务里还有未复核零件图时返回 409，并点名还差哪几张。
+报价底稿导出：`GET /quote-tasks/{id}/quote-sheet?format=xlsx|csv`。每个零件一行。列与顺序读该工厂 `quote_sheet_templates` 行（没有则用默认底稿）。模板是 onboarding 后台配置，没有 HTTP 写入入口，管理员界面也没有字段映射。导出必须带风险标签、非目标族的「实验性、不保证」、以及票 05 的低质量图标记。任务里还有未复核零件图时返回 409：自己能看见的会点名文件名；若未复核的零件不由当前报价员处理，则只报数量、不泄漏他人文件名。未复核检查针对任务里的全部零件，与调用者的 owner 可见性无关。
+
+## 报价底稿模板 CLI（团队工具，不是产品功能）
+
+onboarding 时由团队按该厂现有底稿写入列模板。不要把它做成管理员配置页，也不要加 HTTP 写入。走领域校验（未知源字段 / 空标题 / 重复列会被拒绝）。
+
+```bash
+cd backend
+# 查看（没有写入则显示默认列）
+QA_DATABASE_URL=postgresql+psycopg://quote:quote@127.0.0.1:5432/quote_assistant \
+  PYTHONPATH=src uv run python -m quote_assistant.interface.cli.quote_sheet_template \
+  show --factory-name 华东精密
+
+# 写入 / 更新。JSON 数组，每项 {"source_key": "...", "header": "..."}
+QA_DATABASE_URL=postgresql+psycopg://quote:quote@127.0.0.1:5432/quote_assistant \
+  PYTHONPATH=src uv run python -m quote_assistant.interface.cli.quote_sheet_template \
+  save --factory-name 华东精密 --columns-file ./templates/huadong.json
+
+# 也可以逐列指定
+QA_DATABASE_URL=postgresql+psycopg://quote:quote@127.0.0.1:5432/quote_assistant \
+  PYTHONPATH=src uv run python -m quote_assistant.interface.cli.quote_sheet_template \
+  save --factory-id 00000000-0000-0000-0000-000000000000 \
+  --column part_name:品名 --column drawing_no:本厂图号 --column risk_labels:加工风险
+```
+
+可用 `source_key` 见 `QUOTE_SHEET_SOURCE_KEYS`（`drawing_no` / `part_name` / `material` / 关键尺寸 / 技术要求 / `risk_labels` / `experimental_mark` / `low_quality_mark` / `original_filename`）。漏配风险标签、实验性、低质量图三列时，导出仍会补在末尾。
 
 ## 缝 1 测试
 

@@ -156,8 +156,19 @@ def unreviewed_drawings_for_export(drawings: Sequence[PartDrawing]) -> tuple[Par
     )
 
 
-def incomplete_export_message(drawings: Sequence[PartDrawing]) -> str:
-    names = "、".join(drawing.original_filename for drawing in drawings)
+HIDDEN_UNREVIEWED_EXPORT_MESSAGE = "本任务中有 {count} 个零件尚未完成复核，其中部分不由你处理"
+
+
+def incomplete_export_message(
+    unfinished: Sequence[PartDrawing],
+    *,
+    visible_unfinished: Sequence[PartDrawing] | None = None,
+) -> str:
+    """Name visible unfinished 零件图. If any are outside the caller's visibility, do not leak filenames."""
+    visible = tuple(unfinished if visible_unfinished is None else visible_unfinished)
+    if len(unfinished) > len(visible):
+        return HIDDEN_UNREVIEWED_EXPORT_MESSAGE.format(count=len(unfinished))
+    names = "、".join(drawing.original_filename for drawing in unfinished)
     return f"报价任务中还有未完成复核的零件图：{names}"
 
 

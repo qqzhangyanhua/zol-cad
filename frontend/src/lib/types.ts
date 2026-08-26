@@ -563,6 +563,7 @@ export type QuoteTaskDetail = {
   customer_name: string;
   created_at: string;
   review_status: QuoteTaskReviewStatus;
+  unreviewed_member_count: number;
   drawings: PartDrawing[];
 };
 
@@ -618,6 +619,7 @@ export function parseQuoteTaskDetail(data: unknown): QuoteTaskDetail {
     typeof data.customer_name !== "string" ||
     typeof data.created_at !== "string" ||
     !isQuoteTaskReviewStatus(data.review_status) ||
+    typeof data.unreviewed_member_count !== "number" ||
     !Array.isArray(data.drawings)
   ) {
     throw new Error("报价任务详情响应格式不正确");
@@ -628,6 +630,7 @@ export function parseQuoteTaskDetail(data: unknown): QuoteTaskDetail {
     customer_name: data.customer_name,
     created_at: data.created_at,
     review_status: data.review_status,
+    unreviewed_member_count: data.unreviewed_member_count,
     drawings: data.drawings.map(parsePartDrawing),
   };
 }
