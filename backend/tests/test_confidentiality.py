@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -12,6 +14,9 @@ from quote_assistant.adapter.confidentiality.adr0009 import (
     vendor_is_selected,
 )
 from quote_assistant.config import Settings
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+FRONTEND_SRC = REPO_ROOT / "frontend" / "src"
 
 
 CLOSED_ADR = """# MVP 多模态大模型供应商
@@ -115,3 +120,24 @@ def test_管理员能看到诚实的保密说明报价员不能(
     client.post("/auth/logout")
     assert login(client, "quoter_a", "secret-a").status_code == 200
     assert client.get("/admin/confidentiality").status_code == 403
+
+
+def test_面向客户的保密与风险文案不暴露内部追踪标识() -> None:
+    notice = (FRONTEND_SRC / "components" / "ConfidentialityNotice.tsx").read_text(encoding="utf-8")
+    catalog = (FRONTEND_SRC / "components" / "RiskRuleCatalog.tsx").read_text(encoding="utf-8")
+    for blob, name in ((notice, "ConfidentialityNotice"), (catalog, "RiskRuleCatalog")):
+        assert "票 0" not in blob, name
+        assert "ADR-000" not in blob, name
+        assert ".scratch" not in blob, name
+        assert "adr_path" not in blob, name
+        assert "research_notes_path" not in blob, name
+    assert "presentConfidentialityNotice" in notice
+    assert "阈值仍是暂定值" in catalog
+
+
+def test_管理员侧栏能点进全厂处理记录与保密说明() -> None:
+    sidebar = (FRONTEND_SRC / "components" / "AppSidebar.tsx").read_text(encoding="utf-8")
+    assert 'href: "/admin/processing-records"' in sidebar
+    assert 'href: "/admin/confidentiality"' in sidebar
+    assert "全厂处理记录" in sidebar
+    assert "保密说明" in sidebar
