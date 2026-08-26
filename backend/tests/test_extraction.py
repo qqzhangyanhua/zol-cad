@@ -8,7 +8,11 @@ from helpers import create_factory, create_quoter, login
 from quote_assistant.adapter.extraction.fake import FixtureExtractionEngine
 from quote_assistant.adapter.extraction.fixtures import DIRTY_ENGINE_PAYLOAD
 from quote_assistant.adapter.extraction.validation import parse_engine_result
-from quote_assistant.domain.extraction import LOOK_AT_DRAWING_DISCLAIMER, ExtractionRequest, ExtractionResult
+from quote_assistant.domain.extraction import (
+    LOOK_AT_DRAWING_DISCLAIMER,
+    ExtractionRequest,
+    ExtractionResult,
+)
 
 
 def _upload(client: TestClient, filename: str):

@@ -16,7 +16,6 @@ from quote_assistant.usecase.delete_tenant_data import DeleteTenantData
 from quote_assistant.usecase.export_tenant_data import ExportTenantData
 from quote_assistant.usecase.request_tenant_delete import RequestTenantDelete
 
-
 HIGH_RISK_KEYS = ("tightest_tolerance", "max_envelope", "deepest_hole", "thinnest_wall")
 
 

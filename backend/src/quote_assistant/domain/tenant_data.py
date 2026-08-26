@@ -14,7 +14,11 @@ from quote_assistant.domain.correction import CorrectionRecord
 from quote_assistant.domain.entities import PartDrawing
 from quote_assistant.domain.part_family import experimental_mark_for
 from quote_assistant.domain.quote_task import QuoteTask
-from quote_assistant.domain.review import fields_for_risk_labels, review_fields_for, unfinished_confirmation_items
+from quote_assistant.domain.review import (
+    fields_for_risk_labels,
+    review_fields_for,
+    unfinished_confirmation_items,
+)
 from quote_assistant.domain.risk_labels import evaluate_risk_labels
 
 TENANT_DELETE_CHALLENGE_TTL = timedelta(minutes=10)

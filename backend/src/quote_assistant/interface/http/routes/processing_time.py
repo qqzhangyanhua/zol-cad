@@ -3,7 +3,10 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException
 
 from quote_assistant.domain.errors import AdminRequired, InvalidManualBaseline
-from quote_assistant.interface.http.deps import get_compare_processing_time, get_record_manual_baseline
+from quote_assistant.interface.http.deps import (
+    get_compare_processing_time,
+    get_record_manual_baseline,
+)
 from quote_assistant.interface.http.schemas import (
     ManualBaselineResponse,
     ProcessingTimeComparisonResponse,

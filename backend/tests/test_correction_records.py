@@ -9,7 +9,6 @@ from drawing_fixtures import PNG_1X1
 from helpers import create_admin, create_factory, create_quoter, login
 from quote_assistant.domain.correction import CORRECTION_STATS_PURPOSE
 
-
 FORBIDDEN_COPY = ("越用越准", "自动学习", "实时优化", "越改越准")
 REPO_ROOT = Path(__file__).resolve().parents[2]
 

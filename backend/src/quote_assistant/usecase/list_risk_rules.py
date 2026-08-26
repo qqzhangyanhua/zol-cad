@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from quote_assistant.domain.entities import Actor
 from quote_assistant.domain.risk_labels import RiskRuleDefinition, list_risk_rule_definitions
 from quote_assistant.usecase.tenant import TenantBoundUseCase, require_admin
 

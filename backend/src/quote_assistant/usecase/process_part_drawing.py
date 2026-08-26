@@ -10,6 +10,7 @@ from quote_assistant.domain.errors import (
     IllegalPartDrawingTransition,
 )
 from quote_assistant.domain.part_drawing_state import (
+    PartDrawingEvent,
     fields_to_stash_after_grade,
     record_transition,
     status_after_grade,
@@ -91,7 +92,7 @@ def _grading_failed(
     events: PartDrawingEventRepository,
     actor_user_id: UUID | None,
     reason: str,
-):
+) -> tuple[PartDrawing, PartDrawingEvent]:
     return record_transition(
         drawing,
         PartDrawingStatus.EXTRACT_FAILED,

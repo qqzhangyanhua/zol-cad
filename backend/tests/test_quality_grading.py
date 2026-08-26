@@ -15,8 +15,8 @@ from quote_assistant.domain.quality import (
     QUALITY_GRADE_DISCLAIMER,
 )
 from quote_assistant.usecase.continue_despite_poor_quality import ContinueDespitePoorQuality
-from quote_assistant.usecase.process_part_drawing import ProcessPartDrawing
 from quote_assistant.usecase.list_part_drawing_events import ListPartDrawingEvents
+from quote_assistant.usecase.process_part_drawing import ProcessPartDrawing
 from quote_assistant.usecase.upload_part_drawings import UploadPartDrawings
 
 

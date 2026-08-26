@@ -18,7 +18,7 @@
 
 **落地方式**：先把工具接进来并让它在现有代码上通过（必要时用配置收窄严格度，而不是靠满地 `# type: ignore`），再在 CI 里加成必过项。ruff 的 format 是否启用需要一个决定——如果启用，就在同一个 commit 里一次性 format 全库，别让它和后续功能改动混在一起。
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] `pyproject.toml` 里配好 ruff（lint + isort），规则集与项目风格匹配
 - [ ] `pyproject.toml` 里配好 mypy，严格度写明并有理由

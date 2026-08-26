@@ -19,7 +19,11 @@ from sqlalchemy.orm import Session
 
 from quote_assistant.adapter.db.models import FactoryRow
 from quote_assistant.adapter.db.repositories import SqlQuoteSheetTemplateRepository
-from quote_assistant.adapter.db.session import SqlAlchemyUnitOfWork, make_engine, make_session_factory
+from quote_assistant.adapter.db.session import (
+    SqlAlchemyUnitOfWork,
+    make_engine,
+    make_session_factory,
+)
 from quote_assistant.config import Settings
 from quote_assistant.domain.entities import Actor, Role
 from quote_assistant.domain.errors import InvalidQuoteSheetTemplate

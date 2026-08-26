@@ -7,7 +7,14 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from drawing_fixtures import PNG_1X1
-from helpers import create_admin, create_factory, create_quoter, insert_event, insert_part_drawing, login
+from helpers import (
+    create_admin,
+    create_factory,
+    create_quoter,
+    insert_event,
+    insert_part_drawing,
+    login,
+)
 from quote_assistant.domain.entities import PartDrawingStatus
 
 HIGH_RISK_KEYS = ("tightest_tolerance", "max_envelope", "deepest_hole", "thinnest_wall")

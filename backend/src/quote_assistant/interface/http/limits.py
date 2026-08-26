@@ -7,12 +7,13 @@ from collections import deque
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
+from starlette.types import ASGIApp
 
 
 class RequestSizeLimitMiddleware(BaseHTTPMiddleware):
     """Reject oversized bodies from Content-Length before multipart parsing buffers them."""
 
-    def __init__(self, app, max_bytes: int) -> None:
+    def __init__(self, app: ASGIApp, max_bytes: int) -> None:
         super().__init__(app)
         self._max_bytes = max_bytes
 
@@ -53,7 +54,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
     def __init__(
         self,
-        app,
+        app: ASGIApp,
         *,
         login_per_minute: int,
         upload_per_minute: int,

@@ -15,7 +15,6 @@ from quote_assistant.domain.errors import (
 from quote_assistant.domain.factory_preferences import FactoryPreferences
 from quote_assistant.interface.http.deps import (
     get_add_critical_dimension,
-    get_loaded_factory_preferences,
     get_complete_review,
     get_confirm_extracted_field,
     get_continue_despite_poor_quality,
@@ -26,6 +25,7 @@ from quote_assistant.interface.http.deps import (
     get_list_correction_records,
     get_list_part_drawing_events,
     get_list_part_drawings,
+    get_loaded_factory_preferences,
     get_reopen_review,
     get_unignore_extracted_field,
     get_update_extracted_field,
@@ -45,13 +45,14 @@ from quote_assistant.interface.http.schemas import (
     to_correction_record_response,
     to_part_drawing_response,
 )
+from quote_assistant.interface.http.uploads import read_upload_bounded
 from quote_assistant.usecase.continue_despite_poor_quality import ContinueDespitePoorQuality
-from quote_assistant.usecase.process_part_drawing import ProcessPartDrawing
 from quote_assistant.usecase.get_part_drawing import GetPartDrawing
 from quote_assistant.usecase.issue_original_access_url import IssueOriginalAccessUrl
 from quote_assistant.usecase.list_correction_records import ListCorrectionRecords
 from quote_assistant.usecase.list_part_drawing_events import ListPartDrawingEvents
 from quote_assistant.usecase.list_part_drawings import ListPartDrawings
+from quote_assistant.usecase.process_part_drawing import ProcessPartDrawing
 from quote_assistant.usecase.review_part_drawing import (
     AddCriticalDimension,
     CompleteReview,
@@ -61,7 +62,6 @@ from quote_assistant.usecase.review_part_drawing import (
     UnignoreExtractedField,
     UpdateExtractedField,
 )
-from quote_assistant.interface.http.uploads import read_upload_bounded
 from quote_assistant.usecase.upload_part_drawings import UploadPartDrawings
 
 router = APIRouter(prefix="/part-drawings", tags=["part-drawings"])

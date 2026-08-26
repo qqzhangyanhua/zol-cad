@@ -70,6 +70,25 @@ QA_DATABASE_URL=postgresql+psycopg://quote:quote@127.0.0.1:5432/quote_assistant 
 
 可用 `source_key` 见 `QUOTE_SHEET_SOURCE_KEYS`（`drawing_no` / `part_name` / `material` / 关键尺寸 / 技术要求 / `risk_labels` / `experimental_mark` / `low_quality_mark` / `original_filename`）。漏配风险标签、实验性、低质量图三列时，导出仍会补在末尾。
 
+## 静态检查
+
+与前端的 `tsc --noEmit` + eslint 对等：ruff（lint + isort + format）和 mypy（`strict = true`）。分层规则仍由 `tests/test_layering.py` 守，工具不替代。
+
+```bash
+cd backend
+uv sync --group dev
+uv run ruff check .
+uv run ruff format --check .
+uv run mypy
+```
+
+自动修 lint / 格式：
+
+```bash
+uv run ruff check --fix .
+uv run ruff format .
+```
+
 ## 缝 1 测试
 
 pytest + FastAPI ASGI 测试客户端（不起端口）。启动时对真实 Postgres 执行 Alembic。

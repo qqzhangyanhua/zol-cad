@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 
+from quote_assistant.config import Settings
 from quote_assistant.domain.errors import AccountDisabled, InvalidCredentials
 from quote_assistant.interface.http.deps import (
     SESSION_COOKIE,
@@ -14,7 +15,6 @@ from quote_assistant.interface.http.schemas import CurrentUserResponse, LoginReq
 from quote_assistant.usecase.get_current_actor import GetCurrentActor
 from quote_assistant.usecase.login import Login
 from quote_assistant.usecase.logout import Logout
-from quote_assistant.config import Settings
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 

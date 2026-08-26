@@ -3,7 +3,11 @@ from __future__ import annotations
 from datetime import datetime
 
 from quote_assistant.domain.entities import Actor
-from quote_assistant.domain.quote_task import QuoteTaskReviewStatus, QuoteTaskView, assemble_quote_task_view
+from quote_assistant.domain.quote_task import (
+    QuoteTaskReviewStatus,
+    QuoteTaskView,
+    assemble_quote_task_view,
+)
 from quote_assistant.usecase.ports import PartDrawingRepository, QuoteTaskRepository
 from quote_assistant.usecase.tenant import TenantBoundUseCase, filter_owned_by_actor
 

@@ -29,11 +29,20 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           python-version: "3.12"
-      - name: Run seam-1 tests against containerized Postgres
+      - name: Install backend dependencies
+        working-directory: backend
+        run: uv sync --group dev
+      - name: Lint
         working-directory: backend
         run: |
-          uv sync --group dev
-          uv run pytest -m "not vendor_contract"
+          uv run ruff check .
+          uv run ruff format --check .
+      - name: Typecheck
+        working-directory: backend
+        run: uv run mypy
+      - name: Run seam-1 tests against containerized Postgres
+        working-directory: backend
+        run: uv run pytest -m "not vendor_contract"
 
   frontend:
     runs-on: ubuntu-latest

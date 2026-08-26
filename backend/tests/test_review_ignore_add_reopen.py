@@ -5,9 +5,13 @@ from sqlalchemy.orm import Session
 
 from drawing_fixtures import PNG_1X1
 from helpers import create_factory, create_quoter, login
-from quote_assistant.domain.extraction import ExtractedField, ExtractionRequest, ExtractionResult, FieldCategory
+from quote_assistant.domain.extraction import (
+    ExtractedField,
+    ExtractionRequest,
+    ExtractionResult,
+    FieldCategory,
+)
 from quote_assistant.domain.quality import QualityGrade
-
 
 HIGH_RISK_KEYS = ("tightest_tolerance", "max_envelope", "deepest_hole", "thinnest_wall")
 

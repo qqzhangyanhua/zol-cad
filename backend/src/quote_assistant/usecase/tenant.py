@@ -1,14 +1,11 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
-from typing import TypeVar
 from uuid import UUID
 
 from quote_assistant.domain.entities import Actor, PartDrawing, Role
 from quote_assistant.domain.errors import AdminRequired, PartDrawingNotFound, QuoteTaskNotFound
 from quote_assistant.domain.quote_task import QuoteTask
-
-T = TypeVar("T")
 
 
 class TenantScope:
@@ -52,7 +49,7 @@ def actor_can_see_owned(actor: Actor, owner_user_id: UUID | None) -> bool:
     return owner_user_id == actor.user_id
 
 
-def filter_owned_by_actor(
+def filter_owned_by_actor[T](
     actor: Actor,
     items: Sequence[T],
     owner_of: Callable[[T], UUID | None],

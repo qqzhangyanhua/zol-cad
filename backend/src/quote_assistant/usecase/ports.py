@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from typing import Protocol
 from uuid import UUID
 
+from quote_assistant.domain.confidentiality import ConfidentialityNotice
 from quote_assistant.domain.correction import CorrectionRecord
 from quote_assistant.domain.entities import (
     Actor,
@@ -12,12 +13,11 @@ from quote_assistant.domain.entities import (
     PartDrawing,
     User,
 )
+from quote_assistant.domain.extraction import ExtractionRequest, ExtractionResult, RenderedPage
 from quote_assistant.domain.factory_preferences import FactoryPreferences
+from quote_assistant.domain.part_drawing_state import PartDrawingEvent
 from quote_assistant.domain.quote_sheet import QuoteSheetFileFormat, QuoteSheetTemplate
 from quote_assistant.domain.quote_task import QuoteTask
-from quote_assistant.domain.confidentiality import ConfidentialityNotice
-from quote_assistant.domain.extraction import ExtractionRequest, ExtractionResult, RenderedPage
-from quote_assistant.domain.part_drawing_state import PartDrawingEvent
 from quote_assistant.domain.tenant_data import TenantArchiveFile, TenantDeleteChallenge
 from quote_assistant.usecase.tenant import TenantScope
 

@@ -18,7 +18,10 @@ from quote_assistant.adapter.db.repositories import (
     SqlPartDrawingRepository,
 )
 from quote_assistant.adapter.db.session import SqlAlchemyUnitOfWork
-from quote_assistant.adapter.extraction.cost import ExtractionCostEvent, InMemoryExtractionCostCounter
+from quote_assistant.adapter.extraction.cost import (
+    ExtractionCostEvent,
+    InMemoryExtractionCostCounter,
+)
 from quote_assistant.adapter.extraction.fake import FixtureExtractionEngine
 from quote_assistant.config import Settings, validate_runtime_settings
 from quote_assistant.domain.entities import Actor, PartDrawingStatus, Role
@@ -67,7 +70,7 @@ def test_生产环境拒绝占位签名密钥与demo密码() -> None:
                 object_sign_secret="not-the-default-secret",
             )
         )
-    with pytest.raises(RuntimeError, match="SESSION_COOKIE_SECURE|Secure"):
+    with pytest.raises(RuntimeError, match=r"SESSION_COOKIE_SECURE|Secure"):
         create_app(
             Settings(
                 app_env="production",

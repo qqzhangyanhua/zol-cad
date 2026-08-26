@@ -23,8 +23,9 @@ from quote_assistant.domain.extraction import (
     FieldCategory,
     FieldSource,
 )
-from quote_assistant.domain.part_family import experimental_mark_for, is_target_part_family
+from quote_assistant.domain.factory_preferences import FactoryPreferences
 from quote_assistant.domain.part_drawing_state import auto_prefill_allowed
+from quote_assistant.domain.part_family import experimental_mark_for, is_target_part_family
 from quote_assistant.domain.quality import (
     ASSEMBLY_OUT_OF_SCOPE_TEXT,
     LOW_QUALITY_MARK_TEXT,
@@ -32,13 +33,12 @@ from quote_assistant.domain.quality import (
     QUALITY_GRADE_DISCLAIMER,
     QualityGrade,
 )
+from quote_assistant.domain.quote_task import QuoteTaskReviewStatus, QuoteTaskView
 from quote_assistant.domain.review import (
     fields_for_risk_labels,
     review_fields_for,
     unfinished_confirmation_items,
 )
-from quote_assistant.domain.quote_task import QuoteTaskReviewStatus, QuoteTaskView
-from quote_assistant.domain.factory_preferences import FactoryPreferences
 from quote_assistant.domain.risk_labels import (
     NO_JUDGABLE_RISK_ITEMS_MESSAGE,
     RiskLabelName,

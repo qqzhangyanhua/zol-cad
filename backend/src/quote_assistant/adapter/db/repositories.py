@@ -30,9 +30,9 @@ from quote_assistant.domain.entities import (
     User,
 )
 from quote_assistant.domain.extraction import ExtractedField, FieldCategory, FieldSource
+from quote_assistant.domain.factory_preferences import FactoryPreferences
 from quote_assistant.domain.part_drawing_state import PartDrawingEvent
 from quote_assistant.domain.quality import QualityGrade
-from quote_assistant.domain.factory_preferences import FactoryPreferences
 from quote_assistant.domain.quote_sheet import QuoteSheetTemplate, parse_quote_sheet_columns
 from quote_assistant.domain.quote_task import QuoteTask
 from quote_assistant.domain.risk_labels import RiskLabelName
@@ -666,7 +666,7 @@ class SqlQuoteSheetTemplateRepository:
         return _to_quote_sheet_template(row)
 
     def save_for_tenant(self, tenant: TenantScope, template: QuoteSheetTemplate) -> None:
-        payload = [
+        payload: list[dict[str, object]] = [
             {"source_key": column.source_key, "header": column.header}
             for column in template.columns
         ]

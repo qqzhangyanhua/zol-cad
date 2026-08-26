@@ -12,8 +12,8 @@ from quote_assistant.domain.errors import (
     IncompleteReview,
 )
 from quote_assistant.domain.extraction import (
-    CANONICAL_FIELD_BY_KEY,
     ADDED_KEY_SEPARATOR,
+    CANONICAL_FIELD_BY_KEY,
     ExtractedField,
     FieldCategory,
     FieldSource,
@@ -146,7 +146,7 @@ def _replace_field(
     drawing: PartDrawing,
     field_key: str,
     *,
-    value: str | None | object,
+    value: str | object | None,
     confirm: bool,
     ignored: bool | object = _UNCHANGED,
 ) -> PartDrawing:

@@ -24,6 +24,9 @@ dev = [
   "pytest>=8.3",
   "httpx>=0.28",
   "testcontainers[postgres]>=4.9",
+  "ruff>=0.16.4",
+  "mypy>=2.3.1",
+  "types-openpyxl>=3.1.5.20260807",
 ]
 
 [tool.uv]
@@ -36,3 +39,97 @@ addopts = "-q"
 markers = [
   "vendor_contract: live vendor contract tests; excluded from default CI",
 ]
+
+# Lint + isort. Matches the implicit house style: double quotes, 100-wide lines,
+# first-party package `quote_assistant`. Does not replace test_layering.py —
+# those rules (no fastapi/sqlalchemy in domain/usecase, no inline prompts, no
+# amount/price/approval on quote tasks) are project-specific.
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+  "E",   # pycodestyle errors
+  "W",   # pycodestyle warnings
+  "F",   # pyflakes
+  "I",   # isort
+  "UP",  # pyupgrade
+  "B",   # bugbear
+  "RUF", # ruff-specific
+  "ANN401",  # no explicit `Any` — frontend eslint `no-explicit-any` equivalent
+]
+ignore = [
+  # Domain copy is Chinese; fullwidth punctuation is intentional, not a typo.
+  "RUF001",
+  "RUF002",
+  "RUF003",
+  # Line length is owned by `ruff format` (100). E501 would double-punish
+  # long Chinese strings that format correctly leaves intact.
+  "E501",
+]
+# Alembic revision files are generated from a template that still uses
+# `typing.Sequence` / `Union`; leave them alone so history stays readable.
+[tool.ruff.lint.per-file-ignores]
+"alembic/versions/**" = ["UP"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["quote_assistant"]
+
+# FastAPI's Depends / Query / File in defaults is the framework idiom, not a
+# mutable-default bug. Real B008 (datetime.now, []) still fires.
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = [
+  "fastapi.Depends",
+  "fastapi.Query",
+  "fastapi.Path",
+  "fastapi.Body",
+  "fastapi.File",
+  "fastapi.Form",
+  "fastapi.Header",
+  "fastapi.Cookie",
+]
+
+# Format is enabled (decision for ticket 28): same role as frontend eslint
+# auto-fixes. Whole-tree format lands in its own commit so it never mixes
+# with later feature diffs.
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+
+# Typecheck first-party code only. Aligns with frontend `strict: true` plus
+# eslint `no-explicit-any` as error. The concrete win here is catching a
+# use-case or port that quietly accepts `Any` — adapter-boundary validation
+# (ticket 21) and domain purity are the two pillars; mypy is the type-level
+# complement to test_layering.py, not a replacement.
+#
+# Why not stricter than this:
+# - `disallow_any_expr` would punish Starlette `app.state` and untyped SDKs
+#   (oss2 / pypdfium2) even when adapters isolate them. Too noisy, would
+#   force `# type: ignore`.
+# - tests/ and alembic/ are out of scope: tests are behavioral (pytest);
+#   revisions are generated. The type boundary is `quote_assistant`.
+[tool.mypy]
+python_version = "3.12"
+mypy_path = "src"
+explicit_package_bases = true
+files = ["src"]
+strict = true
+warn_unused_ignores = true
+plugins = ["pydantic.mypy"]
+# `disallow_any_explicit` is off: pydantic's mypy plugin treats `Field(...)`
+# as an explicit Any, which would fail every schema. Written `Any` is banned
+# by ruff ANN401 instead (same intent as frontend `no-explicit-any`).
+
+# Untyped vendor SDKs live only in adapters. Ignore missing stubs rather
+# than papering call sites with `# type: ignore`.
+[[tool.mypy.overrides]]
+module = [
+  "oss2",
+  "oss2.*",
+  "pypdfium2",
+  "pypdfium2.*",
+]
+ignore_missing_imports = true

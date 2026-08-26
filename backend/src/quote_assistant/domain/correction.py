@@ -6,7 +6,11 @@ from datetime import datetime
 from uuid import UUID, uuid4
 
 from quote_assistant.domain.entities import PartDrawing
-from quote_assistant.domain.extraction import CANONICAL_FIELD_BY_KEY, reviewable_fields, role_key_for_field
+from quote_assistant.domain.extraction import (
+    CANONICAL_FIELD_BY_KEY,
+    reviewable_fields,
+    role_key_for_field,
+)
 
 # Honest purpose (ADR-0003): accumulate samples and iterate prompts / post-processing.
 # Not live model improvement — the 提取引擎 is a closed-source general LLM.
