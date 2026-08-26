@@ -120,8 +120,6 @@ def test_校验失败留下结构摘要且不含图像内容(caplog) -> None:
         except ExtractionValidationFailed as exc:
             assert str(exc) == ADAPTER_VALIDATION_FAILED_REASON
             assert exc.diagnostic is not None
-            assert "engine_payload_validation_failed" in caplog.text
-            assert exc.diagnostic in caplog.text
             assert "keys=" in exc.diagnostic
             assert "extra_keys=" in exc.diagnostic
             assert "image_base64" in exc.diagnostic
@@ -129,9 +127,12 @@ def test_校验失败留下结构摘要且不含图像内容(caplog) -> None:
             assert "fields=len=1" in exc.diagnostic
             assert "value_type=int" in exc.diagnostic
             assert image_blob not in exc.diagnostic
-            assert image_blob not in caplog.text
             assert "UNIQUE-IMAGE-BYTES" not in exc.diagnostic
-            assert "UNIQUE-IMAGE-BYTES" not in caplog.text
+            captured = caplog.text + "".join(record.getMessage() for record in caplog.records)
+            assert "engine_payload_validation_failed" in captured
+            assert exc.diagnostic in captured
+            assert image_blob not in captured
+            assert "UNIQUE-IMAGE-BYTES" not in captured
             return
     raise AssertionError("脏载荷应被适配器拒绝")
 

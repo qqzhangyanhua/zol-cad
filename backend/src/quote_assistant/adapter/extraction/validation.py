@@ -160,13 +160,21 @@ def _validation_diagnostic(raw: object, exc: ValidationError) -> str:
     )
 
 
+def _emit_validation_diagnostic(diagnostic: str) -> None:
+    # Alembic's fileConfig(disable_existing_loggers=True) can mute this logger
+    # after import. Ticket 27 owns logging config; keep the line locatable.
+    LOGGER.disabled = False
+    LOGGER.propagate = True
+    LOGGER.warning("engine_payload_validation_failed %s", diagnostic)
+
+
 def parse_engine_result(raw: object) -> ExtractionResult:
     """Strict adapter-boundary validation. Failures never become domain objects."""
     try:
         payload = EngineResultPayload.model_validate(raw)
     except ValidationError as exc:
         diagnostic = _validation_diagnostic(raw, exc)
-        LOGGER.warning("engine_payload_validation_failed %s", diagnostic)
+        _emit_validation_diagnostic(diagnostic)
         raise ExtractionValidationFailed(
             ADAPTER_VALIDATION_FAILED_REASON,
             diagnostic=diagnostic,

@@ -25,13 +25,28 @@
 
 **Status:** claimed
 
-- [ ] 提示词正文包含完整输出契约：JSON 结构、三个必需 key、字段 key / label / category 列表
-- [ ] 字段目录只有一份来源，提示词里的字段清单由 `CANONICAL_FIELD_BY_KEY` 生成，不手抄
-- [ ] 提示词显式要求模型给出**图纸质量分级**，取值与 `QualityGrade` 三档一一对应
-- [ ] 提示词显式要求模型判定是否为装配图 / 爆炸图
-- [ ] 提示词显式要求"图上没有的字段留空"，且留空的表达方式与校验器接受的形式一致（`null` 或 `""` 二者择一并写明）
-- [ ] 有一个测试用"符合提示词契约的样例 payload"打进 `parse_engine_result` 并通过——即校验器与提示词的一致性被测试锁住，而不是靠人读两个文件比对
-- [ ] 校验失败时留下足以定位的诊断信息（模型原始返回的结构摘要），但不落图像内容
-- [ ] 缝 1 既有测试全部不改仍然通过
+- [x] 提示词正文包含完整输出契约：JSON 结构、三个必需 key、字段 key / label / category 列表
+- [x] 字段目录只有一份来源，提示词里的字段清单由 `CANONICAL_FIELD_BY_KEY` 生成，不手抄
+- [x] 提示词显式要求模型给出**图纸质量分级**，取值与 `QualityGrade` 三档一一对应
+- [x] 提示词显式要求模型判定是否为装配图 / 爆炸图
+- [x] 提示词显式要求"图上没有的字段留空"，且留空的表达方式与校验器接受的形式一致（`null` 或 `""` 二者择一并写明）
+- [x] 有一个测试用"符合提示词契约的样例 payload"打进 `parse_engine_result` 并通过——即校验器与提示词的一致性被测试锁住，而不是靠人读两个文件比对
+- [x] 校验失败时留下足以定位的诊断信息（模型原始返回的结构摘要），但不落图像内容
+- [x] 缝 1 既有测试全部不改仍然通过
 
 ## Comments
+
+- 2026-08-26：落地票 21。PR：https://github.com/qqzhangyanhua/zol-cad/pull/19
+
+  设计：
+  - 契约单源在 `domain/engine_output_contract.py`。字段清单遍历 `CANONICAL_FIELD_BY_KEY`，三档取值遍历 `QualityGrade`。两份提示词（专用占位 / 通用实验性）只拼前缀，正文契约不再手抄。
+  - 留空约定：**JSON `null`**。写在契约常量 `ENGINE_ABSENT_FIELD_VALUE` 与提示词里。校验器仍接受 `""` 并归一为 `None`（原行为未改），提示词不要求空字符串。
+  - 分级与装配/爆炸图：提示词里是显式判定指令，取值与 `QualityGrade` / 布尔语义对齐。领域层仍是「照抄引擎 payload」——本票只把判定写进模型合同，不另做程序化分级器。fixture 引擎仍按文件名硬查表，缝 1 路径不变。
+  - 校验失败：对外原因仍是「提取引擎返回结果未通过适配器校验，脏数据未进入领域层」（缝 1 原断言未改）。结构摘要挂在 `ExtractionValidationFailed.diagnostic`，并打 `engine_payload_validation_failed` 日志。摘要只记 key / 类型 / 错误 loc，不落 `image_base64` / `page_content` 等内容。Alembic `fileConfig` 会 mute 导入期 logger，发射前会重新打开该 logger；正式 `basicConfig` 仍归票 27。
+
+  未做票 22+（不合并两次引擎调用）。族类专用取数策略仍等票 01。
+
+  验证：
+  - `QA_TEST_DATABASE_URL` 指向本机 Postgres 16：`uv run pytest -m "not vendor_contract"` → **145 passed / 1 deselected**。既有缝 1 文件未改。
+  - 新测试锁一致性：`engine_output_contract_example()` 与提示词正文里的 JSON 样例打进 `parse_engine_result` 均通过；目录字段与 `QualityGrade` 三档都出现在两份正文里。
+  - 本票无前端 / UI 改动，未做浏览器验证。
