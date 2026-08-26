@@ -47,3 +47,4 @@
   - 缝 1：`tests/test_confidentiality.py` + `tests/test_correction_records.py` 共 12 passed（含源码断言：详情页接上修正记录、侧栏有两个 href、客户文案不含票号/ADR/`.scratch`）。本环境无 Docker，用本机 Postgres + `QA_TEST_DATABASE_URL` 跑的。
   - 浏览器（admin_a）：侧栏能点进 `/admin/processing-records`（看到 FX-TQ-01.png / EMPTY-TRAIL.png）和 `/admin/confidentiality`。保密页页内查找「票 01」「ADR-」「.scratch」均为 0。FX-TQ-01 详情默认收起「3 条 · 展开查看」，展开后最新在前：最深孔（空）→ Ø8×48、图号 FL-001 → FL-009、最严公差 IT7 → IT6，操作人 `quoter_a`。EMPTY-TRAIL 展开后是「这张零件图还没有修正记录…」。偏好页导语与四条规则描述均无票号/ADR。
   - 未做报价员账号下列表里点一遍（报价员看不到管理员入口；修正记录详情用同一组件）。未改 26+。
+  - CI `seam-1 / frontend` 与 `backend` 都 SUCCESS。PR MERGEABLE。
