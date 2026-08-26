@@ -8,9 +8,10 @@ import { readErrorDetail } from "@/lib/types";
 
 type AutoStartExtractionProps = {
   drawingId: string;
+  uploadedAt: string;
 };
 
-export function AutoStartExtraction({ drawingId }: AutoStartExtractionProps) {
+export function AutoStartExtraction({ drawingId, uploadedAt }: AutoStartExtractionProps) {
   const router = useRouter();
   const started = useRef(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,5 +43,5 @@ export function AutoStartExtraction({ drawingId }: AutoStartExtractionProps) {
       </p>
     );
   }
-  return <ExtractionInProgress drawingId={drawingId} />;
+  return <ExtractionInProgress drawingId={drawingId} status="已分级" uploadedAt={uploadedAt} />;
 }

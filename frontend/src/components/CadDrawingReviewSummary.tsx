@@ -1,4 +1,5 @@
 import { AlertTriangleIcon } from "@/components/Icons";
+import { PartDrawingStatusBadge } from "@/components/PartDrawingStatusBadge";
 import { QualityGradeBadge } from "@/components/QualityGradeBadge";
 import type { PartDrawing } from "@/lib/types";
 
@@ -37,9 +38,7 @@ export function CadDrawingReviewSummary({ drawing }: CadDrawingReviewSummaryProp
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100/80 pb-4">
         <h3 className="text-base font-bold text-slate-900">提取摘要</h3>
         <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
-            {drawing.status}
-          </span>
+          <PartDrawingStatusBadge status={drawing.status} />
           <QualityGradeBadge grade={drawing.quality_grade} />
         </div>
       </div>

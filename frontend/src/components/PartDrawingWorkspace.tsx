@@ -26,12 +26,16 @@ export function PartDrawingWorkspace({
     <div className="glass-card overflow-hidden flex min-h-[38rem] flex-col lg:flex-row backdrop-blur-xl">
       <aside className="w-full overflow-y-auto border-b border-slate-200/80 bg-white/40 p-5 lg:w-[28rem] lg:border-b-0 lg:border-r">
         {drawing.status === "已分级" && drawing.auto_prefill_allowed ? (
-          <AutoStartExtraction drawingId={drawing.id} />
+          <AutoStartExtraction drawingId={drawing.id} uploadedAt={drawing.uploaded_at} />
         ) : null}
         {drawing.status === "已上传" ||
         drawing.status === "分级中" ||
         drawing.status === "提取中" ? (
-          <ExtractionInProgress drawingId={drawing.id} />
+          <ExtractionInProgress
+            drawingId={drawing.id}
+            status={drawing.status}
+            uploadedAt={drawing.uploaded_at}
+          />
         ) : null}
         {drawing.status === "提取失败" && drawing.extraction_failure_reason ? (
           <ExtractionFailedPanel
