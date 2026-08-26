@@ -1,0 +1,22 @@
+dev.sh
+  s_e2619db6fc68f1::t_f4cd79591f291d 1-78
+README.md
+  s_e2619db6fc68f1::t_0a599972a569e3 14-20
+  s_e2619db6fc68f1::t_dfc1a1b128943a 13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.6.23",
+  "base_commit_sha": "572e79bcc843576280a10ba183f0b048a99f6252",
+  "prompts": {},
+  "sessions": {
+    "s_e2619db6fc68f1": {
+      "agent_id": {
+        "tool": "grok",
+        "id": "01a03bd3-6ee4-7c52-aedd-16426156771e",
+        "model": "grok-4.6"
+      },
+      "human_author": "张艳华 <939593210@qq.com>"
+    }
+  }
+}
