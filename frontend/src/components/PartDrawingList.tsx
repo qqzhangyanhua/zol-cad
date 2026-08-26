@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { ExperimentalMark } from "@/components/ExperimentalMark";
 import { LowQualityMark } from "@/components/LowQualityMark";
+import { PartDrawingStatusBadge } from "@/components/PartDrawingStatusBadge";
 import { QualityGradeBadge } from "@/components/QualityGradeBadge";
+import { partDrawingListRowAccent, partDrawingStatusTone } from "@/lib/partDrawingStatusPresentation";
 import type { PartDrawing } from "@/lib/types";
 
 type PartDrawingListProps = {
@@ -17,7 +19,10 @@ export function PartDrawingList({ items, quoteTaskNames = {} }: PartDrawingListP
       </div>
       <ul className="divide-y divide-slate-100/80">
         {items.map((item) => (
-          <li key={item.id} className="transition-colors hover:bg-white/60">
+          <li
+            key={item.id}
+            className={`transition-colors hover:bg-white/60 ${partDrawingListRowAccent(partDrawingStatusTone(item.status))}`}
+          >
             <Link
               href={`/part-drawings/${item.id}`}
               className="flex items-center justify-between gap-4 px-6 py-4"
@@ -30,9 +35,7 @@ export function PartDrawingList({ items, quoteTaskNames = {} }: PartDrawingListP
                   <QualityGradeBadge grade={item.quality_grade} />
                 </div>
                 <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                  <span className="rounded-md bg-blue-50 px-2 py-0.5 font-medium text-blue-700">
-                    {item.status}
-                  </span>
+                  <PartDrawingStatusBadge status={item.status} />
                   <span className="text-slate-400">·</span>
                   <span>
                     {item.quote_task_id

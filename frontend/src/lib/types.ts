@@ -23,13 +23,12 @@ export const PART_DRAWING_STATUSES = [
 ] as const;
 export type PartDrawingStatus = (typeof PART_DRAWING_STATUSES)[number];
 
-export const IN_FLIGHT_PART_DRAWING_STATUSES: readonly PartDrawingStatus[] = [
-  "已上传",
-  "分级中",
-  "提取中",
-];
+export const IN_FLIGHT_PART_DRAWING_STATUSES = ["已上传", "分级中", "提取中"] as const satisfies readonly PartDrawingStatus[];
+export type InFlightPartDrawingStatus = (typeof IN_FLIGHT_PART_DRAWING_STATUSES)[number];
 
-export function isInFlightPartDrawingStatus(status: PartDrawingStatus): boolean {
+export function isInFlightPartDrawingStatus(
+  status: PartDrawingStatus,
+): status is InFlightPartDrawingStatus {
   return (IN_FLIGHT_PART_DRAWING_STATUSES as readonly string[]).includes(status);
 }
 

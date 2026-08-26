@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { AppHeader } from "@/components/AppHeader";
 import { AppShell } from "@/components/AppShell";
+import { InFlightRefresh } from "@/components/InFlightRefresh";
 import { QuoteSheetExportButton } from "@/components/QuoteSheetExportButton";
 import { QuoteTaskDrawingManager } from "@/components/QuoteTaskDrawingManager";
 import { fetchBackend } from "@/lib/backend";
@@ -53,6 +54,7 @@ export default async function QuoteTaskDetailPage({ params }: QuoteTaskDetailPag
         ).toLocaleString("zh-CN")}`}
       />
       <main className="flex flex-1 flex-col gap-4 pb-6">
+        <InFlightRefresh statuses={task.drawings.map((drawing) => drawing.status)} />
         <QuoteSheetExportButton task={task} />
         <QuoteTaskDrawingManager
           task={task}

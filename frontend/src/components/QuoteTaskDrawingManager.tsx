@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { PartDrawingStatusBadge } from "@/components/PartDrawingStatusBadge";
 import type { PartDrawing, QuoteTaskDetail, QuoteTaskSummary } from "@/lib/types";
 import { parseQuoteTaskDetail, readErrorDetail } from "@/lib/types";
 
@@ -89,9 +90,7 @@ export function QuoteTaskDrawingManager({
                     {drawing.original_filename}
                   </Link>
                   <div className="mt-1 flex items-center gap-2 text-xs text-slate-500">
-                    <span className="rounded-md bg-blue-50 px-2 py-0.5 font-medium text-blue-700">
-                      {drawing.status}
-                    </span>
+                    <PartDrawingStatusBadge status={drawing.status} />
                     <span>· 点击进入图纸详情与报价评审</span>
                   </div>
                 </div>
