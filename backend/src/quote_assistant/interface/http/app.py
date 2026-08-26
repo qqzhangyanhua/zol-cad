@@ -16,6 +16,7 @@ from quote_assistant.adapter.db.session import (
     make_session_factory,
 )
 from quote_assistant.adapter.extraction.factory import build_extraction_engine
+from quote_assistant.adapter.pdf.renderer import PdfiumDrawingPageRenderer
 from quote_assistant.adapter.storage.factory import build_object_storage
 from quote_assistant.config import Settings
 from quote_assistant.interface.http.background import build_part_drawing_processor
@@ -53,6 +54,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         app.state.session_factory = session_factory
         app.state.object_storage = build_object_storage(resolved)
         app.state.extraction_engine = build_extraction_engine(resolved)
+        app.state.drawing_page_renderer = PdfiumDrawingPageRenderer()
         app.state.part_drawing_processor = build_part_drawing_processor(resolved, app)
         _recover_stranded_part_drawings(session_factory)
         if resolved.seed_demo_data:
@@ -67,6 +69,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.settings = resolved
     app.state.object_storage = build_object_storage(resolved)
     app.state.extraction_engine = build_extraction_engine(resolved)
+    app.state.drawing_page_renderer = PdfiumDrawingPageRenderer()
     app.include_router(auth_router)
     app.include_router(part_drawings_router)
     app.include_router(correction_stats_router)

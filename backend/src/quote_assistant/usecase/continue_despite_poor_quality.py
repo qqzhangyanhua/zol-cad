@@ -20,7 +20,11 @@ from quote_assistant.usecase.tenant import TenantBoundUseCase, require_visible_d
 
 
 class ContinueDespitePoorQuality(TenantBoundUseCase):
-    """Explicit 仍然继续: leave 建议人工 and re-enter the main path with a permanent mark."""
+    """Explicit 仍然继续: leave 建议人工 and re-enter the main path with a permanent mark.
+
+    Fields come from the first extract() already stashed at 分级. apply_extraction
+    reuses that stash; it does not call the 提取引擎 again.
+    """
 
     def __init__(
         self,

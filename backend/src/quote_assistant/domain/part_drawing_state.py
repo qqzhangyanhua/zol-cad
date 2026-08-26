@@ -60,6 +60,13 @@ def status_after_grade(result: ExtractionResult) -> PartDrawingStatus:
     return PartDrawingStatus.GRADED
 
 
+def fields_to_stash_after_grade(result: ExtractionResult) -> tuple[ExtractedField, ...] | None:
+    """Keep the first extract for 已分级 / 建议人工. 装配图 / 爆炸图 discard the fields."""
+    if status_after_grade(result) is PartDrawingStatus.OUT_OF_SCOPE:
+        return None
+    return result.fields
+
+
 _PREFILL_PATH = frozenset(
     {
         PartDrawingStatus.GRADED,
@@ -115,6 +122,7 @@ def record_transition(
     is_assembly_or_exploded: bool | None = None,
     low_quality_unreliable: bool | None = None,
     extracted_fields: tuple[ExtractedField, ...] | None = None,
+    stashed_extracted_fields: tuple[ExtractedField, ...] | None | object = _UNSET,
     extraction_failure_reason: str | None | object = _UNSET,
 ) -> tuple[PartDrawing, PartDrawingEvent]:
     _require_legal(drawing.status, to_status)
@@ -127,6 +135,8 @@ def record_transition(
         updates["low_quality_unreliable"] = low_quality_unreliable
     if extracted_fields is not None:
         updates["extracted_fields"] = extracted_fields
+    if stashed_extracted_fields is not _UNSET:
+        updates["stashed_extracted_fields"] = stashed_extracted_fields
     if extraction_failure_reason is not _UNSET:
         updates["extraction_failure_reason"] = extraction_failure_reason
     updated = replace(drawing, **updates)

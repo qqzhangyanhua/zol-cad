@@ -9,7 +9,11 @@ from quote_assistant.domain.errors import (
     ExtractionValidationFailed,
     IllegalPartDrawingTransition,
 )
-from quote_assistant.domain.extraction import ExtractionRequest, merge_extraction_preserving_review
+from quote_assistant.domain.extraction import (
+    ExtractedField,
+    ExtractionRequest,
+    merge_extraction_preserving_review,
+)
 from quote_assistant.domain.part_drawing_state import record_transition
 from quote_assistant.usecase.ports import (
     DrawingPageRenderer,
@@ -78,8 +82,8 @@ def apply_extraction(
     events.add(started)
 
     try:
-        result = engine.extract(
-            build_extraction_request(drawing, storage=storage, renderer=renderer)
+        fields = _fields_for_extraction(
+            drawing, storage=storage, renderer=renderer, engine=engine
         )
         drawing, finished = record_transition(
             drawing,
@@ -89,8 +93,9 @@ def apply_extraction(
             actor_user_id=actor_user_id,
             extracted_fields=merge_extraction_preserving_review(
                 drawing.extracted_fields,
-                result.fields,
+                fields,
             ),
+            stashed_extracted_fields=None,
             extraction_failure_reason=None,
         )
     except ExtractionValidationFailed as exc:
@@ -123,4 +128,19 @@ def apply_extraction(
     drawings.save(drawing)
     events.add(finished)
     return drawing
+
+
+def _fields_for_extraction(
+    drawing: PartDrawing,
+    *,
+    storage: ObjectStorage,
+    renderer: DrawingPageRenderer,
+    engine: ExtractionEngine,
+) -> tuple[ExtractedField, ...]:
+    """Reuse the first extract when 分级 already stashed it. Otherwise call the engine."""
+    if drawing.stashed_extracted_fields is not None:
+        return drawing.stashed_extracted_fields
+    return engine.extract(
+        build_extraction_request(drawing, storage=storage, renderer=renderer)
+    ).fields
 

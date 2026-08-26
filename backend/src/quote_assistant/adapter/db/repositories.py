@@ -99,6 +99,11 @@ def _to_part_drawing(row: PartDrawingRow) -> PartDrawing:
         is_assembly_or_exploded=row.is_assembly_or_exploded,
         low_quality_unreliable=row.low_quality_unreliable,
         extracted_fields=_fields_from_json(row.extracted_fields),
+        stashed_extracted_fields=(
+            _fields_from_json(row.stashed_extracted_fields)
+            if row.stashed_extracted_fields is not None
+            else None
+        ),
         extraction_failure_reason=row.extraction_failure_reason,
         part_family_id=row.part_family_id,
         quote_task_id=row.quote_task_id,
@@ -325,6 +330,11 @@ class SqlPartDrawingRepository:
                 is_assembly_or_exploded=drawing.is_assembly_or_exploded,
                 low_quality_unreliable=drawing.low_quality_unreliable,
                 extracted_fields=_fields_to_json(drawing.extracted_fields),
+                stashed_extracted_fields=(
+                    _fields_to_json(drawing.stashed_extracted_fields)
+                    if drawing.stashed_extracted_fields is not None
+                    else None
+                ),
                 extraction_failure_reason=drawing.extraction_failure_reason,
                 part_family_id=drawing.part_family_id,
                 quote_task_id=drawing.quote_task_id,
@@ -349,6 +359,11 @@ class SqlPartDrawingRepository:
         row.is_assembly_or_exploded = drawing.is_assembly_or_exploded
         row.low_quality_unreliable = drawing.low_quality_unreliable
         row.extracted_fields = _fields_to_json(drawing.extracted_fields)
+        row.stashed_extracted_fields = (
+            _fields_to_json(drawing.stashed_extracted_fields)
+            if drawing.stashed_extracted_fields is not None
+            else None
+        )
         row.extraction_failure_reason = drawing.extraction_failure_reason
         row.part_family_id = drawing.part_family_id
         row.quote_task_id = drawing.quote_task_id

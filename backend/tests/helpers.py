@@ -75,6 +75,7 @@ def insert_part_drawing(
         is_assembly_or_exploded=False,
         low_quality_unreliable=False,
         extracted_fields=[],
+        stashed_extracted_fields=None,
         extraction_failure_reason=None,
         part_family_id=UNKNOWN_PART_FAMILY_ID,
         quote_task_id=None,

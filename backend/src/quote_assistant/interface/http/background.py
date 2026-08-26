@@ -11,7 +11,6 @@ from quote_assistant.adapter.db.repositories import (
     SqlPartDrawingRepository,
 )
 from quote_assistant.adapter.db.session import SqlAlchemyUnitOfWork
-from quote_assistant.adapter.pdf.renderer import PdfiumDrawingPageRenderer
 from quote_assistant.config import Settings
 from quote_assistant.domain.entities import Actor, PartDrawing
 from quote_assistant.usecase.process_part_drawing import ProcessPartDrawing
@@ -25,8 +24,9 @@ PROCESSOR_THREAD = "thread"
 class ProcessPartDrawingJob:
     """Composition root for one 分级 + 读图取数 job.
 
-    Engine and storage are read from app.state at run time so 缝 1 can swap the
-    提取引擎 without rebuilding the processor.
+    Engine, storage, and the page renderer are read from app.state at run time
+    so 缝 1 can swap the 提取引擎 (and count fetch / rasterize) without
+    rebuilding the processor.
     """
 
     def __init__(self, app: FastAPI) -> None:
@@ -40,7 +40,7 @@ class ProcessPartDrawingJob:
                 drawings=SqlPartDrawingRepository(session),
                 events=SqlPartDrawingEventRepository(session),
                 storage=self._app.state.object_storage,
-                renderer=PdfiumDrawingPageRenderer(),
+                renderer=self._app.state.drawing_page_renderer,
                 engine=self._app.state.extraction_engine,
                 uow=SqlAlchemyUnitOfWork(session),
             ).execute(drawing_id)

@@ -9,7 +9,11 @@ from quote_assistant.domain.errors import (
     ExtractionValidationFailed,
     IllegalPartDrawingTransition,
 )
-from quote_assistant.domain.part_drawing_state import record_transition, status_after_grade
+from quote_assistant.domain.part_drawing_state import (
+    fields_to_stash_after_grade,
+    record_transition,
+    status_after_grade,
+)
 from quote_assistant.usecase.extract_part_drawing import apply_extraction, build_extraction_request
 from quote_assistant.usecase.ports import (
     DrawingPageRenderer,
@@ -67,6 +71,7 @@ def apply_grading(
             actor_user_id=actor_user_id,
             quality_grade=result.quality_grade,
             is_assembly_or_exploded=result.is_assembly_or_exploded,
+            stashed_extracted_fields=fields_to_stash_after_grade(result),
         )
     drawings.save(drawing)
     events.add(finished)
@@ -96,9 +101,13 @@ class ProcessPartDrawing(TenantBoundUseCase):
     whose 分级 itself failed retries from 分级 instead of skipping straight to 读图取数
     with no 图纸质量分级 — that would let a 差图 slip past the 劝退 branch.
 
+    One 提取引擎.extract() call produces both the 图纸质量分级 signal and the fields.
+    分级 still commits before 读图取数 writes those fields, otherwise the 报价员 would
+    sit on 分级中 until the whole pipeline finished. 差图 stashes the fields so
+    「仍然继续」 can reuse them; 装配图 / 爆炸图 discard them.
+
     Runs on behalf of the uploading 报价员, so tenant filtering and the event audit trail
-    stay identical to the synchronous path. 分级 commits before 读图取数 starts, otherwise
-    the 报价员 would sit on 分级中 until the whole pipeline finished.
+    stay identical to the synchronous path.
     """
 
     def __init__(

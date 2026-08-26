@@ -29,7 +29,6 @@ from quote_assistant.config import Settings
 from quote_assistant.domain.entities import Actor
 from quote_assistant.domain.errors import Unauthenticated
 from quote_assistant.adapter.pdf.page_counter import PypdfPageCounter
-from quote_assistant.adapter.pdf.renderer import PdfiumDrawingPageRenderer
 from quote_assistant.usecase.assign_part_drawing_to_quote_task import (
     AssignPartDrawingToQuoteTask,
     RemovePartDrawingFromQuoteTask,
@@ -164,7 +163,7 @@ def get_continue_despite_poor_quality(
         drawings=SqlPartDrawingRepository(session),
         events=SqlPartDrawingEventRepository(session),
         storage=request.app.state.object_storage,
-        renderer=PdfiumDrawingPageRenderer(),
+        renderer=request.app.state.drawing_page_renderer,
         engine=request.app.state.extraction_engine,
         uow=SqlAlchemyUnitOfWork(session),
     )
@@ -180,7 +179,7 @@ def get_extract_part_drawing(
         drawings=SqlPartDrawingRepository(session),
         events=SqlPartDrawingEventRepository(session),
         storage=request.app.state.object_storage,
-        renderer=PdfiumDrawingPageRenderer(),
+        renderer=request.app.state.drawing_page_renderer,
         engine=request.app.state.extraction_engine,
         uow=SqlAlchemyUnitOfWork(session),
     )
