@@ -2,6 +2,12 @@
 
 FastAPI 四层骨架（接口 / 用例 / 领域 / 适配器）。依赖用 `uv` 管理。
 
+## 部署形态（单进程）
+
+生产必须是 **一个 uvicorn worker、一个副本**。启动时的滞留回收会把「已上传 / 分级中 / 提取中」改成提取失败；这个前提只在单进程下成立。不要用 `uvicorn --workers N`，不要水平扩第二个实例。生产入口：`scripts/run-production.sh`（无 `--reload`）和本目录 `Dockerfile`。细节见仓库根目录 `docs/deploy.md`。
+
+非本地环境（`QA_APP_ENV=production`）会拒绝带着默认签名密钥或 demo 密码启动。Session cookie 默认带 `Secure`；本地 HTTP 设 `QA_SESSION_COOKIE_SECURE=false`。
+
 ## 本地运行
 
 ```bash
@@ -11,6 +17,8 @@ cd backend
 uv sync --group dev
 QA_DATABASE_URL=postgresql+psycopg://quote:quote@127.0.0.1:5432/quote_assistant \
   uv run alembic upgrade head
+QA_APP_ENV=local \
+QA_SESSION_COOKIE_SECURE=false \
 QA_SEED_DEMO_DATA=true \
 QA_DATABASE_URL=postgresql+psycopg://quote:quote@127.0.0.1:5432/quote_assistant \
 QA_OBJECT_STORE_BACKEND=local \

@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+from collections import deque
 from dataclasses import dataclass, field
 from typing import Protocol
+
+DEFAULT_MAX_COST_EVENTS = 1000
 
 
 @dataclass(frozen=True)
@@ -24,11 +27,17 @@ class ExtractionCostRecorder(Protocol):
 
 @dataclass
 class InMemoryExtractionCostCounter:
-    """No-op-until-vendor counter. A trial can swap this for a billed meter later."""
+    """Process-local counter. events is bounded so a long-running process cannot leak."""
 
     total_calls: int = 0
-    events: list[ExtractionCostEvent] = field(default_factory=list)
+    max_events: int = DEFAULT_MAX_COST_EVENTS
+    events: deque[ExtractionCostEvent] = field(default_factory=deque)
+
+    def __post_init__(self) -> None:
+        self.events = deque(self.events, maxlen=self.max_events)
 
     def record(self, event: ExtractionCostEvent) -> None:
         self.total_calls += 1
+        if self.events.maxlen != self.max_events:
+            self.events = deque(self.events, maxlen=self.max_events)
         self.events.append(event)

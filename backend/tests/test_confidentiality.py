@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
-
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -9,7 +7,11 @@ from helpers import create_admin, create_factory, create_quoter, login
 from quote_assistant.adapter.confidentiality.adr0009 import (
     ADR_0009_RELATIVE,
     RESEARCH_NOTES_RELATIVE,
+    Adr0009ConfidentialitySource,
     compose_confidentiality_notice,
+    find_repo_file,
+    load_bundled_adr_0009,
+    parse_adr_0009_file,
     parse_adr_0009_text,
     vendor_is_selected,
 )
@@ -55,9 +57,15 @@ def _login_admin(client: TestClient, db_session: Session) -> None:
     assert login(client, "admin_a", "secret-admin").status_code == 200
 
 
-def test_当前ADR解析为未选定且三条门槛待填() -> None:
-    from quote_assistant.adapter.confidentiality.adr0009 import find_repo_file, parse_adr_0009_file
+def test_打包ADR与仓库原文一致且不依赖源树() -> None:
+    live = find_repo_file(*ADR_0009_RELATIVE.split("/")).read_text(encoding="utf-8")
+    assert load_bundled_adr_0009() == live
+    notice = Adr0009ConfidentialitySource(Settings(extraction_engine="fixture")).load()
+    assert notice.vendor_selected is False
+    assert notice.adr_path == ADR_0009_RELATIVE
 
+
+def test_当前ADR解析为未选定且三条门槛待填() -> None:
     snapshot = parse_adr_0009_file(find_repo_file(*ADR_0009_RELATIVE.split("/")))
     assert vendor_is_selected(snapshot) is False
     assert snapshot.vendor_decision_line.startswith("待填")

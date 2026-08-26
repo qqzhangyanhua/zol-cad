@@ -27,6 +27,10 @@ def build_extraction_engine(
     if kind == ENGINE_VENDOR:
         return VendorExtractionEngine(
             transport=UnconfiguredVendorTransport(),
-            cost_recorder=InMemoryExtractionCostCounter(),
+            cost_recorder=InMemoryExtractionCostCounter(
+                max_events=settings.extraction_cost_event_limit
+            ),
+            timeout_seconds=settings.extraction_timeout_seconds,
+            retry_count=settings.extraction_retry_count,
         )
     return FixtureExtractionEngine()

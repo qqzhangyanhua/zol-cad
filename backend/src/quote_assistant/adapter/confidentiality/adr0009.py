@@ -36,6 +36,9 @@ class Adr0009Snapshot:
     adr_path: str
 
 
+_BUNDLED_ADR_0009 = Path(__file__).resolve().parent / "data" / "0009-mvp-multimodal-llm-vendor.md"
+
+
 def find_repo_file(*parts: str) -> Path:
     start = Path(__file__).resolve()
     for parent in [start, *start.parents]:
@@ -43,6 +46,11 @@ def find_repo_file(*parts: str) -> Path:
         if candidate.is_file():
             return candidate
     raise FileNotFoundError("找不到 " + "/".join(parts))
+
+
+def load_bundled_adr_0009() -> str:
+    """ADR-0009 text shipped with the package. Does not walk the source tree."""
+    return _BUNDLED_ADR_0009.read_text(encoding="utf-8")
 
 
 def _first_heading(text: str) -> str:
@@ -245,6 +253,8 @@ class Adr0009ConfidentialitySource:
         self._adr_path = adr_path
 
     def load(self) -> ConfidentialityNotice:
-        path = self._adr_path or find_repo_file(*ADR_0009_RELATIVE.split("/"))
-        snapshot = parse_adr_0009_file(path)
+        if self._adr_path is not None:
+            snapshot = parse_adr_0009_file(self._adr_path)
+        else:
+            snapshot = parse_adr_0009_text(load_bundled_adr_0009(), adr_path=ADR_0009_RELATIVE)
         return compose_confidentiality_notice(snapshot, self._settings)

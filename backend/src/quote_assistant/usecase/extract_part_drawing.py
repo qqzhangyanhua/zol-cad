@@ -21,6 +21,7 @@ from quote_assistant.usecase.ports import (
     ObjectStorage,
     PartDrawingEventRepository,
     PartDrawingRepository,
+    UnitOfWork,
 )
 
 _RETRYABLE = frozenset(
@@ -63,8 +64,14 @@ def apply_extraction(
     storage: ObjectStorage,
     renderer: DrawingPageRenderer,
     engine: ExtractionEngine,
+    uow: UnitOfWork | None = None,
 ) -> PartDrawing:
-    """提取中 → 已提取 / 提取失败. Caller owns the transaction."""
+    """提取中 → 已提取 / 提取失败.
+
+    When *uow* is provided the 提取中 transition is committed before the engine
+    call so a concurrent 重试 sees the in-progress status instead of starting a
+    second paid run.
+    """
     if drawing.status not in _RETRYABLE:
         raise IllegalPartDrawingTransition(
             f"零件图处于「{drawing.status.value}」，不能开始读图取数"
@@ -80,6 +87,8 @@ def apply_extraction(
     )
     drawings.save(drawing)
     events.add(started)
+    if uow is not None:
+        uow.commit()
 
     try:
         fields = _fields_for_extraction(

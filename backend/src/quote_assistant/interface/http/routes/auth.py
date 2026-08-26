@@ -37,6 +37,7 @@ def login(
         value=issued.token,
         httponly=True,
         samesite="lax",
+        secure=settings.effective_session_cookie_secure,
         max_age=settings.session_ttl_hours * 3600,
         path="/",
     )
@@ -48,9 +49,14 @@ def logout(
     request: Request,
     response: Response,
     use_case: Logout = Depends(get_logout),
+    settings: Settings = Depends(get_settings),
 ) -> OkResponse:
     use_case.execute(request.cookies.get(SESSION_COOKIE))
-    response.delete_cookie(SESSION_COOKIE, path="/")
+    response.delete_cookie(
+        SESSION_COOKIE,
+        path="/",
+        secure=settings.effective_session_cookie_secure,
+    )
     return OkResponse()
 
 

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import logging
+from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import TimeoutError as FuturesTimeout
 from dataclasses import dataclass
 from typing import Protocol
 
@@ -107,14 +109,26 @@ class VendorExtractionEngine:
         transport: VendorTransport | None = None,
         cost_recorder: ExtractionCostRecorder | None = None,
         logger: logging.Logger | None = None,
+        timeout_seconds: float = 60,
+        retry_count: int = 0,
     ) -> None:
         self._transport = transport or UnconfiguredVendorTransport()
         self._cost = cost_recorder or InMemoryExtractionCostCounter()
         self._log = logger or LOGGER
+        self._timeout_seconds = timeout_seconds
+        self._retry_count = max(0, retry_count)
 
     def extract(self, request: ExtractionRequest) -> ExtractionResult:
         template = prompt_template_for(request.part_family_id)
         page_byte_size = len(request.page_content)
+        completion = VendorCompletionRequest(
+            input_drawing_id=request.input_drawing_id,
+            media_type=request.media_type,
+            part_family_id=request.part_family_id,
+            prompt_template_id=template.id,
+            page_byte_size=page_byte_size,
+            page_content=request.page_content,
+        )
         _log_extract(
             self._log,
             phase="start",
@@ -129,16 +143,7 @@ class VendorExtractionEngine:
         completion_tokens: int | None = None
         estimated_cost: float | None = None
         try:
-            completed = self._transport.complete(
-                VendorCompletionRequest(
-                    input_drawing_id=request.input_drawing_id,
-                    media_type=request.media_type,
-                    part_family_id=request.part_family_id,
-                    prompt_template_id=template.id,
-                    page_byte_size=page_byte_size,
-                    page_content=request.page_content,
-                )
-            )
+            completed = self._complete_with_retries(completion)
             prompt_tokens = completed.prompt_tokens
             completion_tokens = completed.completion_tokens
             estimated_cost = completed.estimated_cost
@@ -182,3 +187,33 @@ class VendorExtractionEngine:
                 prompt_template_id=template.id,
                 outcome=outcome,
             )
+
+    def _complete_with_retries(self, request: VendorCompletionRequest) -> VendorCompletionResult:
+        attempts = 1 + self._retry_count
+        last_retryable: BaseException | None = None
+        for attempt in range(attempts):
+            try:
+                return self._complete_once(request)
+            except (VendorTimeout, VendorRateLimited, VendorTransportError) as exc:
+                last_retryable = exc
+                if attempt + 1 >= attempts:
+                    raise
+                self._log.info(
+                    "vendor_extract_retry attempt=%s/%s input_drawing_id=%s error=%s",
+                    attempt + 1,
+                    attempts,
+                    request.input_drawing_id,
+                    type(exc).__name__,
+                )
+        assert last_retryable is not None
+        raise last_retryable
+
+    def _complete_once(self, request: VendorCompletionRequest) -> VendorCompletionResult:
+        if self._timeout_seconds <= 0:
+            return self._transport.complete(request)
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            future = pool.submit(self._transport.complete, request)
+            try:
+                return future.result(timeout=self._timeout_seconds)
+            except FuturesTimeout as exc:
+                raise VendorTimeout("deadline exceeded") from exc

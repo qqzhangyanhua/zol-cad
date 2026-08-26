@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from concurrent.futures import ThreadPoolExecutor
+from threading import BoundedSemaphore
 from uuid import UUID
 
 from fastapi import FastAPI
@@ -61,17 +62,44 @@ class InlinePartDrawingProcessor:
 class ThreadPartDrawingProcessor:
     """Run each 零件图 on a worker thread so the upload request returns immediately.
 
-    Deliberately not a queue server: one factory's 报价员 team does not need Redis, and a
-    stranded job after a restart is recovered by the startup sweep. Failures are logged
-    per drawing so one bad 零件图 cannot take the rest of the batch down with it.
+    Deploy is a single uvicorn process: the startup sweep can treat leftover
+    已上传 / 分级中 / 提取中 rows as stranded. Failures are logged per drawing
+    so one bad 零件图 cannot take the rest of the batch down with it.
+
+    The slot semaphore bounds (workers + queue) so a 50-drawing batch cannot
+    grow an unbounded ThreadPoolExecutor queue.
     """
 
-    def __init__(self, job: ProcessPartDrawingJob, workers: int) -> None:
+    def __init__(
+        self,
+        job: ProcessPartDrawingJob,
+        workers: int,
+        queue_max: int,
+        enqueue_timeout_seconds: float = 30,
+    ) -> None:
+        if workers < 1:
+            raise ValueError("part_drawing_processor_workers 必须 >= 1")
+        if queue_max < 0:
+            raise ValueError("part_drawing_processor_queue_max 必须 >= 0")
         self._job = job
+        self._queue_max = queue_max
+        self._enqueue_timeout_seconds = enqueue_timeout_seconds
+        self._slots = BoundedSemaphore(workers + queue_max)
         self._pool = ThreadPoolExecutor(max_workers=workers, thread_name_prefix="qa-extract")
 
     def submit(self, actor: Actor, drawing_id: UUID) -> PartDrawing | None:
-        self._pool.submit(self._run_quietly, actor, drawing_id)
+        if not self._slots.acquire(timeout=self._enqueue_timeout_seconds):
+            LOGGER.error(
+                "零件图作业队列已满 part_drawing_id=%s queue_max=%s",
+                drawing_id,
+                self._queue_max,
+            )
+            return None
+        try:
+            self._pool.submit(self._run_quietly, actor, drawing_id)
+        except Exception:
+            self._slots.release()
+            raise
         return None
 
     def shutdown(self) -> None:
@@ -82,6 +110,8 @@ class ThreadPartDrawingProcessor:
             self._job.run(actor, drawing_id)
         except Exception:
             LOGGER.exception("零件图后台处理失败 part_drawing_id=%s", drawing_id)
+        finally:
+            self._slots.release()
 
 
 class DeferredPartDrawingProcessor:
@@ -101,11 +131,23 @@ class DeferredPartDrawingProcessor:
         return finished
 
 
+def normalize_part_drawing_processor(value: str) -> str:
+    kind = value.strip().lower()
+    if kind in {PROCESSOR_INLINE, PROCESSOR_THREAD}:
+        return kind
+    raise ValueError(f"未知零件图作业实现：{value}（允许 inline / thread）")
+
+
 def build_part_drawing_processor(
     settings: Settings,
     app: FastAPI,
 ) -> InlinePartDrawingProcessor | ThreadPartDrawingProcessor:
     job = ProcessPartDrawingJob(app)
-    if settings.part_drawing_processor == PROCESSOR_INLINE:
+    kind = normalize_part_drawing_processor(settings.part_drawing_processor)
+    if kind == PROCESSOR_INLINE:
         return InlinePartDrawingProcessor(job)
-    return ThreadPartDrawingProcessor(job, settings.part_drawing_processor_workers)
+    return ThreadPartDrawingProcessor(
+        job,
+        workers=settings.part_drawing_processor_workers,
+        queue_max=settings.part_drawing_processor_queue_max,
+    )

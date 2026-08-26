@@ -7,6 +7,9 @@
 - `backend/` — FastAPI，四层（接口 / 用例 / 领域 / 适配器），Postgres + Alembic，缝 1 测试
 - `frontend/` — Next.js，BFF 代理到后端
 - `compose.yaml` — 容器化 Postgres
+- `docs/deploy.md` — 生产部署（**单进程**，不要 `--workers N` / 不要第二副本）
+
+生产入口见 `backend/Dockerfile` 与 `backend/scripts/run-production.sh`。启动回收假定重启后没有其他进程还在跑分级 / 读图取数；多进程会互相踩滞留作业。
 
 ## 快速启动
 
@@ -25,6 +28,8 @@ cd backend
 uv sync --group dev
 QA_DATABASE_URL=postgresql+psycopg://quote:quote@127.0.0.1:5432/quote_assistant \
   uv run alembic upgrade head
+QA_APP_ENV=local \
+QA_SESSION_COOKIE_SECURE=false \
 QA_SEED_DEMO_DATA=true \
 QA_OBJECT_STORE_BACKEND=local \
 QA_LOCAL_OBJECT_DIR=/tmp/quote-assistant-objects \

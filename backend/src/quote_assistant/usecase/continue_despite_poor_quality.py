@@ -46,8 +46,13 @@ class ContinueDespitePoorQuality(TenantBoundUseCase):
 
     def execute(self, drawing_id: UUID) -> PartDrawing:
         drawing = require_visible_drawing(
-            self.actor, self._drawings.get_for_tenant(self.tenant, drawing_id)
+            self.actor,
+            self._drawings.get_for_tenant(self.tenant, drawing_id, for_update=True),
         )
+        if drawing.status in {PartDrawingStatus.GRADING, PartDrawingStatus.EXTRACTING}:
+            raise IllegalPartDrawingTransition(
+                f"零件图处于「{drawing.status.value}」，不能重复推进"
+            )
         if (
             drawing.status is not PartDrawingStatus.ADVISE_MANUAL
             or drawing.quality_grade is not QualityGrade.POOR
@@ -66,6 +71,15 @@ class ContinueDespitePoorQuality(TenantBoundUseCase):
         )
         self._drawings.save(updated)
         self._events.add(event)
+        self._uow.commit()
+        updated = require_visible_drawing(
+            self.actor,
+            self._drawings.get_for_tenant(self.tenant, drawing_id, for_update=True),
+        )
+        if updated.status in {PartDrawingStatus.GRADING, PartDrawingStatus.EXTRACTING}:
+            raise IllegalPartDrawingTransition(
+                f"零件图处于「{updated.status.value}」，不能重复推进"
+            )
         updated = apply_extraction(
             updated,
             actor_user_id=self.actor.user_id,
@@ -74,6 +88,7 @@ class ContinueDespitePoorQuality(TenantBoundUseCase):
             storage=self._storage,
             renderer=self._renderer,
             engine=self._engine,
+            uow=self._uow,
         )
         self._uow.commit()
         return updated

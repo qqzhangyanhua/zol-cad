@@ -22,14 +22,20 @@ _IN_FLIGHT = frozenset(
 
 
 class RecoverStrandedPartDrawings:
-    """Startup sweep: nothing can still be running, so 分级中 / 提取中 rows are stranded.
+    """Startup sweep for a single-process deploy.
 
-    Without this a restart mid-extraction leaves the 报价员 staring at a spinner that will
-    never resolve and offers no 重试 button. Recovering them to 提取失败 puts them back on
-    the existing retry path with an honest reason.
+    MVP is pinned to one uvicorn worker / one replica (see docs/deploy.md). After
+    that process starts, nothing else can still be running 分级 / 读图取数, so
+    leftover 已上传 / 分级中 / 提取中 rows are stranded. Recovering them to
+    提取失败 puts them back on the existing retry path.
 
-    This is maintenance across every factory, not a 报价员 action, so it takes no Actor and
-    uses the narrow cross-tenant port rather than widening the tenant-filtered one.
+    Do not run `uvicorn --workers N` or a second replica: that would mark another
+    live process's in-flight 零件图 as failed. Multi-process recovery needs a
+    lock / lease and is out of MVP scope.
+
+    This is maintenance across every factory, not a 报价员 action, so it takes no
+    Actor and uses the narrow cross-tenant port rather than widening the
+    tenant-filtered one.
     """
 
     def __init__(
