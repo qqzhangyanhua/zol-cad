@@ -42,7 +42,7 @@ if (!meResponse.ok || !listResponse.ok || !tasksResponse.ok) {
 
 **Blocked by:** 20（lint error 的来源就是那段要删的定价逻辑，先删再修剩下的）
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] `pnpm lint` 零 error 零 warning
 - [ ] `AppHeader` 的 `backLabel` 真正用上，返回链接有可访问名称而不只是 `←`
