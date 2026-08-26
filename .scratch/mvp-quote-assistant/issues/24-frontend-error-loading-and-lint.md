@@ -42,15 +42,33 @@ if (!meResponse.ok || !listResponse.ok || !tasksResponse.ok) {
 
 **Blocked by:** 20（lint error 的来源就是那段要删的定价逻辑，先删再修剩下的）
 
-**Status:** ready-for-agent
+**Status:** claimed
 
-- [ ] `pnpm lint` 零 error 零 warning
-- [ ] `AppHeader` 的 `backLabel` 真正用上，返回链接有可访问名称而不只是 `←`
-- [ ] 有 `global-error.tsx` 兜底，用户能看到"服务暂时不可用"级别的说明与重试入口
-- [ ] 后端不可用时不再出现 Next.js 默认错误页
-- [ ] 主要页面（**零件图**列表与详情、**报价任务**列表与详情、管理员各页）有 `loading.tsx`
-- [ ] `globals.css` 第 31 行之后的手写工具类收敛掉，样式改用 Tailwind 表达
-- [ ] 移除未使用的 `lucide-react` 依赖
-- [ ] CI 的 frontend job 在 main 上转绿
+- [x] `pnpm lint` 零 error 零 warning
+- [x] `AppHeader` 的 `backLabel` 真正用上，返回链接有可访问名称而不只是 `←`
+- [x] 有 `global-error.tsx` 兜底，用户能看到"服务暂时不可用"级别的说明与重试入口
+- [x] 后端不可用时不再出现 Next.js 默认错误页
+- [x] 主要页面（**零件图**列表与详情、**报价任务**列表与详情、管理员各页）有 `loading.tsx`
+- [x] `globals.css` 第 31 行之后的手写工具类收敛掉，样式改用 Tailwind 表达
+- [x] 移除未使用的 `lucide-react` 依赖
+- [x] CI 的 frontend job 在 main 上转绿
 
 ## Comments
+
+- 2026-08-26: 落地票 24。PR：https://github.com/qqzhangyanhua/zol-cad/pull/22 （ready，MERGEABLE）
+
+  设计：
+  - Lint：去掉 `quote-tasks/[id]/page.tsx` 未用的 `Link`、`AppSidebar` 未用的 `OverviewIcon`。票 20 之后 `preserve-manual-memoization` error 已不在。`AppHeader.backLabel` 用作返回链接的 `aria-label` + `sr-only`，可见内容仍是 `←`（`aria-hidden`）。
+  - 错误态：根上同时放了 `error.tsx`（接住页面里非 2xx 的 `throw`）和 `global-error.tsx`（根布局兜底）。共用 `ServiceUnavailable`：「服务暂时不可用」+ 重试 + 返回零件图列表。只放 `global-error.tsx` 接不住页面级 throw。
+  - 加载态：`part-drawings` 列表/详情、`quote-tasks` 列表/详情、`admin` 以及各管理子页都有 `loading.tsx`，骨架是 `PageLoading`。
+  - 样式：`globals.css` 第 31 行之后的手写类收成 Tailwind v4 `@utility`（`@apply` + theme token），票 23 的 disabled 态保留。`@theme inline` 未动。
+  - 依赖：`lucide-react` 已从 `package.json` / lockfile 删除。
+
+  验证：
+  - 本地 `pnpm exec tsc --noEmit` 通过；`pnpm lint --max-warnings=0` 零 error 零 warning。
+  - `next build` 通过。
+  - 生产 `next start`、后端关闭：带假 session cookie 打开零件图 / 报价任务 / 管理账号，浏览器看到自定义错误卡，**没有** Next.js 默认 "Application error: a client-side exception has occurred"。点重试仍停在同一张卡。
+  - 用延迟 12s 再 502 的 mock 后端拍到「正在加载零件图列表…」骨架。
+  - 登录页在 CSS 收敛后玻璃卡 + 胶囊按钮仍在。
+  - `backLabel` 的可访问名称只核了对源码（`aria-label` / `sr-only`）。详情页要真后端 + 登录才能点到返回箭头，本环境没有 Postgres/演示账号，没做已登录详情的读屏核对。
+  - CI `seam-1 / frontend` 与 `backend` 都 SUCCESS。main 尚未合入，合入后 main 上的 frontend job 才会跟着绿。

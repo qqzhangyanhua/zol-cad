@@ -7,7 +7,6 @@ import {
   HistoryQuoteIcon,
   KnowledgeIcon,
   LogoIcon,
-  OverviewIcon,
   ProjectManageIcon,
   QuoteCalcIcon,
   RiskAssessIcon,

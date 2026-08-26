@@ -16,6 +16,7 @@ export function AppHeader({
   subtitle,
   actions,
   backHref,
+  backLabel = "返回",
 }: AppHeaderProps) {
   return (
     <header className="glass-card mb-3 flex flex-wrap items-center justify-between gap-4 px-6 py-3.5 backdrop-blur-xl">
@@ -23,9 +24,11 @@ export function AppHeader({
         {backHref ? (
           <Link
             href={backHref}
+            aria-label={backLabel}
             className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/70 text-slate-600 transition hover:bg-white hover:text-slate-900"
           >
-            ←
+            <span aria-hidden="true">←</span>
+            <span className="sr-only">{backLabel}</span>
           </Link>
         ) : null}
 
