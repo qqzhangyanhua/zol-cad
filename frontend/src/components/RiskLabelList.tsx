@@ -48,9 +48,9 @@ export function RiskLabelList({ labels, emptyMessage, priority }: RiskLabelListP
         </h3>
       </div>
       {labels.length === 0 ? (
-        <div role="note" className="glass-card-subtle p-3 text-xs leading-relaxed text-slate-600">
-          ✓ {emptyMessage}
-        </div>
+        <p role="status" className="glass-card-subtle p-3 text-xs leading-relaxed text-slate-600">
+          {emptyMessage}
+        </p>
       ) : (
         <ul className="space-y-2">
           {ordered.map((label) => (

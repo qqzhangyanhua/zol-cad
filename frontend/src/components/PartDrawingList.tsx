@@ -14,7 +14,7 @@ type PartDrawingListProps = {
 export function PartDrawingList({ items, quoteTaskNames = {} }: PartDrawingListProps) {
   return (
     <div className="glass-card overflow-hidden backdrop-blur-xl">
-      <div className="border-b border-slate-100 px-6 py-3.5 bg-white/40">
+      <div className="border-b border-slate-100 bg-white/40 px-4 py-3.5 md:px-6">
         <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">图纸列表 ({items.length})</h3>
       </div>
       <ul className="divide-y divide-slate-100/80">
@@ -25,7 +25,7 @@ export function PartDrawingList({ items, quoteTaskNames = {} }: PartDrawingListP
           >
             <Link
               href={`/part-drawings/${item.id}`}
-              className="flex items-center justify-between gap-4 px-6 py-4"
+              className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4 md:px-6"
             >
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
@@ -67,9 +67,13 @@ export function PartDrawingList({ items, quoteTaskNames = {} }: PartDrawingListP
                     minute: "2-digit",
                   })}
                 </time>
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/80 text-slate-400 shadow-xs border border-white">
+                <span
+                  aria-hidden="true"
+                  className="flex h-7 w-7 items-center justify-center rounded-full border border-white bg-white/80 text-slate-400 shadow-xs"
+                >
                   →
                 </span>
+                <span className="sr-only">查看零件图</span>
               </div>
             </Link>
           </li>

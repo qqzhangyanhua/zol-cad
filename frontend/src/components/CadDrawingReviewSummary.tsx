@@ -52,7 +52,7 @@ export function CadDrawingReviewSummary({ drawing }: CadDrawingReviewSummaryProp
       <div className="mt-5">
         <h4 className="text-sm font-bold text-slate-800">风险标签</h4>
         {drawing.risk_labels.length === 0 ? (
-          <p role="note" className="mt-3 text-xs leading-relaxed text-slate-600">
+          <p role="status" className="mt-3 text-xs leading-relaxed text-slate-600">
             {drawing.no_judgable_risk_message}
           </p>
         ) : (

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   CalendarIcon,
+  CloseIcon,
   DrawingAnalysisIcon,
   HistoryQuoteIcon,
   KnowledgeIcon,
@@ -15,6 +16,7 @@ import {
   ShieldCheckIcon,
 } from "@/components/Icons";
 import { LogoutButton } from "@/components/LogoutButton";
+import { APP_SIDEBAR_ID, useSidebarNav } from "@/components/SidebarNavContext";
 import type { CurrentUser } from "@/lib/types";
 
 type SidebarIcon = typeof DrawingAnalysisIcon;
@@ -30,8 +32,13 @@ type AppSidebarProps = {
   user: CurrentUser;
 };
 
+function roleLabel(role: CurrentUser["role"]): string {
+  return role === "admin" ? "管理员" : "报价员";
+}
+
 export function AppSidebar({ user }: AppSidebarProps) {
   const pathname = usePathname();
+  const { open, closeSidebar } = useSidebarNav();
 
   const navItems: SidebarItem[] = [
     {
@@ -95,20 +102,34 @@ export function AppSidebar({ user }: AppSidebarProps) {
   ];
 
   return (
-    <aside className="glass-panel flex w-64 shrink-0 flex-col justify-between rounded-3xl p-4 shadow-lg backdrop-blur-xl">
-      {/* Brand Header */}
+    <aside
+      id={APP_SIDEBAR_ID}
+      aria-label="主导航"
+      className={`glass-panel z-50 flex w-64 shrink-0 flex-col justify-between rounded-3xl p-4 shadow-lg backdrop-blur-xl max-md:fixed max-md:inset-y-3 max-md:left-3 ${
+        open ? "max-md:flex" : "max-md:hidden"
+      } md:flex`}
+    >
       <div className="flex flex-col gap-6">
-        <div className="flex items-center gap-3 px-2 pt-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600/10 text-blue-600">
-            <LogoIcon className="h-6 w-6" />
+        <div className="flex items-start justify-between gap-2 px-2 pt-2">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600/10 text-blue-600">
+              <LogoIcon className="h-6 w-6" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-base font-bold tracking-tight text-slate-900">智造报价助手</p>
+              <p className="text-[11px] font-medium tracking-wider text-slate-400">CAD Quote Assistant</p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-base font-bold tracking-tight text-slate-900">智造报价助手</h2>
-            <p className="text-[11px] font-medium text-slate-400 tracking-wider">CAD Quote Assistant</p>
-          </div>
+          <button
+            type="button"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/70 text-slate-600 transition hover:bg-white hover:text-slate-900 md:hidden"
+            aria-label="关闭导航"
+            onClick={closeSidebar}
+          >
+            <CloseIcon className="h-4 w-4" aria-hidden="true" />
+          </button>
         </div>
 
-        {/* Navigation List */}
         <nav className="flex flex-col gap-1.5">
           {navItems.map((item) => {
             const active = item.match(pathname);
@@ -117,11 +138,14 @@ export function AppSidebar({ user }: AppSidebarProps) {
               <Link
                 key={item.href}
                 href={item.href}
+                onClick={closeSidebar}
                 className={`group flex items-center gap-3 rounded-2xl px-3.5 py-2.5 text-sm transition-all duration-150 ${
                   active ? "nav-item-active" : "nav-item-inactive"
                 }`}
               >
-                <Icon className={`h-4.5 w-4.5 shrink-0 ${active ? "text-blue-600" : "text-slate-500 group-hover:text-slate-800"}`} />
+                <Icon
+                  className={`h-4.5 w-4.5 shrink-0 ${active ? "text-blue-600" : "text-slate-500 group-hover:text-slate-800"}`}
+                />
                 <span className="font-medium">{item.label}</span>
               </Link>
             );
@@ -129,28 +153,20 @@ export function AppSidebar({ user }: AppSidebarProps) {
         </nav>
       </div>
 
-      {/* Bottom Area: Organization & User Card */}
       <div className="flex flex-col gap-3 pt-4">
-        {/* Org Switcher Card */}
-        <div className="glass-card-subtle flex items-center justify-between rounded-2xl p-3 text-xs">
-          <div className="min-w-0 flex-1 pr-2">
-            <p className="text-[11px] text-slate-400">当前组织</p>
-            <p className="truncate font-semibold text-slate-700">{user.factory_name || "精密制造有限公司"}</p>
-          </div>
-          <span className="text-slate-400">›</span>
+        <div className="glass-card-subtle rounded-2xl p-3 text-xs">
+          <p className="text-[11px] text-slate-400">本厂</p>
+          <p className="truncate font-semibold text-slate-700">{user.factory_name}</p>
         </div>
 
-        {/* User Card */}
         <div className="glass-card-subtle flex items-center justify-between rounded-2xl p-3">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-slate-600 to-slate-400 font-semibold text-white text-xs">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-slate-600 to-slate-400 text-xs font-semibold text-white">
               {user.username.slice(0, 2).toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-xs font-semibold text-slate-900">{user.username}</p>
-              <p className="truncate text-[11px] text-slate-400">
-                {user.role === "admin" ? "高级制造工程师 · 管理员" : "报价工程师"}
-              </p>
+              <p className="truncate text-[11px] text-slate-400">{roleLabel(user.role)}</p>
             </div>
           </div>
           <div className="shrink-0 pl-1">
@@ -158,7 +174,6 @@ export function AppSidebar({ user }: AppSidebarProps) {
           </div>
         </div>
 
-        {/* Security / Compliance Badge */}
         <div className="flex items-center justify-between px-2 pt-1 text-[11px] text-slate-400">
           <span>2024 © 智造科技</span>
           <span className="flex items-center gap-1">
