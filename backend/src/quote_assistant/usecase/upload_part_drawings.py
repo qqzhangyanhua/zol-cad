@@ -132,9 +132,7 @@ class UploadPartDrawings(TenantBoundUseCase):
             raise
         # Hand off only after the commit — a deferred processor reads these rows from its
         # own session and would otherwise find nothing.
-        items = [
-            self._processor.submit(self.actor, drawing.id) or drawing for drawing in stored
-        ]
+        items = [self._processor.submit(self.actor, drawing.id) or drawing for drawing in stored]
         return UploadPartDrawingsResult(items=items, rejected=rejected)
 
     def _assess(

@@ -243,11 +243,7 @@ def to_part_drawing_response(
     *,
     risk_label_priority: Sequence[RiskLabelName] | None = None,
 ) -> PartDrawingResponse:
-    advise = (
-        POOR_GRADE_ADVISE_TEXT
-        if item.status is PartDrawingStatus.ADVISE_MANUAL
-        else None
-    )
+    advise = POOR_GRADE_ADVISE_TEXT if item.status is PartDrawingStatus.ADVISE_MANUAL else None
     out_of_scope = ASSEMBLY_OUT_OF_SCOPE_TEXT if item.is_assembly_or_exploded else None
     mark = LOW_QUALITY_MARK_TEXT if item.low_quality_unreliable else None
     review_fields = review_fields_for(item)
@@ -295,9 +291,7 @@ def to_part_drawing_response(
                 triggering_value=label.triggering_value,
                 reason=label.reason,
             )
-            for label in sort_risk_labels(
-                evaluate_risk_labels(risk_fields), risk_label_priority
-            )
+            for label in sort_risk_labels(evaluate_risk_labels(risk_fields), risk_label_priority)
         ],
         no_judgable_risk_message=NO_JUDGABLE_RISK_ITEMS_MESSAGE,
         pending_confirmation_count=len(unfinished),
@@ -492,7 +486,9 @@ def to_manual_baseline_response(item: ManualBaseline) -> ManualBaselineResponse:
     )
 
 
-def to_drawing_processing_time_response(item: DrawingProcessingTime) -> DrawingProcessingTimeResponse:
+def to_drawing_processing_time_response(
+    item: DrawingProcessingTime,
+) -> DrawingProcessingTimeResponse:
     return DrawingProcessingTimeResponse(
         part_drawing_id=item.part_drawing_id,
         original_filename=item.original_filename,
@@ -564,7 +560,9 @@ def to_hard_gate_response(gate: HardGateStatus) -> HardGateStatusResponse:
     )
 
 
-def to_confidentiality_notice_response(notice: ConfidentialityNotice) -> ConfidentialityNoticeResponse:
+def to_confidentiality_notice_response(
+    notice: ConfidentialityNotice,
+) -> ConfidentialityNoticeResponse:
     return ConfidentialityNoticeResponse(
         ticket_02_closed=notice.ticket_02_closed,
         ticket_02_status=notice.ticket_02_status,

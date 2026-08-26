@@ -74,9 +74,7 @@ def test_多页PDF只把报价员指定的那一页送进提取引擎(
         assert round(width / height) == 4
 
 
-def test_图片上传时内容与媒体类型原样透传(
-    app, client: TestClient, db_session: Session
-) -> None:
+def test_图片上传时内容与媒体类型原样透传(app, client: TestClient, db_session: Session) -> None:
     _login_quoter(client, db_session)
     engine = _RecordingEngine()
     app.state.extraction_engine = engine
@@ -93,9 +91,7 @@ def test_图片上传时内容与媒体类型原样透传(
         assert request.page_content == PNG_1X1
 
 
-def test_选定页渲染失败按提取失败处理且可重试(
-    app, client: TestClient, db_session: Session
-) -> None:
+def test_选定页渲染失败按提取失败处理且可重试(app, client: TestClient, db_session: Session) -> None:
     factory_id = create_factory(db_session, "华东精密")
     create_quoter(db_session, factory_id, "quoter_a", "secret-a")
     db_session.commit()

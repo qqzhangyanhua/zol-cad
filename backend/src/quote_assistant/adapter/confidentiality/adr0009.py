@@ -117,7 +117,9 @@ def _implementation_constraints(text: str) -> tuple[str, ...]:
 
 def parse_adr_0009_text(text: str, *, adr_path: str = ADR_0009_RELATIVE) -> Adr0009Snapshot:
     research = RESEARCH_NOTES_RELATIVE
-    mentioned = re.search(r"`(\.scratch/mvp-quote-assistant/research/02-llm-vendor-compliance/)`", text)
+    mentioned = re.search(
+        r"`(\.scratch/mvp-quote-assistant/research/02-llm-vendor-compliance/)`", text
+    )
     if mentioned is not None:
         research = mentioned.group(1)
     return Adr0009Snapshot(
@@ -198,10 +200,7 @@ def _processor_summary(snapshot: Adr0009Snapshot, settings: Settings) -> str:
             "处理方尚未选定。当前进程打开了 vendor 骨架，但仍拒绝调用付费 API"
             "（票 02 / ADR-0009 仍为模板）。"
         )
-    return (
-        "处理方尚未选定。当前默认提取引擎是 fixture 假实现，"
-        "不把零件图发给第三方多模态大模型。"
-    )
+    return "处理方尚未选定。当前默认提取引擎是 fixture 假实现，不把零件图发给第三方多模态大模型。"
 
 
 def _ticket_02_status(snapshot: Adr0009Snapshot) -> str:

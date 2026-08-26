@@ -28,11 +28,15 @@ def upgrade() -> None:
     )
     op.add_column(
         "part_drawings",
-        sa.Column("is_assembly_or_exploded", sa.Boolean(), nullable=False, server_default=sa.false()),
+        sa.Column(
+            "is_assembly_or_exploded", sa.Boolean(), nullable=False, server_default=sa.false()
+        ),
     )
     op.add_column(
         "part_drawings",
-        sa.Column("low_quality_unreliable", sa.Boolean(), nullable=False, server_default=sa.false()),
+        sa.Column(
+            "low_quality_unreliable", sa.Boolean(), nullable=False, server_default=sa.false()
+        ),
     )
     op.alter_column("part_drawings", "status", server_default=None)
     op.alter_column("part_drawings", "is_assembly_or_exploded", server_default=None)
@@ -52,7 +56,9 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["factory_id"], ["factories.id"]),
         sa.ForeignKeyConstraint(["actor_user_id"], ["users.id"]),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("part_drawing_id", "sequence_no", name="uq_part_drawing_events_sequence"),
+        sa.UniqueConstraint(
+            "part_drawing_id", "sequence_no", name="uq_part_drawing_events_sequence"
+        ),
     )
     op.create_index(
         "ix_part_drawing_events_part_drawing_id",

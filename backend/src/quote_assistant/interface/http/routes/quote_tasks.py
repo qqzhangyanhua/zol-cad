@@ -136,7 +136,9 @@ def assign_part_drawing(
     return to_quote_task_detail_response(view, risk_label_priority=prefs.risk_label_priority)
 
 
-@router.delete("/{quote_task_id}/part-drawings/{drawing_id}", response_model=QuoteTaskDetailResponse)
+@router.delete(
+    "/{quote_task_id}/part-drawings/{drawing_id}", response_model=QuoteTaskDetailResponse
+)
 def remove_part_drawing(
     quote_task_id: UUID,
     drawing_id: UUID,

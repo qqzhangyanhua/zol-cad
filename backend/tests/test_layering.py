@@ -155,7 +155,7 @@ def test_高风险字段判定表只活在领域层() -> None:
             offenders.append(str(path.relative_to(frontend)))
         if "field_requires_confirmation" in source:
             offenders.append(str(path.relative_to(frontend)))
-        if "quality_grade === \"清晰\"" in source or "quality_grade === '清晰'" in source:
+        if 'quality_grade === "清晰"' in source or "quality_grade === '清晰'" in source:
             offenders.append(f"{path.relative_to(frontend)} 用图纸质量分级自行判断需确认")
     assert offenders == []
 
@@ -184,7 +184,9 @@ def test_报价底稿导出规则在领域层且管理员界面没有字段映�
     export_use_case = (SRC / "usecase" / "export_quote_sheet.py").read_text(encoding="utf-8")
     assert "openpyxl" not in export_use_case
     assert "evaluate_risk_labels" not in export_use_case
-    http_src = "".join(path.read_text(encoding="utf-8") for path in (SRC / "interface" / "http").rglob("*.py"))
+    http_src = "".join(
+        path.read_text(encoding="utf-8") for path in (SRC / "interface" / "http").rglob("*.py")
+    )
     assert "quote-sheet-templates" not in http_src
     assert "class QuoteSheetTemplateRequest" not in http_src
     cli = (SRC / "interface" / "cli" / "quote_sheet_template.py").read_text(encoding="utf-8")

@@ -66,7 +66,9 @@ def apply_grading(
         uow.commit()
 
     try:
-        result = engine.extract(build_extraction_request(drawing, storage=storage, renderer=renderer))
+        result = engine.extract(
+            build_extraction_request(drawing, storage=storage, renderer=renderer)
+        )
     except (ExtractionValidationFailed, ExtractionEngineFailed) as exc:
         drawing, finished = _grading_failed(drawing, events, actor_user_id, str(exc))
     except Exception:

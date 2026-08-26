@@ -464,9 +464,7 @@ def get_get_factory_preferences(
     actor: Actor = Depends(require_actor),
     session: Session = Depends(get_db),
 ) -> GetFactoryPreferences:
-    return GetFactoryPreferences(
-        actor=actor, preferences=SqlFactoryPreferenceRepository(session)
-    )
+    return GetFactoryPreferences(actor=actor, preferences=SqlFactoryPreferenceRepository(session))
 
 
 def get_replace_common_materials(

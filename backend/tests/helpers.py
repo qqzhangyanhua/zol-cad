@@ -143,7 +143,9 @@ def insert_quote_sheet_template(
     session.add(
         QuoteSheetTemplateRow(
             factory_id=factory_id,
-            columns=[{"source_key": source_key, "header": header} for source_key, header in columns],
+            columns=[
+                {"source_key": source_key, "header": header} for source_key, header in columns
+            ],
         )
     )
     session.flush()

@@ -87,9 +87,7 @@ def test_差图不自动预填并建议走人工(client: TestClient, db_session:
     assert listed["status"] == "建议人工"
 
 
-def test_显式仍然继续后结果永久携带低质量标记(
-    client: TestClient, db_session: Session
-) -> None:
+def test_显式仍然继续后结果永久携带低质量标记(client: TestClient, db_session: Session) -> None:
     _login_quoter(client, db_session)
     drawing_id = _upload(client, "FX-TP-01.png").json()["items"][0]["id"]
 

@@ -117,7 +117,9 @@ def unfinished_confirmation_items(drawing: PartDrawing) -> tuple[ReviewFieldView
 
 def fields_for_risk_labels(drawing: PartDrawing) -> tuple[ExtractedField, ...]:
     """Confirmed / current values that drive 风险标签. Ignored items do not participate."""
-    return tuple(field for field in reviewable_fields(drawing.extracted_fields) if not field.ignored)
+    return tuple(
+        field for field in reviewable_fields(drawing.extracted_fields) if not field.ignored
+    )
 
 
 def incomplete_review_message(unfinished: tuple[ReviewFieldView, ...]) -> str:
@@ -238,9 +240,7 @@ def add_critical_dimension(
             updated.append(field)
     if not filled:
         existing_added = [
-            field
-            for field in updated
-            if field.key.startswith(f"{kind}{ADDED_KEY_SEPARATOR}")
+            field for field in updated if field.key.startswith(f"{kind}{ADDED_KEY_SEPARATOR}")
         ]
         next_index = 1 + len(existing_added)
         extra_label = label.strip() if label and label.strip() else spec.label
@@ -288,9 +288,7 @@ def complete_review(
     actor_user_id: UUID | None,
 ) -> tuple[PartDrawing, PartDrawingEvent]:
     if drawing.status not in REVIEWABLE_STATUSES:
-        raise IllegalPartDrawingTransition(
-            f"零件图处于「{drawing.status.value}」，不能标记已复核"
-        )
+        raise IllegalPartDrawingTransition(f"零件图处于「{drawing.status.value}」，不能标记已复核")
     unfinished = unfinished_confirmation_items(drawing)
     if unfinished:
         raise IncompleteReview(incomplete_review_message(unfinished))

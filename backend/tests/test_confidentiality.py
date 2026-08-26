@@ -92,9 +92,7 @@ def test_ADR关闭后保密说明改为读入选定供应商() -> None:
     assert "https://example.invalid/g3" in notice.dpa_statement
 
 
-def test_管理员能看到诚实的保密说明报价员不能(
-    client: TestClient, db_session: Session
-) -> None:
+def test_管理员能看到诚实的保密说明报价员不能(client: TestClient, db_session: Session) -> None:
     _login_admin(client, db_session)
     response = client.get("/admin/confidentiality")
     assert response.status_code == 200

@@ -235,7 +235,9 @@ class TenantDeleteChallengeRepository(Protocol):
     def add(self, challenge: TenantDeleteChallenge) -> None:
         """Persist a newly issued one-time delete confirmation. Tenant comes from the entity."""
 
-    def get_open(self, tenant: TenantScope, token: str, now: datetime) -> TenantDeleteChallenge | None:
+    def get_open(
+        self, tenant: TenantScope, token: str, now: datetime
+    ) -> TenantDeleteChallenge | None:
         """Load an unused, unexpired challenge that belongs to this factory."""
 
     def mark_consumed(self, tenant: TenantScope, token: str, consumed_at: datetime) -> None:

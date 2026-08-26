@@ -173,9 +173,7 @@ def test_生产session_cookie带secure(
         assert "secure" in response.headers.get("set-cookie", "").lower()
 
 
-def test_线程处理器上传后后台完成(
-    app, client: TestClient, db_session: Session
-) -> None:
+def test_线程处理器上传后后台完成(app, client: TestClient, db_session: Session) -> None:
     _login_quoter(client, db_session)
     processor = ThreadPartDrawingProcessor(
         ProcessPartDrawingJob(app),
@@ -356,9 +354,7 @@ def test_请求体过大返回413() -> None:
     assert start["status"] == 413
 
 
-def test_后台作业与重试不会双跑且序号不重复(
-    app, client: TestClient, db_session: Session
-) -> None:
+def test_后台作业与重试不会双跑且序号不重复(app, client: TestClient, db_session: Session) -> None:
     factory_id, user_id = _login_quoter(client, db_session)
     from quote_assistant.interface.http.background import DeferredPartDrawingProcessor
 

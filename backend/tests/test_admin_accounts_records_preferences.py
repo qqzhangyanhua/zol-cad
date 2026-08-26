@@ -32,9 +32,7 @@ def test_报价员读不到同厂其他报价员的零件图与报价任务管�
 
     assert login(client, "quoter_a", "secret-a").status_code == 200
     drawing_a = _upload(client, "甲报价员-轴.pdf")
-    task_a = client.post(
-        "/quote-tasks", json={"name": "甲的询价", "customer_name": "甲客户"}
-    )
+    task_a = client.post("/quote-tasks", json={"name": "甲的询价", "customer_name": "甲客户"})
     assert task_a.status_code == 200
     assigned = client.post(
         f"/quote-tasks/{task_a.json()['id']}/part-drawings",
@@ -57,9 +55,7 @@ def test_报价员读不到同厂其他报价员的零件图与报价任务管�
     )
 
     drawing_c = _upload(client, "丙报价员-套.pdf")
-    task_c = client.post(
-        "/quote-tasks", json={"name": "丙的询价", "customer_name": "丙客户"}
-    )
+    task_c = client.post("/quote-tasks", json={"name": "丙的询价", "customer_name": "丙客户"})
     assert task_c.status_code == 200
 
     _switch(client, "admin_a", "secret-admin")
@@ -121,9 +117,12 @@ def test_报价员不能管理账号也不能读到其他厂数据(client: TestC
 
     assert login(client, "quoter_a", "secret-a").status_code == 200
     assert client.get("/admin/accounts").status_code == 403
-    assert client.post(
-        "/admin/accounts", json={"username": "intruder", "password": "secret-xx"}
-    ).status_code == 403
+    assert (
+        client.post(
+            "/admin/accounts", json={"username": "intruder", "password": "secret-xx"}
+        ).status_code
+        == 403
+    )
     assert client.get("/admin/processing-records").status_code == 403
     assert client.get("/admin/confidentiality").status_code == 403
     assert client.get("/admin/risk-rules").status_code == 403
@@ -139,9 +138,7 @@ def test_报价员不能管理账号也不能读到其他厂数据(client: TestC
     _switch(client, "admin_b", "secret-b")
     listed = client.get("/admin/accounts")
     assert {item["username"] for item in listed.json()["items"]} == {"admin_b"}
-    assert client.post(
-        f"/admin/accounts/{created.json()['id']}/disable"
-    ).status_code == 404
+    assert client.post(f"/admin/accounts/{created.json()['id']}/disable").status_code == 404
     records = client.get("/admin/processing-records")
     assert records.status_code == 200
     assert records.json() == {"items": []}

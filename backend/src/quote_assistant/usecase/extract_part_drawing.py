@@ -91,9 +91,7 @@ def apply_extraction(
         uow.commit()
 
     try:
-        fields = _fields_for_extraction(
-            drawing, storage=storage, renderer=renderer, engine=engine
-        )
+        fields = _fields_for_extraction(drawing, storage=storage, renderer=renderer, engine=engine)
         drawing, finished = record_transition(
             drawing,
             PartDrawingStatus.EXTRACTED,
@@ -152,4 +150,3 @@ def _fields_for_extraction(
     return engine.extract(
         build_extraction_request(drawing, storage=storage, renderer=renderer)
     ).fields
-

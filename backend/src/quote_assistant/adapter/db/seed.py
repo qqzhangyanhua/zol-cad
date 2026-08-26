@@ -13,7 +13,9 @@ from quote_assistant.domain.entities import Role
 
 
 def _ensure_factory(session: Session, name: str, now: datetime) -> UUID:
-    existing = session.execute(select(FactoryRow).where(FactoryRow.name == name)).scalar_one_or_none()
+    existing = session.execute(
+        select(FactoryRow).where(FactoryRow.name == name)
+    ).scalar_one_or_none()
     if existing is not None:
         return existing.id
     row = FactoryRow(id=uuid4(), name=name, created_at=now)
@@ -31,7 +33,9 @@ def _ensure_user(
     role: Role,
     now: datetime,
 ) -> None:
-    existing = session.execute(select(UserRow).where(UserRow.username == username)).scalar_one_or_none()
+    existing = session.execute(
+        select(UserRow).where(UserRow.username == username)
+    ).scalar_one_or_none()
     if existing is not None:
         return
     session.add(

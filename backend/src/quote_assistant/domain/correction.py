@@ -14,9 +14,7 @@ from quote_assistant.domain.extraction import (
 
 # Honest purpose (ADR-0003): accumulate samples and iterate prompts / post-processing.
 # Not live model improvement — the 提取引擎 is a closed-source general LLM.
-CORRECTION_STATS_PURPOSE = (
-    "这些修正记录用来积累样本，以便将来自建或微调，并迭代提示词与后处理规则。提取引擎是通用闭源大模型，修正不会回流再训练它。"
-)
+CORRECTION_STATS_PURPOSE = "这些修正记录用来积累样本，以便将来自建或微调，并迭代提示词与后处理规则。提取引擎是通用闭源大模型，修正不会回流再训练它。"
 
 
 @dataclass(frozen=True)

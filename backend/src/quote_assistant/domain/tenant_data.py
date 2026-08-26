@@ -103,13 +103,15 @@ def confirmation_accepted(
     expected_phrase: str,
     submitted_phrase: str,
 ) -> bool:
-    return confirmation_secrets_match(expected_token, submitted_token) and confirmation_secrets_match(
-        expected_phrase, submitted_phrase.strip()
-    )
+    return confirmation_secrets_match(
+        expected_token, submitted_token
+    ) and confirmation_secrets_match(expected_phrase, submitted_phrase.strip())
 
 
 def tenant_export_filename(factory_name: str, exported_at: datetime) -> str:
-    safe = "".join(char if char.isalnum() or char in "._-" else "_" for char in factory_name).strip("_")
+    safe = "".join(char if char.isalnum() or char in "._-" else "_" for char in factory_name).strip(
+        "_"
+    )
     stamp = exported_at.astimezone(UTC).strftime("%Y%m%dT%H%M%SZ")
     return f"本厂数据导出-{safe or 'factory'}-{stamp}.zip"
 

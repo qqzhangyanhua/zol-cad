@@ -124,7 +124,9 @@ async def upload_part_drawings(
                 selected_page=page,
             )
         )
-    result = use_case.execute(incoming) if incoming else UploadPartDrawingsResult(items=[], rejected=[])
+    result = (
+        use_case.execute(incoming) if incoming else UploadPartDrawingsResult(items=[], rejected=[])
+    )
     rejected.extend(
         RejectedUploadResponse(
             original_filename=item.original_filename,

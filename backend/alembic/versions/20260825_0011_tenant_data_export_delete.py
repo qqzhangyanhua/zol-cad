@@ -42,5 +42,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_index(op.f("ix_tenant_delete_challenges_factory_id"), table_name="tenant_delete_challenges")
+    op.drop_index(
+        op.f("ix_tenant_delete_challenges_factory_id"), table_name="tenant_delete_challenges"
+    )
     op.drop_table("tenant_delete_challenges")

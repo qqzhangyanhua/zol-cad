@@ -149,19 +149,27 @@ class SqlUserRepository:
         self._session = session
 
     def get_by_id(self, user_id: UUID) -> User | None:
-        row = self._session.execute(
-            select(UserRow).options(joinedload(UserRow.factory)).where(UserRow.id == user_id)
-        ).unique().scalar_one_or_none()
+        row = (
+            self._session.execute(
+                select(UserRow).options(joinedload(UserRow.factory)).where(UserRow.id == user_id)
+            )
+            .unique()
+            .scalar_one_or_none()
+        )
         if row is None:
             return None
         return _to_user(row)
 
     def get_by_username(self, username: str) -> User | None:
-        row = self._session.execute(
-            select(UserRow)
-            .options(joinedload(UserRow.factory))
-            .where(UserRow.username == username)
-        ).unique().scalar_one_or_none()
+        row = (
+            self._session.execute(
+                select(UserRow)
+                .options(joinedload(UserRow.factory))
+                .where(UserRow.username == username)
+            )
+            .unique()
+            .scalar_one_or_none()
+        )
         if row is None:
             return None
         return _to_user(row)
@@ -194,11 +202,15 @@ class SqlUserRepository:
         self._session.flush()
 
     def disable(self, tenant: TenantScope, user_id: UUID) -> User | None:
-        row = self._session.execute(
-            select(UserRow)
-            .options(joinedload(UserRow.factory))
-            .where(UserRow.id == user_id, UserRow.factory_id == tenant.factory_id)
-        ).unique().scalar_one_or_none()
+        row = (
+            self._session.execute(
+                select(UserRow)
+                .options(joinedload(UserRow.factory))
+                .where(UserRow.id == user_id, UserRow.factory_id == tenant.factory_id)
+            )
+            .unique()
+            .scalar_one_or_none()
+        )
         if row is None:
             return None
         if row.disabled_at is None:
@@ -217,11 +229,15 @@ class SqlPasswordAuthenticator:
         self._session = session
 
     def authenticate(self, username: str, password: str) -> User | None:
-        row = self._session.execute(
-            select(UserRow)
-            .options(joinedload(UserRow.factory))
-            .where(UserRow.username == username)
-        ).unique().scalar_one_or_none()
+        row = (
+            self._session.execute(
+                select(UserRow)
+                .options(joinedload(UserRow.factory))
+                .where(UserRow.username == username)
+            )
+            .unique()
+            .scalar_one_or_none()
+        )
         if row is None:
             return None
         if not verify_password(password, row.password_hash):
@@ -428,9 +444,7 @@ class SqlPartDrawingEventRepository:
     def next_sequence(self, drawing_id: UUID) -> int:
         self._session.flush()
         self._session.execute(
-            select(PartDrawingRow.id)
-            .where(PartDrawingRow.id == drawing_id)
-            .with_for_update()
+            select(PartDrawingRow.id).where(PartDrawingRow.id == drawing_id).with_for_update()
         ).scalar_one()
         current = self._session.execute(
             select(func.coalesce(func.max(PartDrawingEventRow.sequence_no), 0)).where(
@@ -672,9 +686,7 @@ class SqlQuoteSheetTemplateRepository:
         ]
         row = self._session.get(QuoteSheetTemplateRow, tenant.factory_id)
         if row is None:
-            self._session.add(
-                QuoteSheetTemplateRow(factory_id=tenant.factory_id, columns=payload)
-            )
+            self._session.add(QuoteSheetTemplateRow(factory_id=tenant.factory_id, columns=payload))
         else:
             row.columns = payload
         self._session.flush()
@@ -727,7 +739,9 @@ class SqlTenantDeleteChallengeRepository:
         )
         self._session.flush()
 
-    def get_open(self, tenant: TenantScope, token: str, now: datetime) -> TenantDeleteChallenge | None:
+    def get_open(
+        self, tenant: TenantScope, token: str, now: datetime
+    ) -> TenantDeleteChallenge | None:
         row = self._session.execute(
             select(TenantDeleteChallengeRow).where(
                 TenantDeleteChallengeRow.token == token,
@@ -775,6 +789,8 @@ class SqlTenantDataPurge:
             delete(FactoryPreferenceRow).where(FactoryPreferenceRow.factory_id == factory_id)
         )
         self._session.execute(
-            delete(TenantDeleteChallengeRow).where(TenantDeleteChallengeRow.factory_id == factory_id)
+            delete(TenantDeleteChallengeRow).where(
+                TenantDeleteChallengeRow.factory_id == factory_id
+            )
         )
         self._session.flush()

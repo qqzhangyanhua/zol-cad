@@ -132,7 +132,9 @@ def test_差图不自动预填因此没有提取结果(client: TestClient, db_se
     assert [row["to_status"] for row in events] == ["已上传", "分级中", "建议人工"]
 
 
-def test_适配器校验失败按提取失败处理脏数据不进领域层(app, client: TestClient, db_session: Session) -> None:
+def test_适配器校验失败按提取失败处理脏数据不进领域层(
+    app, client: TestClient, db_session: Session
+) -> None:
     _login_quoter(client, db_session)
     app.state.extraction_engine = _AlwaysDirtyEngine()
     uploaded = _upload(client, "FX-TQ-01.png")
@@ -141,7 +143,9 @@ def test_适配器校验失败按提取失败处理脏数据不进领域层(app,
 
     assert item["status"] == "提取失败"
     assert item["quality_grade"] is None
-    assert item["extraction_failure_reason"] == "提取引擎返回结果未通过适配器校验，脏数据未进入领域层"
+    assert (
+        item["extraction_failure_reason"] == "提取引擎返回结果未通过适配器校验，脏数据未进入领域层"
+    )
     assert item["look_at_drawing_disclaimer"] == LOOK_AT_DRAWING_DISCLAIMER
     assert all(field["value"] is None for field in item["extracted_fields"])
     assert all("invented_confidence" not in field for field in item["extracted_fields"])

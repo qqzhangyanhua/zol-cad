@@ -101,16 +101,14 @@ def _add_factory_args(parser: argparse.ArgumentParser) -> None:
 
 def _run_show(database_url: str, args: argparse.Namespace) -> None:
     with _session_scope(database_url) as session:
-        factory = _load_factory(
-            session, factory_id=args.factory_id, factory_name=args.factory_name
-        )
+        factory = _load_factory(session, factory_id=args.factory_id, factory_name=args.factory_name)
         actor = _onboarding_actor(factory)
-        stored = GetQuoteSheetTemplate(
-            actor, SqlQuoteSheetTemplateRepository(session)
-        ).execute()
+        stored = GetQuoteSheetTemplate(actor, SqlQuoteSheetTemplateRepository(session)).execute()
         resolved = resolve_quote_sheet_template(stored)
         if args.json:
-            print(json.dumps(_show_payload(factory, stored, resolved), ensure_ascii=False, indent=2))
+            print(
+                json.dumps(_show_payload(factory, stored, resolved), ensure_ascii=False, indent=2)
+            )
             return
         _print_show(factory, stored, resolved)
 
@@ -118,9 +116,7 @@ def _run_show(database_url: str, args: argparse.Namespace) -> None:
 def _run_save(database_url: str, args: argparse.Namespace) -> None:
     raw_columns = _load_raw_columns(args)
     with _session_scope(database_url) as session:
-        factory = _load_factory(
-            session, factory_id=args.factory_id, factory_name=args.factory_name
-        )
+        factory = _load_factory(session, factory_id=args.factory_id, factory_name=args.factory_name)
         actor = _onboarding_actor(factory)
         resolved = SaveQuoteSheetTemplate(
             actor,
