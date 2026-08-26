@@ -23,7 +23,7 @@
 
 同时给校验失败留一条可诊断的路：现在 `parse_engine_result` 把所有 `ValidationError` 压成一句"未通过适配器校验"，`from exc` 保住了 traceback，但没有日志配置（见票 27）意味着生产上看不到任何东西。换供应商或调提示词时，这是唯一能告诉你"模型到底返回了什么"的地方。
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] 提示词正文包含完整输出契约：JSON 结构、三个必需 key、字段 key / label / category 列表
 - [ ] 字段目录只有一份来源，提示词里的字段清单由 `CANONICAL_FIELD_BY_KEY` 生成，不手抄
