@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import UTC, datetime
 from uuid import UUID
 
@@ -15,6 +16,7 @@ from quote_assistant.domain.part_drawing_state import (
     record_transition,
     status_after_grade,
 )
+from quote_assistant.domain.part_family import adopt_content_classified_family
 from quote_assistant.usecase.extract_part_drawing import apply_extraction, build_extraction_request
 from quote_assistant.usecase.ports import (
     DrawingPageRenderer,
@@ -74,6 +76,13 @@ def apply_grading(
     except Exception:
         drawing, finished = _grading_failed(drawing, events, actor_user_id, _GRADING_FAILURE_REASON)
     else:
+        drawing = replace(
+            drawing,
+            part_family_id=adopt_content_classified_family(
+                drawing.part_family_id,
+                extracted_fields=result.fields,
+            ),
+        )
         drawing, finished = record_transition(
             drawing,
             status_after_grade(result),

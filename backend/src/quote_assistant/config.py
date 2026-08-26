@@ -5,6 +5,14 @@ UNSAFE_DEMO_PASSWORD_A = "change-me-a"
 UNSAFE_DEMO_PASSWORD_B = "change-me-b"
 
 _LOCAL_ENVS = frozenset({"local", "dev", "development", "test"})
+ENGINE_FIXTURE = "fixture"
+FIXTURE_ENGINE_FORBIDDEN_MESSAGE = (
+    "非本地环境禁止 QA_EXTRACTION_ENGINE=fixture：文件名不得触发预置假提取结果"
+)
+
+
+class FixtureEngineNotAllowed(RuntimeError):
+    """fixture 引擎只能在 local / dev / test 选择或使用。"""
 
 
 class Settings(BaseSettings):
@@ -58,6 +66,18 @@ class Settings(BaseSettings):
         return self.app_env.strip().lower() in _LOCAL_ENVS
 
     @property
+    def allows_fixture_engine(self) -> bool:
+        """fixture 假引擎只许 local / dev / test。生产选它等于把预置假数据开进入口。"""
+        return self.is_local
+
+    @property
+    def allows_fixture_filename_classification(self) -> bool:
+        """文件名 FX-T / FX-N 槽位判定只跟 fixture 引擎走，且只在本地/测试。"""
+        return (
+            self.allows_fixture_engine and self.extraction_engine.strip().lower() == ENGINE_FIXTURE
+        )
+
+    @property
     def effective_session_cookie_secure(self) -> bool:
         if self.session_cookie_secure is not None:
             return self.session_cookie_secure
@@ -77,5 +97,7 @@ def validate_runtime_settings(settings: Settings) -> None:
         problems.append("QA_DEMO_PASSWORD_B 必须覆盖默认占位值")
     if not settings.effective_session_cookie_secure:
         problems.append("非本地环境必须启用 session cookie 的 Secure（QA_SESSION_COOKIE_SECURE）")
+    if settings.extraction_engine.strip().lower() == ENGINE_FIXTURE:
+        problems.append(FIXTURE_ENGINE_FORBIDDEN_MESSAGE)
     if problems:
         raise RuntimeError("拒绝启动（非本地环境配置不安全）：" + "；".join(problems))

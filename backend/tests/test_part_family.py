@@ -6,13 +6,21 @@ from sqlalchemy.orm import Session
 from drawing_fixtures import PNG_1X1
 from helpers import create_factory, create_quoter, login
 from quote_assistant.adapter.extraction.fake import FixtureExtractionEngine
-from quote_assistant.domain.extraction import ExtractionRequest, ExtractionResult
+from quote_assistant.domain.extraction import (
+    ExtractedField,
+    ExtractionRequest,
+    ExtractionResult,
+    FieldCategory,
+)
 from quote_assistant.domain.part_family import (
     EXPERIMENTAL_MARK_TEXT,
     PROVISIONAL_OTHER_PART_FAMILY_ID,
     TARGET_PART_FAMILY_ID,
     UNKNOWN_PART_FAMILY_ID,
+    adopt_content_classified_family,
     classify_part_family,
+    classify_part_family_from_content,
+    classify_part_family_from_fixture_filename,
     experimental_mark_for,
 )
 from quote_assistant.domain.prompt_templates import prompt_template_for
@@ -55,8 +63,18 @@ def test_每张零件图记录所属族类(client: TestClient, db_session: Sessi
     assert target["part_family_id"] == TARGET_PART_FAMILY_ID
     assert other["part_family_id"] == PROVISIONAL_OTHER_PART_FAMILY_ID
     assert unknown["part_family_id"] == UNKNOWN_PART_FAMILY_ID
-    assert classify_part_family("FX-TA-01.png") == TARGET_PART_FAMILY_ID
-    assert classify_part_family("FX-NA-01.png") == PROVISIONAL_OTHER_PART_FAMILY_ID
+    assert (
+        classify_part_family("FX-TA-01.png", allow_fixture_filename=True) == TARGET_PART_FAMILY_ID
+    )
+    assert (
+        classify_part_family("FX-NA-01.png", allow_fixture_filename=True)
+        == PROVISIONAL_OTHER_PART_FAMILY_ID
+    )
+    assert classify_part_family_from_fixture_filename("FX-TA-01.png") == TARGET_PART_FAMILY_ID
+    assert (
+        classify_part_family_from_fixture_filename("FX-NA-01.png")
+        == PROVISIONAL_OTHER_PART_FAMILY_ID
+    )
 
 
 def test_目标族走该族专用提示词模板且族类作为Port参数(
@@ -131,3 +149,34 @@ def test_带实验性标记的零件图仍可完成复核(client: TestClient, db
     assert body["status"] == "已复核"
     assert body["experimental_mark"] == EXPERIMENTAL_MARK_TEXT
     assert body["is_target_part_family"] is False
+
+
+def test_未允许文件名槽位时含FX_T也是unknown() -> None:
+    assert classify_part_family("我的图-FX-TQ-01.pdf") == UNKNOWN_PART_FAMILY_ID
+    assert classify_part_family("FX-TQ-01.png", allow_fixture_filename=False) == (
+        UNKNOWN_PART_FAMILY_ID
+    )
+
+
+def test_内容钩子在票01关闭前一律unknown且不发明轴类启发式() -> None:
+    fields = (
+        ExtractedField("part_name", "零件名称", "轴", FieldCategory.TITLE_BLOCK),
+        ExtractedField("max_envelope", "最大外形", "Ø10×120", FieldCategory.CRITICAL_DIMENSION),
+    )
+    assert classify_part_family_from_content(extracted_fields=fields) == UNKNOWN_PART_FAMILY_ID
+    assert classify_part_family_from_content(engine_family_signal="turning") == (
+        UNKNOWN_PART_FAMILY_ID
+    )
+    assert (
+        adopt_content_classified_family(TARGET_PART_FAMILY_ID, extracted_fields=fields)
+        == TARGET_PART_FAMILY_ID
+    )
+    assert (
+        classify_part_family(
+            "FX-TQ-01.png",
+            allow_fixture_filename=False,
+            extracted_fields=fields,
+            engine_family_signal="turning",
+        )
+        == UNKNOWN_PART_FAMILY_ID
+    )

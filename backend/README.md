@@ -6,7 +6,7 @@ FastAPI 四层骨架（接口 / 用例 / 领域 / 适配器）。依赖用 `uv` 
 
 生产必须是 **一个 uvicorn worker、一个副本**。启动时的滞留回收会把「已上传 / 分级中 / 提取中」改成提取失败；这个前提只在单进程下成立。不要用 `uvicorn --workers N`，不要水平扩第二个实例。生产入口：`scripts/run-production.sh`（无 `--reload`）和本目录 `Dockerfile`。细节见仓库根目录 `docs/deploy.md`。
 
-非本地环境（`QA_APP_ENV=production`）会拒绝带着默认签名密钥或 demo 密码启动。Session cookie 默认带 `Secure`；本地 HTTP 设 `QA_SESSION_COOKIE_SECURE=false`。
+非本地环境（`QA_APP_ENV=production`）会拒绝带着默认签名密钥或 demo 密码启动，也拒绝 `QA_EXTRACTION_ENGINE=fixture`（文件名不得触发预置假提取结果）。Session cookie 默认带 `Secure`；本地 HTTP 设 `QA_SESSION_COOKIE_SECURE=false`。
 
 ## 本地运行
 
@@ -33,7 +33,7 @@ QA_LOCAL_OBJECT_DIR=/tmp/quote-assistant-objects \
 
 对象存储：用例层只依赖 `ObjectStorage` 窄接口（存 / 取 / 签发临时 URL / 删）。`QA_OBJECT_STORE_BACKEND=local` 时写入本地目录；`oss` 时走阿里云 OSS，put 时带 `x-oss-server-side-encryption: AES256` 与 private ACL，Bucket 本身不得公共读。
 
-提取引擎：用例层只依赖 `ExtractionEngine` Port（输入图像/PDF 页 + 零件族标识 + 输入图标识，输出结构化提取与图纸质量分级）。`QA_EXTRACTION_ENGINE` 默认 `fixture`（假实现，缝 1 用）；`vendor` 打开未选定供应商的骨架适配器，**不会调用付费 API**。票 02 / ADR-0009 关闭前不得把骨架当成已选定供应商。引擎原始输出在适配器边界用 Pydantic 严格校验，校验失败按提取失败处理，脏数据不进领域层。调用日志只记 `input_drawing_id` / 介质 / 字节数，不落图像内容。单张调用走 `ExtractionCostRecorder` 计数钩子，供应商未定时费用字段为 `None`。
+提取引擎：用例层只依赖 `ExtractionEngine` Port（输入图像/PDF 页 + 零件族标识 + 输入图标识，输出结构化提取与图纸质量分级）。`QA_EXTRACTION_ENGINE` 默认 `fixture`（假实现，缝 1 / 本地用）；**非本地环境禁止选择或使用 fixture**，必须设 `vendor`。`vendor` 打开未选定供应商的骨架适配器，**不会调用付费 API**。票 02 / ADR-0009 关闭前不得把骨架当成已选定供应商。引擎原始输出在适配器边界用 Pydantic 严格校验，校验失败按提取失败处理，脏数据不进领域层。调用日志只记 `input_drawing_id` / 介质 / 字节数，不落图像内容。单张调用走 `ExtractionCostRecorder` 计数钩子，供应商未定时费用字段为 `None`。
 
 风险标签：领域层纯函数 `evaluate_risk_labels`，输入当前结构化字段，输出标签列表（规则标识 / 触发值 / 理由）。词表不含「安全 / 无风险 / 通过」。门槛为 ADR-0007 示例与接线占位，待票 01 调研替换。标签现算不落库。
 

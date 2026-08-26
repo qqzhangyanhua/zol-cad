@@ -28,6 +28,8 @@ MVP 的负载是一家工厂、几个报价员。部署形态钉死为：
 | `QA_DEMO_PASSWORD_A` | `change-me-a` |
 | `QA_DEMO_PASSWORD_B` | `change-me-b` |
 
+非本地环境也**禁止** `QA_EXTRACTION_ENGINE=fixture`。假引擎按文件名子串返回预置结果（图号 FL-001、材料 45#、IT7…），任何人把文件命名成 `我的图-FX-TQ-01.pdf` 就能从生产入口拿到假数据。缝 1 / 本地开发仍可用 fixture。
+
 Session cookie 在非本地默认带 `Secure`。本地 HTTP 开发可设 `QA_SESSION_COOKIE_SECURE=false`。
 
 ## 建议的生产环境变量
@@ -40,7 +42,7 @@ QA_DEMO_PASSWORD_A=<覆盖种子密码>
 QA_DEMO_PASSWORD_B=<覆盖种子密码>
 QA_SESSION_COOKIE_SECURE=true
 QA_OBJECT_STORE_BACKEND=oss   # 或继续 local，仅限受控环境
-QA_EXTRACTION_ENGINE=fixture  # 票 02 关闭前不得当已选定供应商
+QA_EXTRACTION_ENGINE=vendor  # 非本地禁止 fixture；票 02 关闭前 vendor 仍是未选定骨架，不会调付费 API
 QA_PART_DRAWING_PROCESSOR=thread
 QA_PART_DRAWING_PROCESSOR_WORKERS=4
 QA_PART_DRAWING_PROCESSOR_QUEUE_MAX=64

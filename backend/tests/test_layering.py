@@ -95,6 +95,14 @@ def test_用例层只依赖提取引擎抽象() -> None:
     factory = (SRC / "adapter" / "extraction" / "factory.py").read_text(encoding="utf-8")
     assert "ENGINE_FIXTURE" in factory
     assert "def build_extraction_engine" in factory
+    assert "allows_fixture_engine" in factory
+    config = (SRC / "config.py").read_text(encoding="utf-8")
+    assert "FIXTURE_ENGINE_FORBIDDEN_MESSAGE" in config
+    assert "allows_fixture_filename_classification" in config
+    family = (SRC / "domain" / "part_family.py").read_text(encoding="utf-8")
+    assert "def classify_part_family_from_content" in family
+    assert "def classify_part_family_from_fixture_filename" in family
+    assert "allow_fixture_filename" in upload
     assert "prompt_template_for" not in upload
     assert "prompt_template_for" not in extract
     assert "prompt_template_for" not in process
