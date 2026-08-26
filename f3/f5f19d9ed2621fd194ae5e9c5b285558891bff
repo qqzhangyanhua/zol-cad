@@ -1,0 +1,39 @@
+.scratch/mvp-quote-assistant/issues/24-frontend-error-loading-and-lint.md
+  s_09cab0ec53fe9a::t_91a9c0bb4765fa 1-56
+.scratch/mvp-quote-assistant/issues/28-backend-lint-and-typecheck-in-ci.md
+  s_09cab0ec53fe9a::t_64df2a54259c21 1-31
+.scratch/mvp-quote-assistant/issues/26-extraction-progress-visibility.md
+  s_09cab0ec53fe9a::t_e7a443a0479306 1-30
+.scratch/mvp-quote-assistant/issues/29-backfill-ticket-01-conclusions.md
+  s_09cab0ec53fe9a::t_57c90f35178876 1-61
+.scratch/mvp-quote-assistant/issues/20-remove-fabricated-quote-summary.md
+  s_09cab0ec53fe9a::t_0ac07bb3d61702 1-41
+.scratch/mvp-quote-assistant/issues/30-frontend-responsive-and-a11y.md
+  s_09cab0ec53fe9a::t_1a63aeb4f50cd2 1-51
+.scratch/mvp-quote-assistant/issues/27-backend-runtime-hardening.md
+  s_09cab0ec53fe9a::t_1674588ddccbf1 1-73
+.scratch/mvp-quote-assistant/issues/22-single-engine-call-per-drawing.md
+  s_09cab0ec53fe9a::t_35207c57dfe2ad 1-32
+.scratch/mvp-quote-assistant/issues/25-correction-trail-ui-and-admin-nav.md
+  s_09cab0ec53fe9a::t_f120c985c66816 1-36
+.scratch/mvp-quote-assistant/issues/23-quote-sheet-gaps.md
+  s_09cab0ec53fe9a::t_236abb29536202 1-45
+.scratch/mvp-quote-assistant/issues/21-engine-output-contract.md
+  s_09cab0ec53fe9a::t_03fbdf885193e1 1-37
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "development:1.6.23",
+  "base_commit_sha": "f3f5f19d9ed2621fd194ae5e9c5b285558891bff",
+  "prompts": {},
+  "sessions": {
+    "s_09cab0ec53fe9a": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "bf8e21da-2845-453a-9506-68a6998e32c4",
+        "model": "claude-opus-5"
+      },
+      "human_author": "张艳华 <939593210@qq.com>"
+    }
+  }
+}
