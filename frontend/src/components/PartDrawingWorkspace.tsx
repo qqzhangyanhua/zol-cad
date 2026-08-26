@@ -23,8 +23,8 @@ export function PartDrawingWorkspace({
   riskLabelPriority,
 }: PartDrawingWorkspaceProps) {
   return (
-    <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
-      <aside className="min-h-0 w-full overflow-y-auto border-b border-stone-200 bg-stone-50 px-6 py-5 lg:w-[28rem] lg:border-b-0 lg:border-r">
+    <div className="glass-card overflow-hidden flex min-h-[38rem] flex-col lg:flex-row backdrop-blur-xl">
+      <aside className="w-full overflow-y-auto border-b border-slate-200/80 bg-white/40 p-5 lg:w-[28rem] lg:border-b-0 lg:border-r">
         {drawing.status === "已分级" && drawing.auto_prefill_allowed ? (
           <AutoStartExtraction drawingId={drawing.id} />
         ) : null}
@@ -36,7 +36,7 @@ export function PartDrawingWorkspace({
           />
         ) : null}
         {drawing.status === "已提取" || drawing.status === "复核中" || drawing.status === "已复核" ? (
-          <div className="mt-5 space-y-5">
+          <div className="space-y-5">
             <RiskLabelList
               labels={drawing.risk_labels}
               emptyMessage={drawing.no_judgable_risk_message}
@@ -51,7 +51,7 @@ export function PartDrawingWorkspace({
           </div>
         ) : null}
       </aside>
-      <div className="flex min-h-[28rem] min-w-0 flex-1 flex-col">
+      <div className="flex min-h-[32rem] min-w-0 flex-1 flex-col bg-slate-100/50">
         <OriginalDrawingViewer
           src={originalSrc}
           contentType={original.content_type}

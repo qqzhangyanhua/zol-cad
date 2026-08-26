@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-
 import { AppHeader } from "@/components/AppHeader";
+import { AppShell } from "@/components/AppShell";
 import { TenantDataDeletePanel } from "@/components/TenantDataDeletePanel";
 import { TenantDataExportPanel } from "@/components/TenantDataExportPanel";
 import { fetchBackend } from "@/lib/backend";
@@ -20,18 +20,19 @@ export default async function AdminTenantDataPage() {
   }
 
   return (
-    <div className="flex min-h-full flex-1 flex-col bg-stone-50">
-      <AppHeader user={user} />
-      <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-5 px-6 py-5">
-        <div>
-          <h1 className="text-xl font-semibold text-stone-900">本厂数据</h1>
-          <p className="mt-1 text-sm text-stone-500">
-            管理员可以把本厂数据一次性带走，也可以在二次确认后彻底清除。零件图存在第三方云上，这是合作终止时必须答得上的问题。
-          </p>
+    <AppShell user={user}>
+      <AppHeader
+        title="本厂数据资产与导出"
+        subtitle="支持本厂所有图纸与提取记录的一次性备份导出及合规销毁"
+      />
+      <main className="flex flex-1 flex-col gap-5 pb-6">
+        <div className="glass-card p-5 backdrop-blur-xl">
+          <TenantDataExportPanel />
         </div>
-        <TenantDataExportPanel />
-        <TenantDataDeletePanel factoryName={user.factory_name} />
+        <div className="glass-card p-5 backdrop-blur-xl">
+          <TenantDataDeletePanel factoryName={user.factory_name} />
+        </div>
       </main>
-    </div>
+    </AppShell>
   );
 }

@@ -2,7 +2,6 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-
 import { parseQuoteTaskDetail, readErrorDetail } from "@/lib/types";
 
 export function QuoteTaskCreateForm() {
@@ -37,44 +36,52 @@ export function QuoteTaskCreateForm() {
       onSubmit={(event) => {
         void onSubmit(event);
       }}
-      className="rounded-xl border border-stone-200 bg-white p-4"
+      className="glass-card p-5 backdrop-blur-xl"
     >
-      <h2 className="text-sm font-semibold text-stone-900">新建报价任务</h2>
-      <p className="mt-1 text-xs text-stone-500">只填任务名称和客户名称，用来归集零件图。不含金额，也不走审批。</p>
+      <div className="flex items-center justify-between pb-3 border-b border-slate-100/80">
+        <div>
+          <h2 className="text-sm font-bold text-slate-900">新建报价任务</h2>
+          <p className="mt-0.5 text-xs text-slate-500">归集客户本次询价的零件图清单</p>
+        </div>
+      </div>
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
-        <label className="flex flex-col gap-2 text-sm font-medium text-stone-800">
+        <label className="flex flex-col gap-1.5 text-xs font-semibold text-slate-700">
           任务名称
           <input
             name="name"
             value={name}
+            placeholder="例如：精密阀门组试制报价-2405"
             onChange={(event) => setName(event.target.value)}
-            className="h-10 rounded-lg border border-stone-200 bg-stone-50 px-3 text-sm font-normal text-stone-900 outline-none focus:border-stone-400 focus:bg-white"
+            className="h-9 w-full rounded-xl border border-slate-200 bg-white/70 px-3 text-xs font-normal text-slate-900 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100"
             required
           />
         </label>
-        <label className="flex flex-col gap-2 text-sm font-medium text-stone-800">
+        <label className="flex flex-col gap-1.5 text-xs font-semibold text-slate-700">
           客户名称
           <input
             name="customer_name"
             value={customerName}
+            placeholder="例如：苏州精密装备有限公司"
             onChange={(event) => setCustomerName(event.target.value)}
-            className="h-10 rounded-lg border border-stone-200 bg-stone-50 px-3 text-sm font-normal text-stone-900 outline-none focus:border-stone-400 focus:bg-white"
+            className="h-9 w-full rounded-xl border border-slate-200 bg-white/70 px-3 text-xs font-normal text-slate-900 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100"
             required
           />
         </label>
       </div>
       {error ? (
-        <p className="mt-3 text-sm text-red-600" role="alert">
-          {error}
+        <p className="mt-3 text-xs text-red-600" role="alert">
+          ⚠ {error}
         </p>
       ) : null}
-      <button
-        type="submit"
-        disabled={pending}
-        className="mt-4 h-10 rounded-lg bg-stone-900 px-4 text-sm font-medium text-white hover:bg-stone-800 disabled:opacity-60"
-      >
-        {pending ? "创建中…" : "创建报价任务"}
-      </button>
+      <div className="mt-4 flex justify-end">
+        <button
+          type="submit"
+          disabled={pending}
+          className="btn-primary-capsule h-9 px-5 text-xs text-white cursor-pointer disabled:opacity-60"
+        >
+          {pending ? "创建中…" : "+ 创建报价任务"}
+        </button>
+      </div>
     </form>
   );
 }

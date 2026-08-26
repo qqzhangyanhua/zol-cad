@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-
 import { AppHeader } from "@/components/AppHeader";
+import { AppShell } from "@/components/AppShell";
 import { EmptyQuoteTaskState } from "@/components/EmptyQuoteTaskState";
 import { QuoteTaskCreateForm } from "@/components/QuoteTaskCreateForm";
 import { QuoteTaskList } from "@/components/QuoteTaskList";
@@ -61,24 +61,23 @@ export default async function QuoteTasksPage({ searchParams }: QuoteTasksPagePro
   const list = parseQuoteTaskList(await listResponse.json());
 
   return (
-    <div className="flex min-h-full flex-1 flex-col bg-stone-50">
-      <AppHeader user={user} />
-      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-6 py-6">
-        <div>
-          <h1 className="text-xl font-semibold text-stone-900">报价任务</h1>
-          <p className="mt-1 text-sm text-stone-500">
-            {user.role === "admin"
-              ? "全厂报价任务。轻量归集层：把一次询价里的多张零件图归到一起。"
-              : "你自己处理过的报价任务。轻量归集层：把一次询价里的多张零件图归到一起。"}
-          </p>
-        </div>
+    <AppShell user={user}>
+      <AppHeader
+        title="报价任务管理"
+        subtitle={
+          user.role === "admin"
+            ? "全厂报价任务归集与多图纸进度管理"
+            : "自己处理过的报价任务归集"
+        }
+      />
+      <main className="flex flex-1 flex-col gap-4 pb-6">
         <QuoteTaskCreateForm />
         <QuoteTaskSearchForm values={filters} />
         {list.items.length === 0 ? (
           filters.customer_name || filters.created_from || filters.created_to || filters.review_status ? (
-            <p className="rounded-xl border border-dashed border-stone-200 bg-white px-4 py-10 text-center text-sm text-stone-500">
+            <div className="glass-card p-10 text-center text-xs text-slate-500">
               没有符合检索条件的报价任务。
-            </p>
+            </div>
           ) : (
             <EmptyQuoteTaskState />
           )
@@ -86,6 +85,6 @@ export default async function QuoteTasksPage({ searchParams }: QuoteTasksPagePro
           <QuoteTaskList items={list.items} />
         )}
       </main>
-    </div>
+    </AppShell>
   );
 }

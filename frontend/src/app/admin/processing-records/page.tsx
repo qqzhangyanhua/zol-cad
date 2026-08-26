@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-
 import { AppHeader } from "@/components/AppHeader";
+import { AppShell } from "@/components/AppShell";
 import { FactoryProcessingRecordTable } from "@/components/FactoryProcessingRecordTable";
 import { fetchBackend } from "@/lib/backend";
 import { parseCurrentUser, parseFactoryProcessingRecordList } from "@/lib/types";
@@ -27,15 +27,16 @@ export default async function AdminProcessingRecordsPage() {
   const records = parseFactoryProcessingRecordList(await listResponse.json());
 
   return (
-    <div className="flex min-h-full flex-1 flex-col bg-stone-50">
-      <AppHeader user={user} />
-      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-5 px-6 py-5">
-        <div>
-          <h1 className="text-xl font-semibold text-stone-900">全厂处理记录</h1>
-          <p className="mt-1 text-sm text-stone-500">查看本厂所有报价员处理过的零件图。报价员默认只能看到自己的。</p>
+    <AppShell user={user}>
+      <AppHeader
+        title="全厂图纸处理记录"
+        subtitle="审计与追踪本厂所有报价员的图纸解析与复核记录"
+      />
+      <main className="flex flex-1 flex-col pb-6">
+        <div className="glass-card p-5 backdrop-blur-xl">
+          <FactoryProcessingRecordTable items={records.items} />
         </div>
-        <FactoryProcessingRecordTable items={records.items} />
       </main>
-    </div>
+    </AppShell>
   );
 }

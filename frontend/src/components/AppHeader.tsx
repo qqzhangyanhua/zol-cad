@@ -1,57 +1,83 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
-
-import { LogoutButton } from "@/components/LogoutButton";
-import type { CurrentUser } from "@/lib/types";
+import { ExportIcon, SaveDraftIcon, SubmitIcon } from "@/components/Icons";
 
 type AppHeaderProps = {
-  user: CurrentUser;
+  title?: string;
+  projectCode?: string;
+  subtitle?: string;
+  actions?: ReactNode;
+  backHref?: string;
+  backLabel?: string;
 };
 
-export function AppHeader({ user }: AppHeaderProps) {
+export function AppHeader({
+  title,
+  projectCode,
+  subtitle,
+  actions,
+  backHref,
+  backLabel,
+}: AppHeaderProps) {
   return (
-    <header className="flex items-center justify-between border-b border-stone-200 bg-white px-6 py-4">
-      <div>
-        <p className="text-sm font-semibold text-stone-900">机加工报价辅助</p>
-        <nav className="mt-1 flex items-center gap-3 text-xs text-stone-500">
-          <Link href="/part-drawings" className="hover:text-stone-800">
-            零件图
+    <header className="glass-card mb-3 flex flex-wrap items-center justify-between gap-4 px-6 py-3.5 backdrop-blur-xl">
+      <div className="flex items-center gap-3">
+        {backHref ? (
+          <Link
+            href={backHref}
+            className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/70 text-slate-600 transition hover:bg-white hover:text-slate-900"
+          >
+            ←
           </Link>
-          <Link href="/quote-tasks" className="hover:text-stone-800">
-            报价任务
-          </Link>
-          {user.role === "admin" ? (
-            <>
-              <Link href="/admin/accounts" className="hover:text-stone-800">
-                账号
-              </Link>
-              <Link href="/admin/processing-records" className="hover:text-stone-800">
-                处理记录
-              </Link>
-              <Link href="/admin/preferences" className="hover:text-stone-800">
-                本厂偏好
-              </Link>
-              <Link href="/processing-time" className="hover:text-stone-800">
-                处理耗时
-              </Link>
-              <Link href="/admin/correction-stats" className="hover:text-stone-800">
-                修正记录
-              </Link>
-              <Link href="/admin/tenant-data" className="hover:text-stone-800">
-                本厂数据
-              </Link>
-              <Link href="/admin/confidentiality" className="hover:text-stone-800">
-                保密说明
-              </Link>
-            </>
+        ) : null}
+
+        <div>
+          <div className="flex items-center gap-2">
+            {projectCode ? (
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-slate-800 shadow-xs border border-white/90">
+                <span className="text-slate-400 font-normal">项目 /</span>
+                <span>{projectCode}</span>
+                <span className="text-slate-400 text-[10px]">▼</span>
+              </div>
+            ) : null}
+            {title ? (
+              <h1 className="text-base font-bold text-slate-900 tracking-tight">{title}</h1>
+            ) : null}
+          </div>
+          {subtitle ? (
+            <p className="mt-0.5 text-xs text-slate-500">{subtitle}</p>
           ) : null}
-        </nav>
-      </div>
-      <div className="flex items-center gap-4">
-        <div className="text-right text-sm">
-          <p className="font-medium text-stone-800">{user.factory_name}</p>
-          <p className="text-stone-500">{user.username}</p>
         </div>
-        <LogoutButton />
+      </div>
+
+      <div className="flex items-center gap-2.5">
+        {actions ? (
+          actions
+        ) : (
+          <>
+            <button
+              type="button"
+              className="btn-secondary-capsule gap-1.5 px-3.5 py-1.5 text-xs text-slate-700 font-medium cursor-pointer"
+            >
+              <SaveDraftIcon className="h-3.5 w-3.5 text-slate-500" />
+              保存草稿
+            </button>
+            <button
+              type="button"
+              className="btn-secondary-capsule gap-1.5 px-3.5 py-1.5 text-xs text-slate-700 font-medium cursor-pointer"
+            >
+              <ExportIcon className="h-3.5 w-3.5 text-slate-500" />
+              导出报告
+            </button>
+            <button
+              type="button"
+              className="btn-primary-capsule gap-1.5 px-4 py-1.5 text-xs text-white font-medium cursor-pointer"
+            >
+              <SubmitIcon className="h-3.5 w-3.5" />
+              提交报价
+            </button>
+          </>
+        )}
       </div>
     </header>
   );

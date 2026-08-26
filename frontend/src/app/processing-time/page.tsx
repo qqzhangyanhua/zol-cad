@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-
 import { AppHeader } from "@/components/AppHeader";
+import { AppShell } from "@/components/AppShell";
 import { ManualBaselineForm } from "@/components/ManualBaselineForm";
 import { ManualBaselineList } from "@/components/ManualBaselineList";
 import { ProcessingTimeSummary } from "@/components/ProcessingTimeSummary";
@@ -28,28 +28,32 @@ export default async function ProcessingTimePage() {
   const comparison = parseProcessingTimeComparison(await comparisonResponse.json());
 
   return (
-    <div className="flex min-h-full flex-1 flex-col bg-stone-50">
-      <AppHeader user={user} />
-      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-6 py-6">
-        <div>
-          <h1 className="text-xl font-semibold text-stone-900">处理耗时</h1>
-          <p className="mt-1 text-sm text-stone-500">
-            用本厂已复核零件图的客观计时，对照试用初期录入的纯人工基线，判断这工具到底省没省时间。
-          </p>
-        </div>
+    <AppShell user={user}>
+      <AppHeader
+        title="工时与处理耗时评估"
+        subtitle="对照纯人工与智能辅助作业时长，评估综合提效幅度"
+      />
+      <main className="flex flex-1 flex-col gap-6 pb-6">
         <ProcessingTimeSummary comparison={comparison} />
-        <ProcessingTimeTable items={comparison.items} />
-        <section aria-labelledby="manual-baseline-heading">
-          <h2 id="manual-baseline-heading" className="text-sm font-semibold text-stone-900">
-            人工基线
-          </h2>
-          <p className="mt-1 text-xs text-stone-500">
-            请录入几条完全不借助本工具的作业计时。对照只看客观数据，不靠问卷或印象。
-          </p>
+        <div className="glass-card p-5 backdrop-blur-xl">
+          <div className="mb-3">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">零件图处理明细</h3>
+          </div>
+          <ProcessingTimeTable items={comparison.items} />
+        </div>
+        <section aria-labelledby="manual-baseline-heading" className="glass-card p-5 backdrop-blur-xl space-y-4">
+          <div>
+            <h2 id="manual-baseline-heading" className="text-sm font-bold text-slate-900">
+              纯人工作业基线录入
+            </h2>
+            <p className="mt-0.5 text-xs text-slate-500">
+              录入未借助系统时的实际耗时样本，为效能对比提供客观标准
+            </p>
+          </div>
           <ManualBaselineForm />
           <ManualBaselineList items={comparison.baselines} />
         </section>
       </main>
-    </div>
+    </AppShell>
   );
 }

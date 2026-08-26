@@ -11,6 +11,14 @@
 ## 快速启动
 
 ```bash
+./dev.sh
+```
+
+会启动 Postgres、跑迁移、再同时拉起后端和前端。浏览器打开 http://127.0.0.1:3000 。`Ctrl+C` 停止前后端（Postgres 容器保持运行）。
+
+手动分步启动：
+
+```bash
 docker compose up -d postgres
 
 cd backend

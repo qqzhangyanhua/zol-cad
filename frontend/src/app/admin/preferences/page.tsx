@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-
 import { AppHeader } from "@/components/AppHeader";
+import { AppShell } from "@/components/AppShell";
 import { CommonMaterialsEditor } from "@/components/CommonMaterialsEditor";
 import { RiskLabelPriorityEditor } from "@/components/RiskLabelPriorityEditor";
 import { RiskRuleCatalog } from "@/components/RiskRuleCatalog";
@@ -31,19 +31,22 @@ export default async function AdminPreferencesPage() {
   const rules = parseRiskRuleList(await rulesResponse.json());
 
   return (
-    <div className="flex min-h-full flex-1 flex-col bg-stone-50">
-      <AppHeader user={user} />
-      <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-5 px-6 py-5">
-        <div>
-          <h1 className="text-xl font-semibold text-stone-900">本厂偏好</h1>
-          <p className="mt-1 text-sm text-stone-500">
-            管理员可配常用材料与风险标签展示顺序。报价底稿字段模板在 onboarding 时手工配好，不在这个页面。
-          </p>
+    <AppShell user={user}>
+      <AppHeader
+        title="本厂偏好与风险规则"
+        subtitle="配置常用材料清单与制造风险规则优先级排序"
+      />
+      <main className="flex flex-1 flex-col gap-5 pb-6">
+        <div className="glass-card p-5 backdrop-blur-xl">
+          <CommonMaterialsEditor materials={prefs.common_materials} />
         </div>
-        <CommonMaterialsEditor materials={prefs.common_materials} />
-        <RiskLabelPriorityEditor priority={prefs.risk_label_priority} />
-        <RiskRuleCatalog items={rules.items} />
+        <div className="glass-card p-5 backdrop-blur-xl">
+          <RiskLabelPriorityEditor priority={prefs.risk_label_priority} />
+        </div>
+        <div className="glass-card p-5 backdrop-blur-xl">
+          <RiskRuleCatalog items={rules.items} />
+        </div>
       </main>
-    </div>
+    </AppShell>
   );
 }

@@ -53,24 +53,24 @@ export function ZoomPanViewport({ children }: ZoomPanViewportProps) {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex items-center gap-2 border-b border-stone-200 bg-white px-4 py-2">
+      <div className="flex items-center gap-2 border-b border-slate-200/80 bg-white/60 px-4 py-2 backdrop-blur-md">
         <button
           type="button"
-          className="rounded-md border border-stone-200 px-2.5 py-1 text-xs text-stone-700 hover:bg-stone-50"
+          className="btn-secondary-capsule h-7 px-3 text-xs text-slate-700 cursor-pointer"
           onClick={() => setScale((value) => clampScale(value * 1.2))}
         >
           放大
         </button>
         <button
           type="button"
-          className="rounded-md border border-stone-200 px-2.5 py-1 text-xs text-stone-700 hover:bg-stone-50"
+          className="btn-secondary-capsule h-7 px-3 text-xs text-slate-700 cursor-pointer"
           onClick={() => setScale((value) => clampScale(value / 1.2))}
         >
           缩小
         </button>
         <button
           type="button"
-          className="rounded-md border border-stone-200 px-2.5 py-1 text-xs text-stone-700 hover:bg-stone-50"
+          className="btn-secondary-capsule h-7 px-3 text-xs text-slate-700 cursor-pointer"
           onClick={() => {
             setScale(1);
             setOffset({ x: 0, y: 0 });
@@ -78,11 +78,11 @@ export function ZoomPanViewport({ children }: ZoomPanViewportProps) {
         >
           重置
         </button>
-        <span className="text-xs text-stone-500">{Math.round(scale * 100)}%</span>
-        <span className="ml-auto text-xs text-stone-400">滚轮缩放 · 拖拽平移</span>
+        <span className="text-xs font-mono font-medium text-slate-600 ml-2">{Math.round(scale * 100)}%</span>
+        <span className="ml-auto text-[11px] text-slate-400">💡 滚轮缩放 · 拖拽平移</span>
       </div>
       <div
-        className="relative min-h-0 flex-1 cursor-grab overflow-hidden bg-stone-200 touch-none active:cursor-grabbing"
+        className="relative min-h-0 flex-1 cursor-grab overflow-hidden bg-slate-200/40 blueprint-grid-bg touch-none active:cursor-grabbing"
         onWheel={onWheel}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}

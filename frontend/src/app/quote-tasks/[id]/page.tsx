@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-
 import { AppHeader } from "@/components/AppHeader";
+import { AppShell } from "@/components/AppShell";
 import { QuoteSheetExportButton } from "@/components/QuoteSheetExportButton";
 import { QuoteTaskDrawingManager } from "@/components/QuoteTaskDrawingManager";
 import { fetchBackend } from "@/lib/backend";
@@ -43,19 +43,17 @@ export default async function QuoteTaskDetailPage({ params }: QuoteTaskDetailPag
   const unassignedDrawings = drawings.items.filter((item) => item.quote_task_id === null);
 
   return (
-    <div className="flex min-h-full flex-1 flex-col bg-stone-50">
-      <AppHeader user={user} />
-      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-6 py-6">
-        <div>
-          <Link href="/quote-tasks" className="text-xs text-stone-500 hover:text-stone-800">
-            ← 返回报价任务
-          </Link>
-          <h1 className="mt-2 text-xl font-semibold text-stone-900">{task.name}</h1>
-          <p className="mt-1 text-sm text-stone-500">
-            客户 {task.customer_name} · {task.review_status} · 创建于{" "}
-            {new Date(task.created_at).toLocaleString("zh-CN")}
-          </p>
-        </div>
+    <AppShell user={user}>
+      <AppHeader
+        projectCode={task.name}
+        title={task.name}
+        backHref="/quote-tasks"
+        backLabel="返回任务列表"
+        subtitle={`客户: ${task.customer_name} · 状态: ${task.review_status} · 创建于 ${new Date(
+          task.created_at,
+        ).toLocaleString("zh-CN")}`}
+      />
+      <main className="flex flex-1 flex-col gap-4 pb-6">
         <QuoteSheetExportButton task={task} />
         <QuoteTaskDrawingManager
           task={task}
@@ -63,6 +61,6 @@ export default async function QuoteTaskDetailPage({ params }: QuoteTaskDetailPag
           unassignedDrawings={unassignedDrawings}
         />
       </main>
-    </div>
+    </AppShell>
   );
 }

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-
 import { AppHeader } from "@/components/AppHeader";
+import { AppShell } from "@/components/AppShell";
 import { ConfidentialityNotice } from "@/components/ConfidentialityNotice";
 import { fetchBackend } from "@/lib/backend";
 import { parseConfidentialityNotice, parseCurrentUser } from "@/lib/types";
@@ -27,18 +27,16 @@ export default async function AdminConfidentialityPage() {
   const notice = parseConfidentialityNotice(await noticeResponse.json());
 
   return (
-    <div className="flex min-h-full flex-1 flex-col bg-stone-50">
-      <AppHeader user={user} />
-      <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-5 px-6 py-5">
-        <div>
-          <h1 className="text-xl font-semibold text-stone-900">保密说明</h1>
-          <p className="mt-1 text-sm text-stone-500">
-            给管理员回答客户安全问卷用。只写当前能核对的事实：图纸存在哪、由谁处理、是否用于训练、DPA
-            签了没有。票 02 没关之前，这些格子保持待填。
-          </p>
+    <AppShell user={user}>
+      <AppHeader
+        title="保密与数据合规说明"
+        subtitle="企业安全审计、图纸存储与数据协议（DPA）说明"
+      />
+      <main className="flex flex-1 flex-col pb-6">
+        <div className="glass-card p-5 backdrop-blur-xl">
+          <ConfidentialityNotice notice={notice} />
         </div>
-        <ConfidentialityNotice notice={notice} />
       </main>
-    </div>
+    </AppShell>
   );
 }

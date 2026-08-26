@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-
+import { ExportIcon } from "@/components/Icons";
 import { readErrorDetail, type QuoteTaskDetail } from "@/lib/types";
 
 type QuoteSheetExportButtonProps = {
@@ -49,12 +49,12 @@ export function QuoteSheetExportButton({ task }: QuoteSheetExportButtonProps) {
   }
 
   return (
-    <section className="rounded-xl border border-stone-200 bg-white p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+    <section className="glass-card p-5 backdrop-blur-xl">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-sm font-semibold text-stone-900">报价底稿</h2>
-          <p className="mt-1 text-xs text-stone-500">
-            一键导出整个报价任务，每个零件一行。列顺序按本厂 onboarding 配好的底稿模板，不在本页改。
+          <h2 className="text-sm font-bold text-slate-900">报价底稿导出</h2>
+          <p className="mt-0.5 text-xs text-slate-500">
+            一键导出整个报价任务（每个零件对应一行），格式严格符合本厂底稿模板。
           </p>
         </div>
         <button
@@ -63,21 +63,22 @@ export function QuoteSheetExportButton({ task }: QuoteSheetExportButtonProps) {
           onClick={() => {
             void exportSheet();
           }}
-          className="h-10 rounded-lg bg-stone-900 px-4 text-sm font-medium text-white hover:bg-stone-800 disabled:opacity-60"
+          className="btn-primary-capsule h-9 gap-1.5 px-4 text-xs text-white cursor-pointer disabled:opacity-60"
         >
-          {pending ? "正在导出…" : "导出报价底稿"}
+          <ExportIcon className="h-3.5 w-3.5" />
+          {pending ? "正在导出…" : "导出报价底稿 (Excel)"}
         </button>
       </div>
       {unfinished.length > 0 ? (
-        <p className="mt-3 text-xs text-amber-800">
-          还有未完成复核的零件图：
+        <div className="glass-warning-pill mt-3 px-3 py-2 text-xs">
+          ⚠ 尚有未完成复核的零件图：
           {unfinished.map((drawing) => drawing.original_filename).join("、")}
-          。导出会被拦下。
-        </p>
+          。若需出具最终报价，请先完成全部图纸复核。
+        </div>
       ) : null}
       {error ? (
-        <p className="mt-3 text-sm text-red-600" role="alert">
-          {error}
+        <p className="mt-2.5 text-xs text-red-600 font-medium" role="alert">
+          ⚠ {error}
         </p>
       ) : null}
     </section>

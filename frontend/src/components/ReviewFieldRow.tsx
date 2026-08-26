@@ -2,7 +2,6 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-
 import { parsePartDrawing, readErrorDetail, type ExtractedField } from "@/lib/types";
 
 type ReviewFieldRowProps = {
@@ -116,36 +115,46 @@ export function ReviewFieldRow({
 
   return (
     <div
-      className={`rounded-lg border px-3 py-2.5 ${
-        field.ignored ? "border-stone-200 bg-stone-50" : "border-stone-200 bg-white"
+      className={`rounded-xl border p-3 transition-all ${
+        field.ignored
+          ? "border-slate-200/60 bg-slate-50/50 opacity-70"
+          : "border-slate-200/80 bg-white/80 shadow-2xs"
       }`}
     >
-      <div className="grid grid-cols-[7rem_minmax(0,1fr)] items-start gap-3">
+      <div className="grid grid-cols-[6.5rem_minmax(0,1fr)] items-start gap-3">
         <div className="pt-0.5">
-          <p className="text-xs font-medium text-stone-800">{field.label}</p>
-          <p className="mt-0.5 text-[11px] text-stone-400">{field.category}</p>
+          <p className="text-xs font-semibold text-slate-800">{field.label}</p>
+          <p className="mt-0.5 text-[10px] text-slate-400">{field.category}</p>
           {needsConfirm ? (
-            <p className="mt-1 text-[11px] font-medium text-amber-700">需确认</p>
+            <span className="mt-1 inline-block rounded-md bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 border border-amber-200/60">
+              需确认
+            </span>
           ) : null}
           {field.confirmed && !field.ignored ? (
-            <p className="mt-1 text-[11px] font-medium text-emerald-700">已确认</p>
+            <span className="mt-1 inline-block rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 border border-emerald-200/60">
+              ✓ 已确认
+            </span>
           ) : null}
           {field.ignored ? (
-            <p className="mt-1 text-[11px] font-medium text-stone-500">已忽略</p>
+            <span className="mt-1 inline-block rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500">
+              已忽略
+            </span>
           ) : null}
           {field.source === "added" ? (
-            <p className="mt-1 text-[11px] font-medium text-sky-700">补录</p>
+            <span className="mt-1 inline-block rounded-md bg-blue-50 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700 border border-blue-200/60">
+              补录
+            </span>
           ) : null}
         </div>
         <div>
           {readOnly ? (
-            <p className="min-h-8 rounded-md bg-stone-50 px-2.5 py-1.5 text-sm text-stone-900">
+            <div className="min-h-8 rounded-lg bg-slate-50/80 px-2.5 py-1.5 text-xs text-slate-900 font-medium">
               {field.value === null || field.value === "" ? (
-                <span className="text-stone-400">（空）</span>
+                <span className="text-slate-400">（空）</span>
               ) : (
                 field.value
               )}
-            </p>
+            </div>
           ) : (
             <>
               <input
@@ -164,8 +173,10 @@ export function ReviewFieldRow({
                     void persistValue(draft);
                   }
                 }}
-                className={`h-9 w-full rounded-md border px-2.5 text-sm text-stone-900 outline-none focus:border-stone-400 ${
-                  showEmpty ? "border-stone-200 bg-stone-50 placeholder:text-stone-400" : "border-stone-200 bg-white"
+                className={`h-8.5 w-full rounded-lg border px-2.5 text-xs font-medium text-slate-900 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 ${
+                  showEmpty
+                    ? "border-slate-200 bg-slate-50/60 placeholder:text-slate-400"
+                    : "border-slate-200 bg-white"
                 }`}
               />
               {field.key === "material" && materialCandidates.length > 0 ? (
@@ -185,7 +196,7 @@ export function ReviewFieldRow({
                 onClick={() => {
                   void confirmField();
                 }}
-                className="h-8 rounded-md bg-stone-900 px-2.5 text-xs font-medium text-white hover:bg-stone-800 disabled:opacity-50"
+                className="btn-primary-capsule h-7 px-3 text-[11px] text-white cursor-pointer disabled:opacity-50"
               >
                 {pending ? "处理中…" : "确认"}
               </button>
@@ -197,7 +208,7 @@ export function ReviewFieldRow({
                 onClick={() => {
                   void toggleIgnore(true);
                 }}
-                className="h-8 rounded-md border border-stone-300 px-2.5 text-xs font-medium text-stone-700 hover:bg-stone-100 disabled:opacity-50"
+                className="btn-secondary-capsule h-7 px-2.5 text-[11px] text-slate-600 cursor-pointer disabled:opacity-50"
               >
                 忽略
               </button>
@@ -209,16 +220,18 @@ export function ReviewFieldRow({
                 onClick={() => {
                   void toggleIgnore(false);
                 }}
-                className="h-8 rounded-md border border-stone-300 px-2.5 text-xs font-medium text-stone-700 hover:bg-stone-100 disabled:opacity-50"
+                className="btn-secondary-capsule h-7 px-2.5 text-[11px] text-slate-600 cursor-pointer disabled:opacity-50"
               >
                 撤销忽略
               </button>
             ) : null}
-            {saved && !readOnly ? <span className="text-[11px] text-stone-500">已保存</span> : null}
+            {saved && !readOnly ? (
+              <span className="text-[11px] font-medium text-emerald-600">✓ 已保存</span>
+            ) : null}
           </div>
           {error ? (
-            <p className="mt-1 text-xs text-red-700" role="alert">
-              {error}
+            <p className="mt-1 text-xs text-red-600" role="alert">
+              ⚠ {error}
             </p>
           ) : null}
         </div>

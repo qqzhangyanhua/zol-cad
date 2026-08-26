@@ -1,19 +1,29 @@
+import { LogoIcon, ShieldCheckIcon } from "@/components/Icons";
 import { LoginForm } from "@/components/LoginForm";
 
 export default function LoginPage() {
   return (
-    <main className="flex min-h-full flex-1 items-center justify-center bg-stone-100 px-4">
-      <section className="w-full max-w-md rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
-        <p className="text-center text-sm font-semibold tracking-wide text-stone-500">
-          机加工报价辅助
-        </p>
-        <h1 className="mt-2 text-center text-2xl font-semibold text-stone-900">
-          欢迎回来
-        </h1>
-        <p className="mt-2 mb-8 text-center text-sm text-stone-500">
-          请使用本厂账号登录
-        </p>
+    <main className="glass-shell flex min-h-screen flex-1 items-center justify-center p-4">
+      <section className="glass-card relative w-full max-w-md overflow-hidden p-8 shadow-2xl backdrop-blur-2xl">
+        <div className="flex flex-col items-center text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-600/10 text-blue-600 shadow-xs mb-3">
+            <LogoIcon className="h-8 w-8" />
+          </div>
+          <h1 className="text-xl font-bold tracking-tight text-slate-900">智造报价助手</h1>
+          <p className="mt-0.5 text-xs font-semibold uppercase tracking-wider text-slate-400">
+            CAD Quote Assistant
+          </p>
+          <p className="mt-2 mb-6 text-xs text-slate-500">
+            精密制造工艺审查与智能报价工作台
+          </p>
+        </div>
+
         <LoginForm />
+
+        <div className="mt-8 border-t border-slate-200/60 pt-4 flex items-center justify-center gap-1.5 text-[11px] text-slate-400">
+          <ShieldCheckIcon className="h-3.5 w-3.5" />
+          <span>2024 © 智造科技 · 企业数据安全隔离保护</span>
+        </div>
       </section>
     </main>
   );

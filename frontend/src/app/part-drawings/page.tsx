@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-
 import { AppHeader } from "@/components/AppHeader";
+import { AppShell } from "@/components/AppShell";
 import { EmptyPartDrawingState } from "@/components/EmptyPartDrawingState";
 import { PartDrawingList } from "@/components/PartDrawingList";
 import { PartDrawingUploadPanel } from "@/components/PartDrawingUploadPanel";
@@ -28,22 +28,19 @@ export default async function PartDrawingsPage() {
   const quoteTaskNames = Object.fromEntries(tasks.items.map((item) => [item.id, item.name]));
 
   return (
-    <div className="flex min-h-full flex-1 flex-col bg-stone-50">
-      <AppHeader user={user} />
-      <main className="flex flex-1 flex-col">
-        <div className="px-6 py-5">
-          <h1 className="text-xl font-semibold text-stone-900">零件图</h1>
-          <p className="mt-1 text-sm text-stone-500">
-            {user.role === "admin" ? "本厂全部零件图" : "你自己处理过的零件图"}
-          </p>
-          <div className="mt-2">
-            <QualityGradeDisclaimer
-              text={
-                list.items[0]?.quality_grade_disclaimer ??
-                "图纸质量分级只表示图纸本身的质量，不代表结果可以免核。"
-              }
-            />
-          </div>
+    <AppShell user={user}>
+      <AppHeader
+        title="零件图分析与评审"
+        subtitle={user.role === "admin" ? "本厂全部图纸，支持智能读图与特征提取" : "处理过的图纸与提取结果"}
+      />
+      <main className="flex flex-1 flex-col pb-6">
+        <div className="mb-3">
+          <QualityGradeDisclaimer
+            text={
+              list.items[0]?.quality_grade_disclaimer ??
+              "图纸质量分级只表示图纸本身的质量，不代表结果可以免核。"
+            }
+          />
         </div>
         <PartDrawingUploadPanel />
         {list.items.length === 0 ? (
@@ -52,6 +49,6 @@ export default async function PartDrawingsPage() {
           <PartDrawingList items={list.items} quoteTaskNames={quoteTaskNames} />
         )}
       </main>
-    </div>
+    </AppShell>
   );
 }

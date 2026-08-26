@@ -1,5 +1,4 @@
 import Link from "next/link";
-
 import { ExperimentalMark } from "@/components/ExperimentalMark";
 import { LowQualityMark } from "@/components/LowQualityMark";
 import { QualityGradeBadge } from "@/components/QualityGradeBadge";
@@ -12,44 +11,67 @@ type PartDrawingListProps = {
 
 export function PartDrawingList({ items, quoteTaskNames = {} }: PartDrawingListProps) {
   return (
-    <ul className="divide-y divide-stone-200 border-t border-stone-200">
-      {items.map((item) => (
-        <li key={item.id}>
-          <Link
-            href={`/part-drawings/${item.id}`}
-            className="flex items-center justify-between gap-4 px-6 py-4 hover:bg-white"
-          >
-            <span className="min-w-0">
-              <span className="block truncate text-sm font-medium text-stone-900">
-                {item.original_filename}
-              </span>
-              <span className="mt-1 flex flex-wrap items-center gap-2">
-                <QualityGradeBadge grade={item.quality_grade} />
-                <span className="text-xs text-stone-500">{item.status}</span>
-                <span className="text-xs text-stone-500">
-                  {item.quote_task_id
-                    ? `已归入 ${quoteTaskNames[item.quote_task_id] ?? "报价任务"}`
-                    : "未归集"}
-                </span>
-                {item.content_type === "application/pdf" ? (
-                  <span className="text-xs text-stone-500">
-                    指定第 {item.selected_page} 页（共 {item.page_count} 页）
+    <div className="glass-card overflow-hidden backdrop-blur-xl">
+      <div className="border-b border-slate-100 px-6 py-3.5 bg-white/40">
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">图纸列表 ({items.length})</h3>
+      </div>
+      <ul className="divide-y divide-slate-100/80">
+        {items.map((item) => (
+          <li key={item.id} className="transition-colors hover:bg-white/60">
+            <Link
+              href={`/part-drawings/${item.id}`}
+              className="flex items-center justify-between gap-4 px-6 py-4"
+            >
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="truncate text-sm font-semibold text-slate-900">
+                    {item.original_filename}
                   </span>
+                  <QualityGradeBadge grade={item.quality_grade} />
+                </div>
+                <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                  <span className="rounded-md bg-blue-50 px-2 py-0.5 font-medium text-blue-700">
+                    {item.status}
+                  </span>
+                  <span className="text-slate-400">·</span>
+                  <span>
+                    {item.quote_task_id
+                      ? `所属任务: ${quoteTaskNames[item.quote_task_id] ?? "报价任务"}`
+                      : "未归集任务"}
+                  </span>
+                  {item.content_type === "application/pdf" ? (
+                    <>
+                      <span className="text-slate-400">·</span>
+                      <span>
+                        第 {item.selected_page} 页 / 共 {item.page_count} 页
+                      </span>
+                    </>
+                  ) : null}
+                </div>
+                {item.experimental_mark || item.low_quality_mark ? (
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    {item.experimental_mark ? <ExperimentalMark text={item.experimental_mark} /> : null}
+                    {item.low_quality_mark ? <LowQualityMark text={item.low_quality_mark} /> : null}
+                  </div>
                 ) : null}
-              </span>
-              {item.experimental_mark || item.low_quality_mark ? (
-                <span className="mt-2 flex flex-wrap items-center gap-2">
-                  {item.experimental_mark ? <ExperimentalMark text={item.experimental_mark} /> : null}
-                  {item.low_quality_mark ? <LowQualityMark text={item.low_quality_mark} /> : null}
+              </div>
+              <div className="flex items-center gap-4 shrink-0">
+                <time className="text-xs text-slate-400 font-mono" dateTime={item.uploaded_at}>
+                  {new Date(item.uploaded_at).toLocaleString("zh-CN", {
+                    month: "2-digit",
+                    day: "2-digit",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </time>
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/80 text-slate-400 shadow-xs border border-white">
+                  →
                 </span>
-              ) : null}
-            </span>
-            <time className="shrink-0 text-xs text-stone-500" dateTime={item.uploaded_at}>
-              {new Date(item.uploaded_at).toLocaleString("zh-CN")}
-            </time>
-          </Link>
-        </li>
-      ))}
-    </ul>
+              </div>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
