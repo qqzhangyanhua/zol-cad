@@ -153,6 +153,7 @@ def get_upload_part_drawings(
         pdf_pages=PypdfPageCounter(),
         processor=request.app.state.part_drawing_processor,
         uow=SqlAlchemyUnitOfWork(session),
+        allow_fixture_filename=request.app.state.settings.allows_fixture_filename_classification,
     )
 
 

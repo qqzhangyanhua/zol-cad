@@ -72,6 +72,7 @@ class UploadPartDrawings(TenantBoundUseCase):
         pdf_pages: PdfPageCounter,
         processor: PartDrawingProcessor,
         uow: UnitOfWork,
+        allow_fixture_filename: bool = False,
     ) -> None:
         super().__init__(actor)
         self._drawings = drawings
@@ -80,6 +81,7 @@ class UploadPartDrawings(TenantBoundUseCase):
         self._pdf_pages = pdf_pages
         self._processor = processor
         self._uow = uow
+        self._allow_fixture_filename = allow_fixture_filename
 
     def execute(self, files: list[IncomingDrawing]) -> UploadPartDrawingsResult:
         stored: list[PartDrawing] = []
@@ -116,7 +118,10 @@ class UploadPartDrawings(TenantBoundUseCase):
                     extracted_fields=(),
                     stashed_extracted_fields=None,
                     extraction_failure_reason=None,
-                    part_family_id=classify_part_family(assessed.original_filename),
+                    part_family_id=classify_part_family(
+                        assessed.original_filename,
+                        allow_fixture_filename=self._allow_fixture_filename,
+                    ),
                     quote_task_id=None,
                 )
                 drawing, born = birth_uploaded(

@@ -50,7 +50,7 @@ def classify_part_family(input_drawing_id: str) -> str:
 
 - [ ] 零件族判定基于图纸内容而非文件名
 - [ ] 真实工厂图纸能被正确分到目标族 / 非目标族，不再全部落 `unknown`
-- [ ] fixture 引擎在生产环境不可用，文件名不再能触发预置的假提取结果
+- [x] fixture 引擎在生产环境不可用，文件名不再能触发预置的假提取结果
 - [ ] 四条风险阈值替换为票 01 的样本结论，`PROVISIONAL_` 前缀与"编来接线"的注释一并去掉
 - [ ] 缝 2 的表驱动用例按新阈值更新"刚好触发 / 刚好不触发 / 边界值"
 - [ ] 两条不变量测试（无"安全/无风险"语义、同输入同输出）仍然通过
@@ -59,3 +59,12 @@ def classify_part_family(input_drawing_id: str) -> str:
 - [ ] ADR-0008 据此更新或关闭
 
 ## Comments
+
+- 2026-08-26：票 01 仍是 `ready-for-human`，等真实工厂图纸。本轮**不编造目标零件族、不替换 `PROVISIONAL_` 阈值、不写车削/铣削取数策略、不关闭票 01、不改 ADR-0008、不把管理员规则说明改成「已定稿」**。本票未全部完成。
+
+  **已落地（不依赖 01）：**
+  - 复用票 27 的 `QA_APP_ENV` / `Settings.is_local`。非 `local` / `dev` / `development` / `test` 时：`validate_runtime_settings` 与 `build_extraction_engine` 都拒绝 `QA_EXTRACTION_ENGINE=fixture`；`FixtureExtractionEngine(allowed=False)` 也不能构造/extract。生产必须 `vendor`（票 02 未关时仍是未选定骨架）。
+  - 文件名 `FX-T` / `FX-N` 槽位判定只在「本地且当前选了 fixture」时启用，供缝 1 使用。生产即使文件名叫 `我的图-FX-TQ-01.pdf` 也不会走假引擎、也不会被标成目标族。
+  - 加了 `classify_part_family_from_content` / `adopt_content_classified_family` 钩子，提取后会调用；票 01 给出判据前一律 `unknown`，没有「看起来像轴」之类启发式。
+
+  **仍等 01：** 内容判族真正生效、真实图纸不再全落 unknown、四条阈值与缝 2 边界、专用提示词策略、`RiskRuleCatalog` 去掉「暂定」、ADR-0008 更新或关闭。

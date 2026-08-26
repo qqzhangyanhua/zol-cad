@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import UTC, datetime
 from uuid import UUID
 
@@ -15,6 +16,7 @@ from quote_assistant.domain.extraction import (
     merge_extraction_preserving_review,
 )
 from quote_assistant.domain.part_drawing_state import record_transition
+from quote_assistant.domain.part_family import adopt_content_classified_family
 from quote_assistant.usecase.ports import (
     DrawingPageRenderer,
     ExtractionEngine,
@@ -92,16 +94,21 @@ def apply_extraction(
 
     try:
         fields = _fields_for_extraction(drawing, storage=storage, renderer=renderer, engine=engine)
+        merged = merge_extraction_preserving_review(drawing.extracted_fields, fields)
+        drawing = replace(
+            drawing,
+            part_family_id=adopt_content_classified_family(
+                drawing.part_family_id,
+                extracted_fields=merged,
+            ),
+        )
         drawing, finished = record_transition(
             drawing,
             PartDrawingStatus.EXTRACTED,
             occurred_at=datetime.now(UTC),
             sequence_no=events.next_sequence(drawing.id),
             actor_user_id=actor_user_id,
-            extracted_fields=merge_extraction_preserving_review(
-                drawing.extracted_fields,
-                fields,
-            ),
+            extracted_fields=merged,
             stashed_extracted_fields=None,
             extraction_failure_reason=None,
         )

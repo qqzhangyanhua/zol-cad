@@ -86,6 +86,7 @@ def test_生产环境覆盖占位值后通过校验() -> None:
     validate_runtime_settings(
         Settings(
             app_env="production",
+            extraction_engine="vendor",
             object_sign_secret="not-the-default-secret",
             demo_password_a="real-a",
             demo_password_b="real-b",
@@ -157,6 +158,7 @@ def test_生产session_cookie带secure(
     db_session.commit()
     settings = Settings(
         app_env="production",
+        extraction_engine="vendor",
         database_url=database_url,
         seed_demo_data=False,
         object_store_backend="local",

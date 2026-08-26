@@ -6,7 +6,11 @@ from quote_assistant.adapter.extraction.vendor import (
     UnconfiguredVendorTransport,
     VendorExtractionEngine,
 )
-from quote_assistant.config import Settings
+from quote_assistant.config import (
+    FIXTURE_ENGINE_FORBIDDEN_MESSAGE,
+    FixtureEngineNotAllowed,
+    Settings,
+)
 
 ENGINE_FIXTURE = "fixture"
 ENGINE_VENDOR = "vendor"
@@ -22,7 +26,11 @@ def normalize_extraction_engine(value: str) -> str:
 def build_extraction_engine(
     settings: Settings,
 ) -> FixtureExtractionEngine | VendorExtractionEngine:
-    """Default stays fixture so seam-1 keeps the fake engine. vendor is the unpaid skeleton."""
+    """Default stays fixture so seam-1 keeps the fake engine. vendor is the unpaid skeleton.
+
+    Non-local environments must not select fixture: a filename containing FX-TQ-01
+    would otherwise return canned 读图取数 results (FL-001 / 45# / IT7).
+    """
     kind = normalize_extraction_engine(settings.extraction_engine)
     if kind == ENGINE_VENDOR:
         return VendorExtractionEngine(
@@ -33,4 +41,6 @@ def build_extraction_engine(
             timeout_seconds=settings.extraction_timeout_seconds,
             retry_count=settings.extraction_retry_count,
         )
-    return FixtureExtractionEngine()
+    if not settings.allows_fixture_engine:
+        raise FixtureEngineNotAllowed(FIXTURE_ENGINE_FORBIDDEN_MESSAGE)
+    return FixtureExtractionEngine(allowed=True)
