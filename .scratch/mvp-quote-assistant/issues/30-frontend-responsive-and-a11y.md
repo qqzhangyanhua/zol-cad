@@ -38,14 +38,34 @@ spec 的 Out of Scope 排除的是"移动端原生应用"，没有豁免响应�
 
 **Status:** claimed
 
-- [ ] 侧栏在窄屏下可收起，主内容区在 375px 宽下可用
-- [ ] 并排**复核**页在窄屏下有可用的堆叠布局
-- [ ] `ZoomPanViewport` 支持键盘平移与缩放
-- [ ] 图标按钮与纯符号链接都有可访问名称
-- [ ] 每页只有一个 h1
-- [ ] `RiskLabelList` 空态去掉 `✓`，改用不表达"通过"的中性呈现，且 `role` 用标准值
-- [ ] 工厂名不回填假值；侧栏不再暗示可切换组织
-- [ ] 不再显示编造的用户头衔，角色只显示**管理员** / **报价员**
-- [ ] `lib/types.ts` 按领域拆分
+- [x] 侧栏在窄屏下可收起，主内容区在 375px 宽下可用
+- [x] 并排**复核**页在窄屏下有可用的堆叠布局
+- [x] `ZoomPanViewport` 支持键盘平移与缩放
+- [x] 图标按钮与纯符号链接都有可访问名称
+- [x] 每页只有一个 h1
+- [x] `RiskLabelList` 空态去掉 `✓`，改用不表达"通过"的中性呈现，且 `role` 用标准值
+- [x] 工厂名不回填假值；侧栏不再暗示可切换组织
+- [x] 不再显示编造的用户头衔，角色只显示**管理员** / **报价员**
+- [x] `lib/types.ts` 按领域拆分
 
 ## Comments
+
+- 2026-08-26: 落地票 30。PR：https://github.com/qqzhangyanhua/zol-cad/pull/28 （ready，CI 绿）
+
+  设计：
+  - 壳层：`AppShell` 管抽屉状态。`< md` 侧栏 `max-md:hidden` / 打开时固定抽屉 + 遮罩 + Escape + 导航点击关闭。`AppHeader` 汉堡按钮 `aria-label="打开导航"`。375px 主栏实测 351px，不再被 256px 侧栏挤没。
+  - 复核：`PartDrawingWorkspace` 窄屏上下堆叠，表单 / 原图可分别收起；`lg+` 仍是左表单右原图。
+  - `ZoomPanViewport`：原图区 `tabIndex={0}`，方向键平移、`+`/`-` 缩放、`0` 重置。按钮补 `aria-label`。
+  - 票 24 的 `backLabel`（`aria-label` + `sr-only`）未改，详情页仍是「零件图列表」。`PartDrawingList` / `QuoteTaskList` 的 `→` 标 `aria-hidden` 并补 sr-only。侧栏去掉 `›`。
+  - `/admin/correction-stats` 面板标题改 `h2`，页上只留 `AppHeader` 一个 h1。
+  - `RiskLabelList` 空态去掉 `✓`，`role="status"`。摘要卡里同一句空态也改成 `status`（同一页、同一句 ADR-0007 文案）。`ExtractionDisclaimer` 仍是 `role="note"`，那是看图提示条，不是风险空态，没动。
+  - 本厂名原样显示，空也不回填「精密制造有限公司」。角色只显示 **管理员** / **报价员**。
+  - `lib/types.ts` 按领域拆到 `lib/types/{auth,part-drawing,risk,quote-task,factory,corrections,processing-time,confidentiality,api,guard}.ts`，`@/lib/types` 仍是桶导出。
+
+  验证：
+  - `pnpm exec tsc --noEmit` 与 `pnpm lint --max-warnings=0` 通过。
+  - 本环境没有 Postgres / Docker，用本地 mock 后端 + 无头 Chrome（375×812）量过：侧栏关闭时 `display:none`、主栏 351px；抽屉里是「本厂 / 华东精密 / 报价员|管理员」，无 `›`、无假厂名、无编造头衔。
+  - 复核页收起原图 / 表单后对应 pane `display:none`。键盘：方向键右两次 `translate(-80px)`，`+` 到 120%，`0` 回到 100%。
+  - `/admin/correction-stats` 只有一个 h1：「字段修正统计与复核洞察」。
+  - `lg` 桌面复核仍是左表单（448px）右原图（526px）。
+  - CI `seam-1 / frontend` 与 `backend` SUCCESS。
