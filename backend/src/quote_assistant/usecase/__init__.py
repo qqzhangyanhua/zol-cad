@@ -22,6 +22,10 @@ from quote_assistant.usecase.login import Login
 from quote_assistant.usecase.logout import Logout
 from quote_assistant.usecase.record_manual_baseline import RecordManualBaseline
 from quote_assistant.usecase.request_tenant_delete import RequestTenantDelete
+from quote_assistant.usecase.save_quote_sheet_template import (
+    GetQuoteSheetTemplate,
+    SaveQuoteSheetTemplate,
+)
 from quote_assistant.usecase.review_part_drawing import (
     AddCriticalDimension,
     CompleteReview,
@@ -64,6 +68,8 @@ __all__ = [
     "Logout",
     "RecordManualBaseline",
     "RequestTenantDelete",
+    "GetQuoteSheetTemplate",
+    "SaveQuoteSheetTemplate",
     "TenantBoundUseCase",
     "TenantScope",
     "UpdateExtractedField",

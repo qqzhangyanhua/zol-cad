@@ -30,16 +30,31 @@
 
 顺带：前端已经算出了 `unfinished` 并渲染了明确警告，但导出按钮的 `disabled` 只绑了 `pending`，不受 `unfinished` 影响。用户看完警告点下去，走一遍网络拿回 409 再变红字。警告已经说清楚了就别让用户再撞一次墙。
 
-**Status:** ready-for-agent
+**Status:** claimed
 
-- [ ] 有一个 onboarding 用的 CLI 能为指定工厂写入 / 更新 / 查看**报价底稿**模板，走领域校验，不经过 HTTP
-- [ ] CLI 的存在与用法写进 `backend/README.md`，写明它是团队工具不是产品功能
-- [ ] 管理员配置页仍然没有模板这一项（这条不变量不能被这张票破坏）
-- [ ] 前端导出入口同时提供 xlsx 与 csv
-- [ ] 未复核拦截针对**报价任务**里的全部零件，不受调用者的 owner 可见性影响
-- [ ] 警告文案不泄漏其他**报价员**的文件名
-- [ ] 前端在存在未完成**复核**的零件时禁用导出按钮，用户不需要撞一次 409
-- [ ] 缝 1：管理员把 C 的未复核图归入 A 的任务后，A 导出被拦下；把该图复核完成后 A 能导出且行数正确
-- [ ] 缝 1：写入过模板的工厂导出的列与模板一致，未写入的工厂拿到默认列
+- [x] 有一个 onboarding 用的 CLI 能为指定工厂写入 / 更新 / 查看**报价底稿**模板，走领域校验，不经过 HTTP
+- [x] CLI 的存在与用法写进 `backend/README.md`，写明它是团队工具不是产品功能
+- [x] 管理员配置页仍然没有模板这一项（这条不变量不能被这张票破坏）
+- [x] 前端导出入口同时提供 xlsx 与 csv
+- [x] 未复核拦截针对**报价任务**里的全部零件，不受调用者的 owner 可见性影响
+- [x] 警告文案不泄漏其他**报价员**的文件名
+- [x] 前端在存在未完成**复核**的零件时禁用导出按钮，用户不需要撞一次 409
+- [x] 缝 1：管理员把 C 的未复核图归入 A 的任务后，A 导出被拦下；把该图复核完成后 A 能导出且行数正确
+- [x] 缝 1：写入过模板的工厂导出的列与模板一致，未写入的工厂拿到默认列
 
 ## Comments
+
+- 2026-08-26: 落地票 23。PR：https://github.com/qqzhangyanhua/zol-cad/pull/21
+
+  设计：
+  - onboarding CLI：`python -m quote_assistant.interface.cli.quote_sheet_template {show,save}`。走 `SaveQuoteSheetTemplate` / `GetQuoteSheetTemplate`，领域校验后调用 `save_for_tenant`。没有 HTTP 写入，管理员页没有模板项。用法写在 `backend/README.md`，标明团队工具。
+  - 前端导出：`QuoteSheetExportButton` 同时提供「导出 Excel」与「导出 CSV」。
+  - `ExportQuoteSheet` 先对任务里全部零件做未复核检查，再按 owner 过滤导出行。自己能看见的未复核仍点名文件名；有不可见成员时文案为「本任务中有 N 个零件尚未完成复核，其中部分不由你处理」。
+  - 详情增加 `unreviewed_member_count`（按任务全员计算，不把他人文件名塞进 drawings）。前端用它禁用按钮，隐藏的未复核也不会先撞 409。
+  - 复核完成后，A 导出的行数仍按 owner 可见性（A 自己的零件），不把 C 的提取结果写进 A 的表。这与「先检查再过滤」一致。
+
+  验证：
+  - 缝 1：`151 passed`（真实 Postgres + Alembic head `0012`，`QA_TEST_DATABASE_URL`）。含跨报价员 409 不泄漏文件名、复核后导出 1 行、CLI 写入后该厂列变、未写入厂仍是默认列；原有底稿 / 任务测试仍过。
+  - 前端 `tsc --noEmit` 通过。eslint 仅有两处既有 unused warning（`quote-tasks/[id]/page.tsx` 的 `Link`、`AppSidebar.tsx` 的 `OverviewIcon`），不是本票引入。
+  - 浏览器：任务详情 SSR HTML 两个按钮都带 `disabled`，警告列出自己的 `FX-TQ-01.png`。管理员 `/admin/preferences` 与 `/admin/accounts` HTML 不含「字段映射 / 导出模板 / source_key / 报价底稿模板」。复核完成后 API 导出 csv 1 行；CLI 写入华东精密模板后再导出 xlsx，表头为「品名 / 本厂图号 / 加工风险」加两列必带标记。
+  - 未做票 24+。未加管理员模板映射入口。

@@ -50,14 +50,22 @@ class ExportQuoteSheet(TenantBoundUseCase):
         task = require_visible_quote_task(
             self.actor, self._quote_tasks.get_for_tenant(self.tenant, quote_task_id)
         )
+        all_drawings = self._drawings.list_for_quote_task(self.tenant, quote_task_id)
+        unfinished = unreviewed_drawings_for_export(all_drawings)
+        if unfinished:
+            visible_unfinished = filter_owned_by_actor(
+                self.actor,
+                unfinished,
+                lambda drawing: drawing.uploaded_by_user_id,
+            )
+            raise IncompleteQuoteTaskReview(
+                incomplete_export_message(unfinished, visible_unfinished=visible_unfinished)
+            )
         drawings = filter_owned_by_actor(
             self.actor,
-            self._drawings.list_for_quote_task(self.tenant, quote_task_id),
+            all_drawings,
             lambda drawing: drawing.uploaded_by_user_id,
         )
-        unfinished = unreviewed_drawings_for_export(drawings)
-        if unfinished:
-            raise IncompleteQuoteTaskReview(incomplete_export_message(unfinished))
         template = resolve_quote_sheet_template(self._templates.get_for_tenant(self.tenant))
         table = build_quote_sheet_table(drawings, template)
         content = self._writer.write(table.headers, table.rows, file_format)

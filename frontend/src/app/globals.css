@@ -90,14 +90,20 @@
   font-weight: 500;
 }
 
-.btn-primary-capsule:hover {
+.btn-primary-capsule:hover:not(:disabled) {
   background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 50%, #2563eb 100%);
   box-shadow: 0 6px 18px 0 rgba(59, 130, 246, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.45);
   transform: translateY(-1px);
 }
 
-.btn-primary-capsule:active {
+.btn-primary-capsule:active:not(:disabled) {
   transform: translateY(0);
+}
+
+.btn-primary-capsule:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 /* Secondary Action Capsule Button */
@@ -116,14 +122,20 @@
   font-weight: 500;
 }
 
-.btn-secondary-capsule:hover {
+.btn-secondary-capsule:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.98);
   box-shadow: 0 4px 10px rgba(15, 23, 42, 0.06);
   transform: translateY(-1px);
 }
 
-.btn-secondary-capsule:active {
+.btn-secondary-capsule:active:not(:disabled) {
   transform: translateY(0);
+}
+
+.btn-secondary-capsule:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 /* Blueprint Pattern Overlay */

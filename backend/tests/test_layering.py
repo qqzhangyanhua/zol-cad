@@ -187,6 +187,9 @@ def test_报价底稿导出规则在领域层且管理员界面没有字段映�
     http_src = "".join(path.read_text(encoding="utf-8") for path in (SRC / "interface" / "http").rglob("*.py"))
     assert "quote-sheet-templates" not in http_src
     assert "class QuoteSheetTemplateRequest" not in http_src
+    cli = (SRC / "interface" / "cli" / "quote_sheet_template.py").read_text(encoding="utf-8")
+    assert "SaveQuoteSheetTemplate" in cli
+    assert "这是团队 onboarding 工具" in cli or "不是产品功能" in cli
 
     frontend = SRC.parents[2] / "frontend" / "src"
     offenders: list[str] = []

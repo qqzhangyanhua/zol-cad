@@ -41,6 +41,7 @@ class QuoteTaskView:
     task: QuoteTask
     drawings: tuple[PartDrawing, ...]
     review_status: QuoteTaskReviewStatus
+    unreviewed_member_count: int
 
     @property
     def drawing_count(self) -> int:
@@ -86,10 +87,21 @@ def derive_quote_task_review_status(drawings: Sequence[PartDrawing]) -> QuoteTas
     return QuoteTaskReviewStatus.INCOMPLETE
 
 
-def assemble_quote_task_view(task: QuoteTask, drawings: Sequence[PartDrawing]) -> QuoteTaskView:
+def assemble_quote_task_view(
+    task: QuoteTask,
+    drawings: Sequence[PartDrawing],
+    *,
+    unreviewed_member_count: int | None = None,
+) -> QuoteTaskView:
     members = tuple(drawing for drawing in drawings if drawing.quote_task_id == task.id)
+    count = (
+        unreviewed_member_count
+        if unreviewed_member_count is not None
+        else sum(1 for drawing in members if drawing.status is not PartDrawingStatus.REVIEWED)
+    )
     return QuoteTaskView(
         task=task,
         drawings=members,
         review_status=derive_quote_task_review_status(members),
+        unreviewed_member_count=count,
     )
