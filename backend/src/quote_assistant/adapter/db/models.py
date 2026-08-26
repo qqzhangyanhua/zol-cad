@@ -59,6 +59,9 @@ class PartDrawingRow(Base):
     extracted_fields: Mapped[list[dict[str, object]]] = mapped_column(
         JSONB, nullable=False, default=list
     )
+    stashed_extracted_fields: Mapped[list[dict[str, object]] | None] = mapped_column(
+        JSONB, nullable=True
+    )
     extraction_failure_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     part_family_id: Mapped[str] = mapped_column(String(80), nullable=False)
     quote_task_id: Mapped[UUID | None] = mapped_column(

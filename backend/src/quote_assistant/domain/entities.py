@@ -83,6 +83,7 @@ class PartDrawing:
     is_assembly_or_exploded: bool
     low_quality_unreliable: bool
     extracted_fields: tuple[ExtractedField, ...]
+    stashed_extracted_fields: tuple[ExtractedField, ...] | None
     extraction_failure_reason: str | None
     part_family_id: str
     quote_task_id: UUID | None

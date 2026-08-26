@@ -113,6 +113,7 @@ class UploadPartDrawings(TenantBoundUseCase):
                     is_assembly_or_exploded=False,
                     low_quality_unreliable=False,
                     extracted_fields=(),
+                    stashed_extracted_fields=None,
                     extraction_failure_reason=None,
                     part_family_id=classify_part_family(assessed.original_filename),
                     quote_task_id=None,

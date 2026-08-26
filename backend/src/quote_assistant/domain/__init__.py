@@ -79,6 +79,7 @@ from quote_assistant.domain.part_drawing_state import (
     PartDrawingEvent,
     auto_prefill_allowed,
     birth_uploaded,
+    fields_to_stash_after_grade,
     record_transition,
     status_after_grade,
 )
@@ -254,5 +255,6 @@ __all__ = [
     "review_fields_for",
     "unfinished_confirmation_items",
     "record_transition",
+    "fields_to_stash_after_grade",
     "status_after_grade",
 ]

@@ -36,18 +36,6 @@ def _grouped_categories(item: dict) -> dict[str, list[str]]:
     return grouped
 
 
-class _FirstOkThenDirtyEngine:
-    def __init__(self) -> None:
-        self._inner = FixtureExtractionEngine()
-        self._calls = 0
-
-    def extract(self, request: ExtractionRequest) -> ExtractionResult:
-        self._calls += 1
-        if self._calls == 1:
-            return self._inner.extract(request)
-        return parse_engine_result(DIRTY_ENGINE_PAYLOAD)
-
-
 class _AlwaysDirtyEngine:
     def extract(self, request: ExtractionRequest) -> ExtractionResult:
         del request
@@ -142,12 +130,13 @@ def test_差图不自动预填因此没有提取结果(client: TestClient, db_se
 
 def test_适配器校验失败按提取失败处理脏数据不进领域层(app, client: TestClient, db_session: Session) -> None:
     _login_quoter(client, db_session)
-    app.state.extraction_engine = _FirstOkThenDirtyEngine()
+    app.state.extraction_engine = _AlwaysDirtyEngine()
     uploaded = _upload(client, "FX-TQ-01.png")
     assert uploaded.status_code == 200
     item = uploaded.json()["items"][0]
 
     assert item["status"] == "提取失败"
+    assert item["quality_grade"] is None
     assert item["extraction_failure_reason"] == "提取引擎返回结果未通过适配器校验，脏数据未进入领域层"
     assert item["look_at_drawing_disclaimer"] == LOOK_AT_DRAWING_DISCLAIMER
     assert all(field["value"] is None for field in item["extracted_fields"])
@@ -155,14 +144,15 @@ def test_适配器校验失败按提取失败处理脏数据不进领域层(app,
     assert all(field["value"] != 12345 for field in item["extracted_fields"])
 
     events = client.get(f"/part-drawings/{item['id']}/events").json()["items"]
-    assert [row["to_status"] for row in events][-2:] == ["提取中", "提取失败"]
+    assert [row["to_status"] for row in events][-2:] == ["分级中", "提取失败"]
 
 
 def test_提取失败可一键重试且不必重新上传(app, client: TestClient, db_session: Session) -> None:
     _login_quoter(client, db_session)
-    app.state.extraction_engine = _FirstOkThenDirtyEngine()
+    app.state.extraction_engine = _AlwaysDirtyEngine()
     drawing_id = _upload(client, "FX-TQ-01.png").json()["items"][0]["id"]
     assert client.get(f"/part-drawings/{drawing_id}").json()["status"] == "提取失败"
+    assert client.get(f"/part-drawings/{drawing_id}").json()["quality_grade"] is None
 
     app.state.extraction_engine = FixtureExtractionEngine()
     retried = client.post(f"/part-drawings/{drawing_id}/extract")
@@ -177,9 +167,9 @@ def test_提取失败可一键重试且不必重新上传(app, client: TestClien
     assert [row["to_status"] for row in events] == [
         "已上传",
         "分级中",
-        "已分级",
-        "提取中",
         "提取失败",
+        "分级中",
+        "已分级",
         "提取中",
         "已提取",
     ]
@@ -206,7 +196,7 @@ def test_看图提示常驻在提取结果里(client: TestClient, db_session: Se
 
 def test_脏引擎重试仍失败时不写入编造字段(app, client: TestClient, db_session: Session) -> None:
     _login_quoter(client, db_session)
-    app.state.extraction_engine = _FirstOkThenDirtyEngine()
+    app.state.extraction_engine = _AlwaysDirtyEngine()
     drawing_id = _upload(client, "FX-TQ-01.png").json()["items"][0]["id"]
     app.state.extraction_engine = _AlwaysDirtyEngine()
     retried = client.post(f"/part-drawings/{drawing_id}/extract")

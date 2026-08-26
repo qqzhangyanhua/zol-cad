@@ -104,8 +104,9 @@ class PdfPageCounter(Protocol):
 class DrawingPageRenderer(Protocol):
     """Port that turns a stored 零件图 into the one page the 提取引擎 sees.
 
-    Use-case code must not import a PDF library; both the 分级 call and the
-    读图取数 call go through here so 选定页 can never be bypassed on one path.
+    Use-case code must not import a PDF library. 分级 and 读图取数 share one
+    extract(), so they share this render too — 选定页 cannot be bypassed on
+    one path, and one processing rasterizes the page once.
     """
 
     def render(self, content: bytes, media_type: str, selected_page: int) -> RenderedPage:
