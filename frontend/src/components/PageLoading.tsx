@@ -10,7 +10,7 @@ export function PageLoading({ label }: PageLoadingProps) {
       aria-live="polite"
       aria-label={label}
     >
-      <div className="glass-panel w-64 shrink-0 animate-pulse rounded-3xl" />
+      <div className="glass-panel hidden w-64 shrink-0 animate-pulse rounded-3xl md:block" />
       <div className="flex min-w-0 flex-1 flex-col gap-3">
         <div className="glass-card h-16 animate-pulse" />
         <div className="glass-card flex flex-1 flex-col justify-center p-8">

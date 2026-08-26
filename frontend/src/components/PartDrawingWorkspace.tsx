@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import { AutoStartExtraction } from "@/components/AutoStartExtraction";
 import { ExtractionFailedPanel } from "@/components/ExtractionFailedPanel";
 import { ExtractionForm } from "@/components/ExtractionForm";
@@ -22,9 +25,40 @@ export function PartDrawingWorkspace({
   materialCandidates,
   riskLabelPriority,
 }: PartDrawingWorkspaceProps) {
+  const [formOpen, setFormOpen] = useState(true);
+  const [drawingOpen, setDrawingOpen] = useState(true);
+
   return (
-    <div className="glass-card overflow-hidden flex min-h-[38rem] flex-col lg:flex-row backdrop-blur-xl">
-      <aside className="w-full overflow-y-auto border-b border-slate-200/80 bg-white/40 p-5 lg:w-[28rem] lg:border-b-0 lg:border-r">
+    <div className="glass-card flex min-h-0 flex-col overflow-hidden backdrop-blur-xl lg:min-h-[38rem] lg:flex-row">
+      <div className="flex gap-2 border-b border-slate-200/80 bg-white/70 px-3 py-2 lg:hidden">
+        <button
+          type="button"
+          aria-expanded={formOpen}
+          aria-controls="review-form-pane"
+          className="btn-secondary-capsule h-8 flex-1 px-3 text-xs text-slate-700"
+          onClick={() => {
+            setFormOpen((current) => !current);
+          }}
+        >
+          {formOpen ? "收起复核表单" : "展开复核表单"}
+        </button>
+        <button
+          type="button"
+          aria-expanded={drawingOpen}
+          aria-controls="original-drawing-pane"
+          className="btn-secondary-capsule h-8 flex-1 px-3 text-xs text-slate-700"
+          onClick={() => {
+            setDrawingOpen((current) => !current);
+          }}
+        >
+          {drawingOpen ? "收起原图" : "展开原图"}
+        </button>
+      </div>
+
+      <aside
+        id="review-form-pane"
+        className={`${formOpen ? "block" : "hidden"} w-full overflow-y-auto border-b border-slate-200/80 bg-white/40 p-4 lg:block lg:w-[28rem] lg:border-b-0 lg:border-r lg:p-5`}
+      >
         {drawing.status === "已分级" && drawing.auto_prefill_allowed ? (
           <AutoStartExtraction drawingId={drawing.id} uploadedAt={drawing.uploaded_at} />
         ) : null}
@@ -59,7 +93,12 @@ export function PartDrawingWorkspace({
           </div>
         ) : null}
       </aside>
-      <div className="flex min-h-[32rem] min-w-0 flex-1 flex-col bg-slate-100/50">
+      <div
+        id="original-drawing-pane"
+        className={`${drawingOpen ? "flex" : "hidden"} min-h-[16rem] min-w-0 flex-1 flex-col bg-slate-100/50 lg:flex lg:min-h-[32rem] ${
+          drawingOpen && !formOpen ? "h-[70vh] lg:h-auto" : "h-[40vh] lg:h-auto"
+        }`}
+      >
         <OriginalDrawingViewer
           src={originalSrc}
           contentType={original.content_type}
