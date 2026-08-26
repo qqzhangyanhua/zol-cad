@@ -19,7 +19,11 @@ from sqlalchemy.orm import Session
 
 from quote_assistant.adapter.db.models import FactoryRow
 from quote_assistant.adapter.db.repositories import SqlQuoteSheetTemplateRepository
-from quote_assistant.adapter.db.session import SqlAlchemyUnitOfWork, make_engine, make_session_factory
+from quote_assistant.adapter.db.session import (
+    SqlAlchemyUnitOfWork,
+    make_engine,
+    make_session_factory,
+)
 from quote_assistant.config import Settings
 from quote_assistant.domain.entities import Actor, Role
 from quote_assistant.domain.errors import InvalidQuoteSheetTemplate
@@ -97,16 +101,14 @@ def _add_factory_args(parser: argparse.ArgumentParser) -> None:
 
 def _run_show(database_url: str, args: argparse.Namespace) -> None:
     with _session_scope(database_url) as session:
-        factory = _load_factory(
-            session, factory_id=args.factory_id, factory_name=args.factory_name
-        )
+        factory = _load_factory(session, factory_id=args.factory_id, factory_name=args.factory_name)
         actor = _onboarding_actor(factory)
-        stored = GetQuoteSheetTemplate(
-            actor, SqlQuoteSheetTemplateRepository(session)
-        ).execute()
+        stored = GetQuoteSheetTemplate(actor, SqlQuoteSheetTemplateRepository(session)).execute()
         resolved = resolve_quote_sheet_template(stored)
         if args.json:
-            print(json.dumps(_show_payload(factory, stored, resolved), ensure_ascii=False, indent=2))
+            print(
+                json.dumps(_show_payload(factory, stored, resolved), ensure_ascii=False, indent=2)
+            )
             return
         _print_show(factory, stored, resolved)
 
@@ -114,9 +116,7 @@ def _run_show(database_url: str, args: argparse.Namespace) -> None:
 def _run_save(database_url: str, args: argparse.Namespace) -> None:
     raw_columns = _load_raw_columns(args)
     with _session_scope(database_url) as session:
-        factory = _load_factory(
-            session, factory_id=args.factory_id, factory_name=args.factory_name
-        )
+        factory = _load_factory(session, factory_id=args.factory_id, factory_name=args.factory_name)
         actor = _onboarding_actor(factory)
         resolved = SaveQuoteSheetTemplate(
             actor,

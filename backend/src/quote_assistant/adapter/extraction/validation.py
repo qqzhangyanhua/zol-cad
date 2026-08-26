@@ -139,7 +139,9 @@ def summarize_engine_payload(raw: object) -> str:
             parts.append(f"{name}={_short_scalar(raw[name])}")
     if "fields" in raw:
         parts.append(f"fields={_summarize_fields(raw['fields'])}")
-    extra = [key for key in keys if key not in {"quality_grade", "is_assembly_or_exploded", "fields"}]
+    extra = [
+        key for key in keys if key not in {"quality_grade", "is_assembly_or_exploded", "fields"}
+    ]
     if extra:
         parts.append(f"extra_keys={extra}")
         omitted = [key for key in extra if _looks_like_image_key(key)]

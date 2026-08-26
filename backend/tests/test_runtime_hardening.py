@@ -18,7 +18,10 @@ from quote_assistant.adapter.db.repositories import (
     SqlPartDrawingRepository,
 )
 from quote_assistant.adapter.db.session import SqlAlchemyUnitOfWork
-from quote_assistant.adapter.extraction.cost import ExtractionCostEvent, InMemoryExtractionCostCounter
+from quote_assistant.adapter.extraction.cost import (
+    ExtractionCostEvent,
+    InMemoryExtractionCostCounter,
+)
 from quote_assistant.adapter.extraction.fake import FixtureExtractionEngine
 from quote_assistant.config import Settings, validate_runtime_settings
 from quote_assistant.domain.entities import Actor, PartDrawingStatus, Role
@@ -67,7 +70,7 @@ def test_生产环境拒绝占位签名密钥与demo密码() -> None:
                 object_sign_secret="not-the-default-secret",
             )
         )
-    with pytest.raises(RuntimeError, match="SESSION_COOKIE_SECURE|Secure"):
+    with pytest.raises(RuntimeError, match=r"SESSION_COOKIE_SECURE|Secure"):
         create_app(
             Settings(
                 app_env="production",
@@ -170,9 +173,7 @@ def test_生产session_cookie带secure(
         assert "secure" in response.headers.get("set-cookie", "").lower()
 
 
-def test_线程处理器上传后后台完成(
-    app, client: TestClient, db_session: Session
-) -> None:
+def test_线程处理器上传后后台完成(app, client: TestClient, db_session: Session) -> None:
     _login_quoter(client, db_session)
     processor = ThreadPartDrawingProcessor(
         ProcessPartDrawingJob(app),
@@ -353,9 +354,7 @@ def test_请求体过大返回413() -> None:
     assert start["status"] == 413
 
 
-def test_后台作业与重试不会双跑且序号不重复(
-    app, client: TestClient, db_session: Session
-) -> None:
+def test_后台作业与重试不会双跑且序号不重复(app, client: TestClient, db_session: Session) -> None:
     factory_id, user_id = _login_quoter(client, db_session)
     from quote_assistant.interface.http.background import DeferredPartDrawingProcessor
 

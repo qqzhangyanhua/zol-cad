@@ -6,7 +6,6 @@ from sqlalchemy.orm import Session
 from drawing_fixtures import PNG_1X1
 from helpers import create_factory, create_quoter, login
 
-
 HIGH_RISK_KEYS = ("tightest_tolerance", "max_envelope", "deepest_hole", "thinnest_wall")
 LOW_RISK_KEYS = ("drawing_no", "part_name", "material", "quantity")
 
@@ -39,7 +38,9 @@ def _complete(client: TestClient, drawing_id: str):
     return client.post(f"/part-drawings/{drawing_id}/complete-review")
 
 
-def test_清晰图上尺寸与公差仍需确认低风险字段不强制(client: TestClient, db_session: Session) -> None:
+def test_清晰图上尺寸与公差仍需确认低风险字段不强制(
+    client: TestClient, db_session: Session
+) -> None:
     _login_quoter(client, db_session)
     item = _upload(client, "FX-TQ-01.png")
     assert item["quality_grade"] == "清晰"

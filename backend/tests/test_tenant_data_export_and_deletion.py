@@ -16,7 +16,6 @@ from quote_assistant.usecase.delete_tenant_data import DeleteTenantData
 from quote_assistant.usecase.export_tenant_data import ExportTenantData
 from quote_assistant.usecase.request_tenant_delete import RequestTenantDelete
 
-
 HIGH_RISK_KEYS = ("tightest_tolerance", "max_envelope", "deepest_hole", "thinnest_wall")
 
 
@@ -60,7 +59,9 @@ def test_报价员不能导出或删除本厂数据(client: TestClient, db_sessi
 
     exported = client.get("/admin/tenant-data/export", params={"factory_id": str(factory_id)})
     assert exported.status_code == 403
-    challenge = client.post("/admin/tenant-data/delete-challenge", json={"factory_id": str(factory_id)})
+    challenge = client.post(
+        "/admin/tenant-data/delete-challenge", json={"factory_id": str(factory_id)}
+    )
     assert challenge.status_code == 403
     deleted = client.post(
         "/admin/tenant-data/delete",
@@ -139,7 +140,10 @@ def test_管理员能导出可读压缩包且删除需服务端二次确认_删�
         exported_drawing = drawings[0]
         assert exported_drawing["id"] == drawing_a["id"]
         assert exported_drawing["original_filename"] == "WIRE-RL-01-FX-TQ.png"
-        assert any(field["key"] == "drawing_no" and field["value"] == "A-1001" for field in exported_drawing["extracted_fields"])
+        assert any(
+            field["key"] == "drawing_no" and field["value"] == "A-1001"
+            for field in exported_drawing["extracted_fields"]
+        )
         assert exported_drawing["review"]["status"] == "已复核"
         assert exported_drawing["risk_labels"]
         assert {label["name"] for label in exported_drawing["risk_labels"]}
@@ -161,7 +165,10 @@ def test_管理员能导出可读压缩包且删除需服务端二次确认_删�
 
     rejected = client.post(
         "/admin/tenant-data/delete",
-        json={"confirm_token": "not-a-real-token", "confirm_phrase": tenant_delete_confirm_phrase("华东精密")},
+        json={
+            "confirm_token": "not-a-real-token",
+            "confirm_phrase": tenant_delete_confirm_phrase("华东精密"),
+        },
     )
     assert rejected.status_code == 400
     assert client.get("/part-drawings").json()["items"]

@@ -44,9 +44,7 @@ class ExportQuoteSheet(TenantBoundUseCase):
         self._templates = templates
         self._writer = writer
 
-    def execute(
-        self, quote_task_id: UUID, file_format: QuoteSheetFileFormat
-    ) -> QuoteSheetFile:
+    def execute(self, quote_task_id: UUID, file_format: QuoteSheetFileFormat) -> QuoteSheetFile:
         task = require_visible_quote_task(
             self.actor, self._quote_tasks.get_for_tenant(self.tenant, quote_task_id)
         )

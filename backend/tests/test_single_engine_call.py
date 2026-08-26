@@ -80,7 +80,9 @@ def _login_quoter(client: TestClient, db_session: Session) -> None:
     assert login(client, "quoter_a", "secret-a").status_code == 200
 
 
-def _install_counters(app, inner_engine: object) -> tuple[_CountingEngine, _CountingStorage, _CountingRenderer]:
+def _install_counters(
+    app, inner_engine: object
+) -> tuple[_CountingEngine, _CountingStorage, _CountingRenderer]:
     engine = _CountingEngine(inner_engine)
     storage = _CountingStorage(app.state.object_storage)
     renderer = _CountingRenderer(app.state.drawing_page_renderer)
@@ -178,9 +180,7 @@ def test_装配图一次调用后丢弃字段且没有仍然继续入口(
     assert engine.extract_calls == 1
 
 
-def test_分级失败重试仍从分级开始不跳过劝退(
-    app, client: TestClient, db_session: Session
-) -> None:
+def test_分级失败重试仍从分级开始不跳过劝退(app, client: TestClient, db_session: Session) -> None:
     _login_quoter(client, db_session)
     engine, storage, renderer = _install_counters(app, _AlwaysDirtyEngine())
 

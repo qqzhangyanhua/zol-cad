@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from typing import Protocol
 from uuid import UUID
 
+from quote_assistant.domain.confidentiality import ConfidentialityNotice
 from quote_assistant.domain.correction import CorrectionRecord
 from quote_assistant.domain.entities import (
     Actor,
@@ -12,12 +13,11 @@ from quote_assistant.domain.entities import (
     PartDrawing,
     User,
 )
+from quote_assistant.domain.extraction import ExtractionRequest, ExtractionResult, RenderedPage
 from quote_assistant.domain.factory_preferences import FactoryPreferences
+from quote_assistant.domain.part_drawing_state import PartDrawingEvent
 from quote_assistant.domain.quote_sheet import QuoteSheetFileFormat, QuoteSheetTemplate
 from quote_assistant.domain.quote_task import QuoteTask
-from quote_assistant.domain.confidentiality import ConfidentialityNotice
-from quote_assistant.domain.extraction import ExtractionRequest, ExtractionResult, RenderedPage
-from quote_assistant.domain.part_drawing_state import PartDrawingEvent
 from quote_assistant.domain.tenant_data import TenantArchiveFile, TenantDeleteChallenge
 from quote_assistant.usecase.tenant import TenantScope
 
@@ -235,7 +235,9 @@ class TenantDeleteChallengeRepository(Protocol):
     def add(self, challenge: TenantDeleteChallenge) -> None:
         """Persist a newly issued one-time delete confirmation. Tenant comes from the entity."""
 
-    def get_open(self, tenant: TenantScope, token: str, now: datetime) -> TenantDeleteChallenge | None:
+    def get_open(
+        self, tenant: TenantScope, token: str, now: datetime
+    ) -> TenantDeleteChallenge | None:
         """Load an unused, unexpired challenge that belongs to this factory."""
 
     def mark_consumed(self, tenant: TenantScope, token: str, consumed_at: datetime) -> None:

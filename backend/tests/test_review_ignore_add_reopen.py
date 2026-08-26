@@ -5,9 +5,13 @@ from sqlalchemy.orm import Session
 
 from drawing_fixtures import PNG_1X1
 from helpers import create_factory, create_quoter, login
-from quote_assistant.domain.extraction import ExtractedField, ExtractionRequest, ExtractionResult, FieldCategory
+from quote_assistant.domain.extraction import (
+    ExtractedField,
+    ExtractionRequest,
+    ExtractionResult,
+    FieldCategory,
+)
 from quote_assistant.domain.quality import QualityGrade
-
 
 HIGH_RISK_KEYS = ("tightest_tolerance", "max_envelope", "deepest_hole", "thinnest_wall")
 
@@ -72,7 +76,9 @@ class _OverwriteEngine:
                 ExtractedField(
                     "tightest_tolerance", "最严公差", "IT8", FieldCategory.CRITICAL_DIMENSION
                 ),
-                ExtractedField("max_envelope", "最大外形", "Ø1×1", FieldCategory.CRITICAL_DIMENSION),
+                ExtractedField(
+                    "max_envelope", "最大外形", "Ø1×1", FieldCategory.CRITICAL_DIMENSION
+                ),
                 ExtractedField("deepest_hole", "最深孔", "Ø1×1", FieldCategory.CRITICAL_DIMENSION),
                 ExtractedField("thinnest_wall", "最薄壁", "9", FieldCategory.CRITICAL_DIMENSION),
             ),
@@ -154,7 +160,9 @@ def test_补录关键尺寸进入结果并参与风险标签(client: TestClient,
     assert extra_field["category"] == "关键尺寸"
     assert extra_field["confirmed"] is True
     assert "高精度" in _label_names(extra_body)
-    assert any(field["key"] == "tightest_tolerance__added__1" for field in extra_body["extracted_fields"])
+    assert any(
+        field["key"] == "tightest_tolerance__added__1" for field in extra_body["extracted_fields"]
+    )
 
 
 def test_修正关键尺寸后风险标签按确认值重算(client: TestClient, db_session: Session) -> None:

@@ -24,7 +24,12 @@ def upgrade() -> None:
     )
     op.add_column(
         "part_drawings",
-        sa.Column("content_type", sa.String(length=100), nullable=False, server_default="application/octet-stream"),
+        sa.Column(
+            "content_type",
+            sa.String(length=100),
+            nullable=False,
+            server_default="application/octet-stream",
+        ),
     )
     op.add_column(
         "part_drawings",

@@ -7,7 +7,14 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from drawing_fixtures import PNG_1X1
-from helpers import create_admin, create_factory, create_quoter, insert_event, insert_part_drawing, login
+from helpers import (
+    create_admin,
+    create_factory,
+    create_quoter,
+    insert_event,
+    insert_part_drawing,
+    login,
+)
 from quote_assistant.domain.entities import PartDrawingStatus
 
 HIGH_RISK_KEYS = ("tightest_tolerance", "max_envelope", "deepest_hole", "thinnest_wall")
@@ -63,7 +70,8 @@ def test_走完全流程后上传与已复核时间戳都在且处理耗时可�
     assert computed["uploaded_at"] == uploaded["occurred_at"]
     assert computed["reviewed_at"] == reviewed["occurred_at"]
     expected = (
-        datetime.fromisoformat(reviewed["occurred_at"]) - datetime.fromisoformat(uploaded["occurred_at"])
+        datetime.fromisoformat(reviewed["occurred_at"])
+        - datetime.fromisoformat(uploaded["occurred_at"])
     ).total_seconds()
     assert computed["processing_seconds"] == expected
     assert computed["grading_seconds"] is not None
@@ -146,9 +154,7 @@ def test_未复核零件图不计入处理耗时避免半成品拉低数据(
     assert body["average_review_seconds"] == 300
 
 
-def test_管理员能录入人工基线并看到本厂对比(
-    client: TestClient, db_session: Session
-) -> None:
+def test_管理员能录入人工基线并看到本厂对比(client: TestClient, db_session: Session) -> None:
     factory_id = create_factory(db_session, "华东精密")
     create_admin(db_session, factory_id, "admin_a", "secret-admin")
     uploaded_at = datetime(2026, 8, 1, 9, 0, tzinfo=UTC)
@@ -193,9 +199,7 @@ def test_管理员能录入人工基线并看到本厂对比(
     assert body["baselines"][0]["part_description"] == "φ40 回转轴，纯人工抄写"
 
 
-def test_报价员不能查看处理耗时也不能录入人工基线(
-    client: TestClient, db_session: Session
-) -> None:
+def test_报价员不能查看处理耗时也不能录入人工基线(client: TestClient, db_session: Session) -> None:
     factory_id = create_factory(db_session, "华东精密")
     create_quoter(db_session, factory_id, "quoter_a", "secret-a")
     db_session.commit()
@@ -210,9 +214,7 @@ def test_报价员不能查看处理耗时也不能录入人工基线(
     assert "管理员" in blocked.json()["detail"]
 
 
-def test_甲厂管理员看不到乙厂处理耗时与人工基线(
-    client: TestClient, db_session: Session
-) -> None:
+def test_甲厂管理员看不到乙厂处理耗时与人工基线(client: TestClient, db_session: Session) -> None:
     factory_a = create_factory(db_session, "华东精密")
     factory_b = create_factory(db_session, "南方模具")
     create_admin(db_session, factory_a, "admin_a", "secret-a")
@@ -266,9 +268,7 @@ def test_甲厂管理员看不到乙厂处理耗时与人工基线(
     assert empty["saved_seconds"] is None
 
 
-def test_处理耗时与基线忽略调用方传入的工厂标识(
-    client: TestClient, db_session: Session
-) -> None:
+def test_处理耗时与基线忽略调用方传入的工厂标识(client: TestClient, db_session: Session) -> None:
     factory_a = create_factory(db_session, "华东精密")
     factory_b = create_factory(db_session, "南方模具")
     create_admin(db_session, factory_a, "admin_a", "secret-a")

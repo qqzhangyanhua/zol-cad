@@ -52,7 +52,9 @@ class _PayloadTransport:
 
     def complete(self, request: VendorCompletionRequest) -> VendorCompletionResult:
         self.last_request = request
-        return VendorCompletionResult(raw_payload=self.payload, prompt_tokens=12, estimated_cost=None)
+        return VendorCompletionResult(
+            raw_payload=self.payload, prompt_tokens=12, estimated_cost=None
+        )
 
 
 class _RaiseTransport:
@@ -152,9 +154,7 @@ def test_调用日志不落图像内容(caplog) -> None:
     assert recorder.events[0].estimated_cost is None
 
 
-def test_超时失败有明确原因且可走现有重试(
-    app, client: TestClient, db_session: Session
-) -> None:
+def test_超时失败有明确原因且可走现有重试(app, client: TestClient, db_session: Session) -> None:
     factory_id = create_factory(db_session, "华东精密")
     create_quoter(db_session, factory_id, "quoter_a", "secret-a")
     db_session.commit()
@@ -182,9 +182,7 @@ def test_超时失败有明确原因且可走现有重试(
     assert retried.json()["status"] == "已提取"
 
 
-def test_骨架失败进入提取失败且可重试回假引擎(
-    app, client: TestClient, db_session: Session
-) -> None:
+def test_骨架失败进入提取失败且可重试回假引擎(app, client: TestClient, db_session: Session) -> None:
     factory_id = create_factory(db_session, "华东精密")
     create_quoter(db_session, factory_id, "quoter_a", "secret-a")
     db_session.commit()

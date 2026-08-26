@@ -48,7 +48,9 @@ class DeleteTenantData(TenantBoundUseCase):
             submitted_phrase=confirm_phrase,
         ):
             raise TenantDeleteConfirmationInvalid(TENANT_DELETE_CONFIRMATION_INVALID_MESSAGE)
-        storage_keys = [drawing.storage_key for drawing in self._drawings.list_for_tenant(self.tenant)]
+        storage_keys = [
+            drawing.storage_key for drawing in self._drawings.list_for_tenant(self.tenant)
+        ]
         self._challenges.mark_consumed(self.tenant, challenge.token, now)
         self._purge.delete_operational_data(self.tenant)
         self._uow.commit()

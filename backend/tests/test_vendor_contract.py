@@ -27,6 +27,4 @@ def test_供应商契约_输出满足提取端口():
             "票 02 未关闭或未设置 QA_VENDOR_CONTRACT=1；"
             "选定供应商后手工运行：uv run pytest -m vendor_contract"
         )
-    raise AssertionError(
-        "票 02 已关闭但真实供应商契约尚未接入。不要在未接线前假装已跑通付费 API。"
-    )
+    raise AssertionError("票 02 已关闭但真实供应商契约尚未接入。不要在未接线前假装已跑通付费 API。")

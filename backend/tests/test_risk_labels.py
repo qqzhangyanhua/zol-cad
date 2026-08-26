@@ -76,9 +76,24 @@ def test_输出词表不含安全无风险通过语义() -> None:
 def test_任意输入的输出名称都在词表内且无安全语义() -> None:
     samples = [
         _fields(),
-        _fields(tightest_tolerance="IT6", deepest_hole="Ø8×48", thinnest_wall="1.5", max_envelope="Ø10×120"),
-        _fields(tightest_tolerance="无风险", deepest_hole="安全", thinnest_wall="通过", max_envelope="合格"),
-        _fields(tightest_tolerance="IT0", deepest_hole="见技术要求", thinnest_wall="薄", max_envelope="Ø120"),
+        _fields(
+            tightest_tolerance="IT6",
+            deepest_hole="Ø8×48",
+            thinnest_wall="1.5",
+            max_envelope="Ø10×120",
+        ),
+        _fields(
+            tightest_tolerance="无风险",
+            deepest_hole="安全",
+            thinnest_wall="通过",
+            max_envelope="合格",
+        ),
+        _fields(
+            tightest_tolerance="IT0",
+            deepest_hole="见技术要求",
+            thinnest_wall="薄",
+            max_envelope="Ø120",
+        ),
     ]
     for fields in samples:
         for label in evaluate_risk_labels(fields):

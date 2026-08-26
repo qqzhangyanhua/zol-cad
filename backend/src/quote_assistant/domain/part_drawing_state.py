@@ -9,7 +9,12 @@ from quote_assistant.domain.errors import IllegalPartDrawingTransition
 from quote_assistant.domain.extraction import ExtractedField, ExtractionResult
 from quote_assistant.domain.quality import QualityGrade
 
-_UNSET = object()
+
+class _Unset:
+    pass
+
+
+_UNSET = _Unset()
 
 
 LEGAL_TRANSITIONS: frozenset[tuple[PartDrawingStatus | None, PartDrawingStatus]] = frozenset(
@@ -122,24 +127,38 @@ def record_transition(
     is_assembly_or_exploded: bool | None = None,
     low_quality_unreliable: bool | None = None,
     extracted_fields: tuple[ExtractedField, ...] | None = None,
-    stashed_extracted_fields: tuple[ExtractedField, ...] | None | object = _UNSET,
-    extraction_failure_reason: str | None | object = _UNSET,
+    stashed_extracted_fields: tuple[ExtractedField, ...] | _Unset | None = _UNSET,
+    extraction_failure_reason: str | _Unset | None = _UNSET,
 ) -> tuple[PartDrawing, PartDrawingEvent]:
     _require_legal(drawing.status, to_status)
-    updates: dict[str, object] = {"status": to_status}
-    if quality_grade is not None:
-        updates["quality_grade"] = quality_grade
-    if is_assembly_or_exploded is not None:
-        updates["is_assembly_or_exploded"] = is_assembly_or_exploded
-    if low_quality_unreliable is not None:
-        updates["low_quality_unreliable"] = low_quality_unreliable
-    if extracted_fields is not None:
-        updates["extracted_fields"] = extracted_fields
-    if stashed_extracted_fields is not _UNSET:
-        updates["stashed_extracted_fields"] = stashed_extracted_fields
-    if extraction_failure_reason is not _UNSET:
-        updates["extraction_failure_reason"] = extraction_failure_reason
-    updated = replace(drawing, **updates)
+    next_stashed = (
+        drawing.stashed_extracted_fields
+        if isinstance(stashed_extracted_fields, _Unset)
+        else stashed_extracted_fields
+    )
+    next_reason = (
+        drawing.extraction_failure_reason
+        if isinstance(extraction_failure_reason, _Unset)
+        else extraction_failure_reason
+    )
+    updated = replace(
+        drawing,
+        status=to_status,
+        quality_grade=drawing.quality_grade if quality_grade is None else quality_grade,
+        is_assembly_or_exploded=(
+            drawing.is_assembly_or_exploded
+            if is_assembly_or_exploded is None
+            else is_assembly_or_exploded
+        ),
+        low_quality_unreliable=(
+            drawing.low_quality_unreliable
+            if low_quality_unreliable is None
+            else low_quality_unreliable
+        ),
+        extracted_fields=drawing.extracted_fields if extracted_fields is None else extracted_fields,
+        stashed_extracted_fields=next_stashed,
+        extraction_failure_reason=next_reason,
+    )
     return updated, _event(
         drawing=updated,
         from_status=drawing.status,

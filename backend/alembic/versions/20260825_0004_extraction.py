@@ -21,7 +21,9 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     op.add_column(
         "part_drawings",
-        sa.Column("extracted_fields", JSONB(), nullable=False, server_default=sa.text("'[]'::jsonb")),
+        sa.Column(
+            "extracted_fields", JSONB(), nullable=False, server_default=sa.text("'[]'::jsonb")
+        ),
     )
     op.add_column(
         "part_drawings",

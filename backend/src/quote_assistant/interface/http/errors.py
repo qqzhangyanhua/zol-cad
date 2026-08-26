@@ -47,8 +47,10 @@ def domain_error_detail(exc: DomainError) -> str:
     return text or exc.__class__.__name__
 
 
-async def domain_error_handler(_request: Request, exc: DomainError) -> JSONResponse:
+async def domain_error_handler(_request: Request, exc: Exception) -> JSONResponse:
     """Uncaught DomainError becomes a stable JSON error, not 500 + traceback."""
+    if not isinstance(exc, DomainError):
+        raise exc
     return JSONResponse(
         status_code=domain_error_status(exc),
         content={"detail": domain_error_detail(exc)},

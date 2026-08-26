@@ -16,7 +16,6 @@ from quote_assistant.interface.http.schemas import (
     QuoteTaskSummaryResponse,
 )
 
-
 HIGH_RISK_KEYS = ("tightest_tolerance", "max_envelope", "deepest_hole", "thinnest_wall")
 
 

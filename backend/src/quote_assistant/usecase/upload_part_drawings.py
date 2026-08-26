@@ -7,6 +7,7 @@ from uuid import uuid4
 from quote_assistant.domain.drawing_upload import (
     MAX_FILE_BYTES,
     PDF_MEDIA_TYPE,
+    AcceptedDrawingFile,
     assess_drawing_upload,
     detect_media_type,
 )
@@ -19,8 +20,8 @@ from quote_assistant.domain.entities import (
     UploadPartDrawingsResult,
 )
 from quote_assistant.domain.errors import PdfUnreadable
-from quote_assistant.domain.part_family import classify_part_family
 from quote_assistant.domain.part_drawing_state import birth_uploaded
+from quote_assistant.domain.part_family import classify_part_family
 from quote_assistant.usecase.ports import (
     ObjectStorage,
     PartDrawingEventRepository,
@@ -131,12 +132,12 @@ class UploadPartDrawings(TenantBoundUseCase):
             raise
         # Hand off only after the commit — a deferred processor reads these rows from its
         # own session and would otherwise find nothing.
-        items = [
-            self._processor.submit(self.actor, drawing.id) or drawing for drawing in stored
-        ]
+        items = [self._processor.submit(self.actor, drawing.id) or drawing for drawing in stored]
         return UploadPartDrawingsResult(items=items, rejected=rejected)
 
-    def _assess(self, incoming: IncomingDrawing, rejected: list[RejectedUpload]):
+    def _assess(
+        self, incoming: IncomingDrawing, rejected: list[RejectedUpload]
+    ) -> AcceptedDrawingFile | None:
         display_name = incoming.original_filename or "未命名文件"
         page_count: int | None = None
         if (

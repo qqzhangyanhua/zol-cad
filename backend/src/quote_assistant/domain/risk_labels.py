@@ -103,9 +103,7 @@ def sort_risk_labels(
     """Display order only. Does not change which rules fire."""
     order = tuple(priority) if priority else DEFAULT_RISK_LABEL_PRIORITY
     rank = {name: index for index, name in enumerate(order)}
-    return tuple(
-        sorted(labels, key=lambda label: rank.get(label.name, len(rank)))
-    )
+    return tuple(sorted(labels, key=lambda label: rank.get(label.name, len(rank))))
 
 
 def evaluate_risk_labels(fields: Sequence[ExtractedField]) -> tuple[RiskLabel, ...]:

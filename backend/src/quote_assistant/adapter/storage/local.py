@@ -64,7 +64,7 @@ class LocalDirectoryObjectStorage:
         return self._root.joinpath(*parts)
 
     def _sign(self, key: str, expires: int) -> str:
-        payload = f"{key}:{expires}".encode("utf-8")
+        payload = f"{key}:{expires}".encode()
         return hmac.new(self._sign_secret, payload, hashlib.sha256).hexdigest()
 
     @staticmethod

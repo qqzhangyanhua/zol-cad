@@ -4,7 +4,10 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from quote_assistant.domain.errors import AdminRequired
 from quote_assistant.interface.http.deps import get_list_correction_stats
-from quote_assistant.interface.http.schemas import CorrectionStatsResponse, to_correction_stat_response
+from quote_assistant.interface.http.schemas import (
+    CorrectionStatsResponse,
+    to_correction_stat_response,
+)
 from quote_assistant.usecase.list_correction_stats import ListCorrectionStats
 
 router = APIRouter(tags=["correction-stats"])

@@ -9,7 +9,6 @@ from drawing_fixtures import PNG_1X1
 from helpers import create_admin, create_factory, create_quoter, login
 from quote_assistant.domain.correction import CORRECTION_STATS_PURPOSE
 
-
 FORBIDDEN_COPY = ("越用越准", "自动学习", "实时优化", "越改越准")
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -93,7 +92,10 @@ def test_手工补录产生原值为空的修正记录(client: TestClient, db_se
     _login_quoter(client, db_session)
     item = _upload(client, "FX-TQ-01.png")
     drawing_id = item["id"]
-    assert next(field["value"] for field in item["extracted_fields"] if field["key"] == "deepest_hole") is None
+    assert (
+        next(field["value"] for field in item["extracted_fields"] if field["key"] == "deepest_hole")
+        is None
+    )
 
     added = client.post(
         f"/part-drawings/{drawing_id}/fields",
@@ -228,9 +230,9 @@ def test_界面与用途文案不暗示实时模型优化() -> None:
 
 
 def test_零件图详情会拉取并展示修正记录() -> None:
-    detail = (REPO_ROOT / "frontend" / "src" / "app" / "part-drawings" / "[id]" / "page.tsx").read_text(
-        encoding="utf-8"
-    )
+    detail = (
+        REPO_ROOT / "frontend" / "src" / "app" / "part-drawings" / "[id]" / "page.tsx"
+    ).read_text(encoding="utf-8")
     trail = (REPO_ROOT / "frontend" / "src" / "components" / "CorrectionTrail.tsx").read_text(
         encoding="utf-8"
     )

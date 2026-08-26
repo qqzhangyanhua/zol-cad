@@ -6,6 +6,7 @@ from datetime import timedelta
 from fastapi import Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
+from quote_assistant.adapter.confidentiality.adr0009 import Adr0009ConfidentialitySource
 from quote_assistant.adapter.db.repositories import (
     SqlCorrectionRecordRepository,
     SqlFactoryPreferenceRepository,
@@ -21,35 +22,47 @@ from quote_assistant.adapter.db.repositories import (
     SqlTenantDeleteChallengeRepository,
     SqlUserRepository,
 )
-from quote_assistant.adapter.confidentiality.adr0009 import Adr0009ConfidentialitySource
+from quote_assistant.adapter.db.session import SqlAlchemyUnitOfWork
 from quote_assistant.adapter.export.quote_sheet_writer import OpenpyxlQuoteSheetFileWriter
 from quote_assistant.adapter.export.tenant_archive_writer import ZipTenantArchiveWriter
-from quote_assistant.adapter.db.session import SqlAlchemyUnitOfWork
+from quote_assistant.adapter.pdf.page_counter import PypdfPageCounter
 from quote_assistant.config import Settings
 from quote_assistant.domain.entities import Actor
 from quote_assistant.domain.errors import Unauthenticated
-from quote_assistant.adapter.pdf.page_counter import PypdfPageCounter
+from quote_assistant.domain.factory_preferences import FactoryPreferences
 from quote_assistant.usecase.assign_part_drawing_to_quote_task import (
     AssignPartDrawingToQuoteTask,
     RemovePartDrawingFromQuoteTask,
 )
 from quote_assistant.usecase.compare_processing_time import CompareProcessingTime
-from quote_assistant.usecase.create_quote_task import CreateQuoteTask
-from quote_assistant.usecase.export_quote_sheet import ExportQuoteSheet
-from quote_assistant.usecase.get_quote_task import GetQuoteTask
-from quote_assistant.usecase.list_quote_tasks import ListQuoteTasks
 from quote_assistant.usecase.continue_despite_poor_quality import ContinueDespitePoorQuality
-from quote_assistant.usecase.process_part_drawing import ProcessPartDrawing
+from quote_assistant.usecase.create_quote_task import CreateQuoteTask
+from quote_assistant.usecase.create_quoter import CreateQuoter
+from quote_assistant.usecase.delete_tenant_data import DeleteTenantData
+from quote_assistant.usecase.disable_quoter import DisableQuoter
+from quote_assistant.usecase.export_quote_sheet import ExportQuoteSheet
+from quote_assistant.usecase.export_tenant_data import ExportTenantData
+from quote_assistant.usecase.get_confidentiality_notice import GetConfidentialityNotice
 from quote_assistant.usecase.get_current_actor import GetCurrentActor
+from quote_assistant.usecase.get_factory_preferences import GetFactoryPreferences
 from quote_assistant.usecase.get_part_drawing import GetPartDrawing
+from quote_assistant.usecase.get_quote_task import GetQuoteTask
 from quote_assistant.usecase.issue_original_access_url import IssueOriginalAccessUrl
 from quote_assistant.usecase.list_correction_records import ListCorrectionRecords
 from quote_assistant.usecase.list_correction_stats import ListCorrectionStats
+from quote_assistant.usecase.list_factory_accounts import ListFactoryAccounts
+from quote_assistant.usecase.list_factory_processing_records import ListFactoryProcessingRecords
 from quote_assistant.usecase.list_part_drawing_events import ListPartDrawingEvents
 from quote_assistant.usecase.list_part_drawings import ListPartDrawings
+from quote_assistant.usecase.list_quote_tasks import ListQuoteTasks
+from quote_assistant.usecase.list_risk_rules import ListRiskRules
 from quote_assistant.usecase.login import Login
 from quote_assistant.usecase.logout import Logout
+from quote_assistant.usecase.process_part_drawing import ProcessPartDrawing
 from quote_assistant.usecase.record_manual_baseline import RecordManualBaseline
+from quote_assistant.usecase.replace_common_materials import ReplaceCommonMaterials
+from quote_assistant.usecase.replace_risk_label_priority import ReplaceRiskLabelPriority
+from quote_assistant.usecase.request_tenant_delete import RequestTenantDelete
 from quote_assistant.usecase.review_part_drawing import (
     AddCriticalDimension,
     CompleteReview,
@@ -59,26 +72,16 @@ from quote_assistant.usecase.review_part_drawing import (
     UnignoreExtractedField,
     UpdateExtractedField,
 )
-from quote_assistant.usecase.create_quoter import CreateQuoter
-from quote_assistant.usecase.disable_quoter import DisableQuoter
-from quote_assistant.usecase.get_factory_preferences import GetFactoryPreferences
-from quote_assistant.usecase.list_factory_accounts import ListFactoryAccounts
-from quote_assistant.usecase.list_factory_processing_records import ListFactoryProcessingRecords
-from quote_assistant.usecase.list_risk_rules import ListRiskRules
-from quote_assistant.usecase.delete_tenant_data import DeleteTenantData
-from quote_assistant.usecase.export_tenant_data import ExportTenantData
-from quote_assistant.usecase.get_confidentiality_notice import GetConfidentialityNotice
-from quote_assistant.usecase.replace_common_materials import ReplaceCommonMaterials
-from quote_assistant.usecase.replace_risk_label_priority import ReplaceRiskLabelPriority
-from quote_assistant.usecase.request_tenant_delete import RequestTenantDelete
 from quote_assistant.usecase.upload_part_drawings import UploadPartDrawings
-from quote_assistant.domain.factory_preferences import FactoryPreferences
 
 SESSION_COOKIE = "qa_session"
 
 
 def get_settings(request: Request) -> Settings:
-    return request.app.state.settings
+    settings = request.app.state.settings
+    if not isinstance(settings, Settings):
+        raise RuntimeError("应用未配置 Settings")
+    return settings
 
 
 def get_db(request: Request) -> Iterator[Session]:
@@ -461,9 +464,7 @@ def get_get_factory_preferences(
     actor: Actor = Depends(require_actor),
     session: Session = Depends(get_db),
 ) -> GetFactoryPreferences:
-    return GetFactoryPreferences(
-        actor=actor, preferences=SqlFactoryPreferenceRepository(session)
-    )
+    return GetFactoryPreferences(actor=actor, preferences=SqlFactoryPreferenceRepository(session))
 
 
 def get_replace_common_materials(

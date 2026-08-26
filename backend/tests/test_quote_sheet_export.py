@@ -131,9 +131,7 @@ def test_导出底稿行数等于零件数且含风险标签与实验性列(
     assert "安全" not in by_drawing_no["FL-001"][risk_col]
 
 
-def test_csv导出同样一行一件且带风险与实验性列(
-    client: TestClient, db_session: Session
-) -> None:
+def test_csv导出同样一行一件且带风险与实验性列(client: TestClient, db_session: Session) -> None:
     _login_quoter(client, db_session)
     first = _upload(client, "WIRE-RL-01-FX-TQ.png")
     second = _upload(client, "FX-NQ-01.png")
@@ -154,9 +152,7 @@ def test_csv导出同样一行一件且带风险与实验性列(
     assert EXPERIMENTAL_MARK_TEXT in {row[experimental_col] for row in rows}
 
 
-def test_未复核零件图拦截导出并点名还差哪几个(
-    client: TestClient, db_session: Session
-) -> None:
+def test_未复核零件图拦截导出并点名还差哪几个(client: TestClient, db_session: Session) -> None:
     _login_quoter(client, db_session)
     reviewed = _upload(client, "FX-TQ-01.png")
     pending = _upload(client, "FX-TA-01.png")
@@ -234,9 +230,7 @@ def test_没有字段映射的HTTP入口(client: TestClient, db_session: Session
     assert client.get("/admin/quote-sheet-template").status_code == 404
 
 
-def test_跨报价员未复核零件拦住导出且不泄漏文件名(
-    client: TestClient, db_session: Session
-) -> None:
+def test_跨报价员未复核零件拦住导出且不泄漏文件名(client: TestClient, db_session: Session) -> None:
     factory_id = create_factory(db_session, "华东精密")
     create_quoter(db_session, factory_id, "quoter_a", "secret-a")
     create_quoter(db_session, factory_id, "quoter_c", "secret-c")

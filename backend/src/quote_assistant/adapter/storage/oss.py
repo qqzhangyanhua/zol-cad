@@ -33,14 +33,16 @@ class OssObjectStorage:
 
     def fetch(self, key: str) -> bytes:
         result = self._bucket.get_object(key)
-        return result.read()
+        return bytes(result.read())
 
     def sign_access_url(self, key: str, ttl: timedelta) -> str:
-        return self._bucket.sign_url(
-            "GET",
-            key,
-            int(ttl.total_seconds()),
-            slash_safe=True,
+        return str(
+            self._bucket.sign_url(
+                "GET",
+                key,
+                int(ttl.total_seconds()),
+                slash_safe=True,
+            )
         )
 
     def delete(self, key: str) -> None:

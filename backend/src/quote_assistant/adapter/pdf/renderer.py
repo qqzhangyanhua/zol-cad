@@ -57,7 +57,7 @@ class PdfiumDrawingPageRenderer:
 
     def _scale_for(self, page: pdfium.PdfPage) -> float:
         scale = self._dpi / 72
-        longest_point_side = max(page.get_width(), page.get_height())
+        longest_point_side = max(float(page.get_width()), float(page.get_height()))
         if longest_point_side <= 0:
             return scale
         return min(scale, self._max_pixels / longest_point_side)
