@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { AppHeader } from "@/components/AppHeader";
 import { AppShell } from "@/components/AppShell";
@@ -74,7 +73,7 @@ export default async function PartDrawingDetailPage({ params }: PartDrawingDetai
   return (
     <AppShell user={user}>
       <AppHeader
-        projectCode={taskName || "新项目-240518-A"}
+        projectCode={taskName}
         title={drawing.original_filename}
         backHref="/part-drawings"
         backLabel="零件图列表"
@@ -95,7 +94,6 @@ export default async function PartDrawingDetailPage({ params }: PartDrawingDetai
         <ExtractionDisclaimer text={drawing.look_at_drawing_disclaimer} />
         <PartDrawingQualityPanel drawing={drawing} />
 
-        {/* CAD Drawing Review & Quote Bento Grid Overview */}
         <CadDrawingReviewSummary drawing={drawing} />
 
         {/* Detailed CAD/PDF Viewer & Field Review Workspace */}
