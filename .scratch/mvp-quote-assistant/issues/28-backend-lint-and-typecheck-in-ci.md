@@ -20,12 +20,35 @@
 
 **Status:** claimed
 
-- [ ] `pyproject.toml` 里配好 ruff（lint + isort），规则集与项目风格匹配
-- [ ] `pyproject.toml` 里配好 mypy，严格度写明并有理由
-- [ ] 现有代码全部通过，不靠散落的 `# type: ignore` 蒙过去
-- [ ] CI 的 backend job 跑 lint 与类型检查，且是必过项
-- [ ] `backend/README.md` 写明本地怎么跑这两项
-- [ ] 若启用 ruff format，全库格式化独立成一个 commit
-- [ ] `test_layering.py` 的项目特有规则保留，不被工具替代
+- [x] `pyproject.toml` 里配好 ruff（lint + isort），规则集与项目风格匹配
+- [x] `pyproject.toml` 里配好 mypy，严格度写明并有理由
+- [x] 现有代码全部通过，不靠散落的 `# type: ignore` 蒙过去
+- [x] CI 的 backend job 跑 lint 与类型检查，且是必过项
+- [x] `backend/README.md` 写明本地怎么跑这两项
+- [x] 若启用 ruff format，全库格式化独立成一个 commit
+- [x] `test_layering.py` 的项目特有规则保留，不被工具替代
 
 ## Comments
+
+- 2026-08-26：落地票 28。PR：https://github.com/qqzhangyanhua/zol-cad/pull/26（ready，MERGEABLE）
+
+  决定：
+  - **启用 ruff format**。全库格式化单独 commit（`Apply ruff format to the backend tree`），不和配置 / 类型修复混在一起。
+  - mypy：`strict = true`，只检查 `src/`。与前端 `tsc --noEmit` + `strict: true` 对齐。书面 `Any` 由 ruff `ANN401` 禁（前端 `no-explicit-any`）。`disallow_any_explicit` 不开——pydantic 插件会把 `Field(...)` 当成 explicit Any。`disallow_any_expr` 也不开，否则 Starlette `app.state` 和未打桩的 oss2 / pypdfium2 会逼出满地 `# type: ignore`。tests / alembic 不进 mypy：测试是行为检查，迁移是生成物。
+  - 配置收窄、不靠 ignore：中文全角标点（RUF001–003）、E501（交给 format）、FastAPI `Depends` 当 immutable call、oss2 / pypdfium2 `ignore_missing_imports`、Alembic revisions 忽略 `UP`。仓库里没有 `# type: ignore`。
+
+  票里点名的三处：
+  - `_grading_failed` 补了 `-> tuple[PartDrawing, PartDrawingEvent]`。
+  - `_recover_stranded_part_drawings(session_factory)` **票 27 已经标了** `sessionmaker[Session]`，本票没再改。
+  - `app.py` 的 import 顺序在票 27 之后已经干净；isort 修的是 ports / schemas / routes 等别处。
+
+  另外补了 `_assess` 的返回类型，把 `record_transition` 的 `replace(**dict[str, object])` 改成显式字段（typed sentinel `_Unset`），适配器边界对未打桩 SDK 做 `bytes()` / `str()` / `float()` 收窄。
+
+  **没动分层规则。** `test_layering.py` 的禁止导入清单、不得自建 `ExtractionRequest`、不得内联提示词、报价任务不得出现 `amount` / `price` / `approval` 都还在。format 只改了两处换行 / 引号。
+
+  验证：
+  - 本地 `uv run ruff check .` / `ruff format --check .` / `mypy` 通过。
+  - `QA_TEST_DATABASE_URL` 指向本机 Postgres 16：`uv run pytest -m "not vendor_contract"` → **174 passed / 1 deselected**。
+  - GitHub CI seam-1 backend（Lint + Typecheck + pytest）与 frontend 均 SUCCESS。
+
+  未做票 29+。
