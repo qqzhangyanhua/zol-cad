@@ -202,7 +202,7 @@ def test_线程处理器上传后后台完成(
         app.state.part_drawing_processor = previous
 
 
-def test_线程处理器失败会记日志(app, caplog) -> None:
+def test_线程处理器失败会记日志(caplog) -> None:
     class _BoomJob:
         def run(self, actor: Actor, drawing_id: UUID) -> None:
             del actor
@@ -212,11 +212,9 @@ def test_线程处理器失败会记日志(app, caplog) -> None:
     actor = _actor(uuid4(), uuid4())
     drawing_id = uuid4()
     try:
+        assert processor._slots.acquire(timeout=1)
         with caplog.at_level(logging.ERROR, logger="quote_assistant.background"):
-            processor.submit(actor, drawing_id)
-            deadline = time.monotonic() + 3
-            while time.monotonic() < deadline and "零件图后台处理失败" not in caplog.text:
-                time.sleep(0.05)
+            processor._run_quietly(actor, drawing_id)
         assert "零件图后台处理失败" in caplog.text
         assert str(drawing_id) in caplog.text
     finally:

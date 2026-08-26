@@ -107,14 +107,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         factory = getattr(app.state, "session_factory", None)
         if factory is None:
             raise HTTPException(status_code=503, detail="数据库未就绪")
-        session = factory()
+        session = None
         try:
+            session = factory()
             session.execute(text("SELECT 1"))
         except Exception:
             LOGGER.exception("健康检查：数据库不可用")
             raise HTTPException(status_code=503, detail="数据库不可用") from None
         finally:
-            session.close()
+            if session is not None:
+                session.close()
         return {"status": "ok"}
 
     return app

@@ -11,7 +11,7 @@ from quote_assistant.adapter.db.models import Base
 config = context.config
 
 if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+    fileConfig(config.config_file_name, disable_existing_loggers=False)
 
 database_url = os.environ.get("QA_DATABASE_URL") or os.environ.get("QA_TEST_DATABASE_URL")
 if database_url:
