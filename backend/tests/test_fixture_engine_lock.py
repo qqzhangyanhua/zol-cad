@@ -90,7 +90,7 @@ def test_生产环境文件名不能触发预置假提取(
         session_cookie_secure=True,
         part_drawing_processor="inline",
     )
-    with TestClient(create_app(settings)) as client:
+    with TestClient(create_app(settings), base_url="https://testserver") as client:
         assert login(client, "quoter_a", "secret-a").status_code == 200
         uploaded = client.post(
             "/part-drawings",

@@ -68,3 +68,5 @@ def classify_part_family(input_drawing_id: str) -> str:
   - 加了 `classify_part_family_from_content` / `adopt_content_classified_family` 钩子，提取后会调用；票 01 给出判据前一律 `unknown`，没有「看起来像轴」之类启发式。
 
   **仍等 01：** 内容判族真正生效、真实图纸不再全落 unknown、四条阈值与缝 2 边界、专用提示词策略、`RiskRuleCatalog` 去掉「暂定」、ADR-0008 更新或关闭。
+
+  验证：缝 1 `uv run pytest -m "not vendor_contract"` → **183 passed / 1 deselected**；`ruff check` / `ruff format --check` / `mypy` 通过。未做票 30。
