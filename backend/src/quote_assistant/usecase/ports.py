@@ -67,8 +67,17 @@ class PartDrawingRepository(Protocol):
     def list_for_tenant(self, tenant: TenantScope) -> list[PartDrawing]:
         """List 零件图 belonging to the Actor's factory only."""
 
-    def get_for_tenant(self, tenant: TenantScope, drawing_id: UUID) -> PartDrawing | None:
-        """Load one 零件图 if it belongs to the Actor's factory."""
+    def get_for_tenant(
+        self,
+        tenant: TenantScope,
+        drawing_id: UUID,
+        *,
+        for_update: bool = False,
+    ) -> PartDrawing | None:
+        """Load one 零件图 if it belongs to the Actor's factory.
+
+        for_update takes a row lock so 后台作业 and 重试 cannot both advance the same drawing.
+        """
 
     def list_for_quote_task(self, tenant: TenantScope, quote_task_id: UUID) -> list[PartDrawing]:
         """零件图 belonging to one 报价任务 of the Actor's factory, oldest first."""

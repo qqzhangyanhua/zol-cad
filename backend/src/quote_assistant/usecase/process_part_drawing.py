@@ -25,6 +25,7 @@ from quote_assistant.usecase.ports import (
 )
 from quote_assistant.usecase.tenant import TenantBoundUseCase, require_visible_drawing
 
+_IN_PROGRESS = frozenset({PartDrawingStatus.GRADING, PartDrawingStatus.EXTRACTING})
 _GRADABLE = frozenset({PartDrawingStatus.UPLOADED, PartDrawingStatus.EXTRACT_FAILED})
 _GRADING_FAILURE_REASON = "图纸质量分级失败，请重试"
 
@@ -38,8 +39,13 @@ def apply_grading(
     storage: ObjectStorage,
     renderer: DrawingPageRenderer,
     engine: ExtractionEngine,
+    uow: UnitOfWork | None = None,
 ) -> PartDrawing:
-    """分级中 → 已分级 / 建议人工 / 超出范围 / 提取失败. Caller owns the transaction."""
+    """分级中 → 已分级 / 建议人工 / 超出范围 / 提取失败.
+
+    When *uow* is provided the 分级中 transition is committed before the engine
+    call so a concurrent 重试 cannot start a second run.
+    """
     if drawing.status not in _GRADABLE:
         raise IllegalPartDrawingTransition(
             f"零件图处于「{drawing.status.value}」，不能开始图纸质量分级"
@@ -55,6 +61,8 @@ def apply_grading(
     )
     drawings.save(drawing)
     events.add(started)
+    if uow is not None:
+        uow.commit()
 
     try:
         result = engine.extract(build_extraction_request(drawing, storage=storage, renderer=renderer))
@@ -129,9 +137,7 @@ class ProcessPartDrawing(TenantBoundUseCase):
         self._uow = uow
 
     def execute(self, drawing_id: UUID) -> PartDrawing:
-        drawing = require_visible_drawing(
-            self.actor, self._drawings.get_for_tenant(self.tenant, drawing_id)
-        )
+        drawing = self._lock_visible(drawing_id)
         if drawing.quality_grade is None:
             drawing = apply_grading(
                 drawing,
@@ -141,10 +147,12 @@ class ProcessPartDrawing(TenantBoundUseCase):
                 storage=self._storage,
                 renderer=self._renderer,
                 engine=self._engine,
+                uow=self._uow,
             )
             self._uow.commit()
             if drawing.status is not PartDrawingStatus.GRADED:
                 return drawing
+            drawing = self._lock_visible(drawing_id)
         drawing = apply_extraction(
             drawing,
             actor_user_id=self.actor.user_id,
@@ -153,6 +161,18 @@ class ProcessPartDrawing(TenantBoundUseCase):
             storage=self._storage,
             renderer=self._renderer,
             engine=self._engine,
+            uow=self._uow,
         )
         self._uow.commit()
+        return drawing
+
+    def _lock_visible(self, drawing_id: UUID) -> PartDrawing:
+        drawing = require_visible_drawing(
+            self.actor,
+            self._drawings.get_for_tenant(self.tenant, drawing_id, for_update=True),
+        )
+        if drawing.status in _IN_PROGRESS:
+            raise IllegalPartDrawingTransition(
+                f"零件图处于「{drawing.status.value}」，不能重复推进"
+            )
         return drawing

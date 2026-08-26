@@ -290,13 +290,20 @@ class SqlPartDrawingRepository:
         ).scalars()
         return [_to_part_drawing(row) for row in rows]
 
-    def get_for_tenant(self, tenant: TenantScope, drawing_id: UUID) -> PartDrawing | None:
-        row = self._session.execute(
-            select(PartDrawingRow).where(
-                PartDrawingRow.id == drawing_id,
-                PartDrawingRow.factory_id == tenant.factory_id,
-            )
-        ).scalar_one_or_none()
+    def get_for_tenant(
+        self,
+        tenant: TenantScope,
+        drawing_id: UUID,
+        *,
+        for_update: bool = False,
+    ) -> PartDrawing | None:
+        stmt = select(PartDrawingRow).where(
+            PartDrawingRow.id == drawing_id,
+            PartDrawingRow.factory_id == tenant.factory_id,
+        )
+        if for_update:
+            stmt = stmt.with_for_update()
+        row = self._session.execute(stmt).scalar_one_or_none()
         if row is None:
             return None
         return _to_part_drawing(row)
@@ -383,6 +390,7 @@ class SqlInFlightPartDrawingRepository(SqlPartDrawingRepository):
             select(PartDrawingRow)
             .where(PartDrawingRow.status.in_(self._IN_FLIGHT_STATUSES))
             .order_by(PartDrawingRow.uploaded_at.asc())
+            .with_for_update()
         ).scalars()
         return [_to_part_drawing(row) for row in rows]
 
@@ -419,6 +427,11 @@ class SqlPartDrawingEventRepository:
 
     def next_sequence(self, drawing_id: UUID) -> int:
         self._session.flush()
+        self._session.execute(
+            select(PartDrawingRow.id)
+            .where(PartDrawingRow.id == drawing_id)
+            .with_for_update()
+        ).scalar_one()
         current = self._session.execute(
             select(func.coalesce(func.max(PartDrawingEventRow.sequence_no), 0)).where(
                 PartDrawingEventRow.part_drawing_id == drawing_id

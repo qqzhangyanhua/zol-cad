@@ -92,6 +92,7 @@ def object_store_dir(tmp_path_factory: pytest.TempPathFactory) -> Path:
 def app(database_url: str, migrated_engine: Engine, object_store_dir: Path):
     del migrated_engine  # migrations must run before the app starts
     settings = Settings(
+        app_env="local",
         database_url=database_url,
         seed_demo_data=False,
         object_store_backend="local",
@@ -100,6 +101,7 @@ def app(database_url: str, migrated_engine: Engine, object_store_dir: Path):
         object_sign_secret="test-object-sign-secret",
         signed_url_ttl_seconds=300,
         part_drawing_processor="inline",
+        session_cookie_secure=False,
     )
     return create_app(settings)
 

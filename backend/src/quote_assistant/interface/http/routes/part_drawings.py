@@ -5,7 +5,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 
-from quote_assistant.domain.entities import IncomingDrawing, PartDrawing
+from quote_assistant.domain.entities import IncomingDrawing, PartDrawing, UploadPartDrawingsResult
 from quote_assistant.domain.errors import (
     ExtractedFieldNotFound,
     IllegalPartDrawingTransition,
@@ -61,6 +61,7 @@ from quote_assistant.usecase.review_part_drawing import (
     UnignoreExtractedField,
     UpdateExtractedField,
 )
+from quote_assistant.interface.http.uploads import read_upload_bounded
 from quote_assistant.usecase.upload_part_drawings import UploadPartDrawings
 
 router = APIRouter(prefix="/part-drawings", tags=["part-drawings"])
@@ -105,25 +106,35 @@ async def upload_part_drawings(
         raise HTTPException(status_code=400, detail="请至少选择一张零件图")
     pages = _parse_selected_pages(selected_pages, len(files))
     incoming: list[IncomingDrawing] = []
+    rejected: list[RejectedUploadResponse] = []
     for upload, page in zip(files, pages, strict=True):
-        content = await upload.read()
+        loaded = await read_upload_bounded(upload)
+        if isinstance(loaded, str):
+            rejected.append(
+                RejectedUploadResponse(
+                    original_filename=upload.filename or "未命名文件",
+                    detail=loaded,
+                )
+            )
+            continue
         incoming.append(
             IncomingDrawing(
                 original_filename=upload.filename or "未命名文件",
-                content=content,
+                content=loaded,
                 selected_page=page,
             )
         )
-    result = use_case.execute(incoming)
+    result = use_case.execute(incoming) if incoming else UploadPartDrawingsResult(items=[], rejected=[])
+    rejected.extend(
+        RejectedUploadResponse(
+            original_filename=item.original_filename,
+            detail=item.detail,
+        )
+        for item in result.rejected
+    )
     return UploadPartDrawingsResponse(
         items=[_drawing(item, prefs) for item in result.items],
-        rejected=[
-            RejectedUploadResponse(
-                original_filename=item.original_filename,
-                detail=item.detail,
-            )
-            for item in result.rejected
-        ],
+        rejected=rejected,
     )
 
 

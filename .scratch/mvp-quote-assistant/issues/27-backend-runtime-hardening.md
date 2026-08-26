@@ -51,23 +51,30 @@
 - `InMemoryExtractionCostCounter` 不持久化、无查询接口、`events` 列表无上界、进程重启即清零，且 `estimated_cost` 永远是 `None`。票 17 的验收项"单张调用成本可观测"实际不成立。这条可以拆出去单独做，但至少要给 `events` 加上界，避免长跑进程内存泄漏。
 - 没有请求体大小限制中间件、没有速率限制。
 
-**Status:** ready-for-agent
+**Status:** claimed
 
-- [ ] 部署形态被明确决定并写下来（单进程 / 多进程），滞留回收的正确性与该决定一致
-- [ ] 回收逻辑不会打断另一个活着的进程正在处理的作业
-- [ ] 回收失败不阻止应用启动
-- [ ] 同一张**零件图**不会被后台作业与重试同时推进；事件 `sequence_no` 在并发下不重复
-- [ ] 启动时校验配置：非本地环境下签名密钥与 demo 密码必须被覆盖，否则拒绝启动
-- [ ] session cookie 带 `secure`（本地开发可通过配置放开）
-- [ ] 生产默认的作业实现有测试覆盖
-- [ ] `part_drawing_processor` 未知值抛错，与引擎选择的行为一致
-- [ ] 上传超限在读完整个文件之前中断
-- [ ] 有全局异常处理器，领域错误不再漏成 500 + traceback
-- [ ] 有日志配置，后台作业失败可见
-- [ ] `/health` 检查数据库连通性
-- [ ] 有 Dockerfile / 部署产物，不依赖 `--reload`
-- [ ] 保密说明内容不依赖运行时能找到仓库源文件
-- [ ] 提取超时、重试次数、作业并发度可配置；作业队列有上界
-- [ ] `InMemoryExtractionCostCounter` 的 `events` 有上界
+- [x] 部署形态被明确决定并写下来（单进程 / 多进程），滞留回收的正确性与该决定一致
+- [x] 回收逻辑不会打断另一个活着的进程正在处理的作业
+- [x] 回收失败不阻止应用启动
+- [x] 同一张**零件图**不会被后台作业与重试同时推进；事件 `sequence_no` 在并发下不重复
+- [x] 启动时校验配置：非本地环境下签名密钥与 demo 密码必须被覆盖，否则拒绝启动
+- [x] session cookie 带 `secure`（本地开发可通过配置放开）
+- [x] 生产默认的作业实现有测试覆盖
+- [x] `part_drawing_processor` 未知值抛错，与引擎选择的行为一致
+- [x] 上传超限在读完整个文件之前中断
+- [x] 有全局异常处理器，领域错误不再漏成 500 + traceback
+- [x] 有日志配置，后台作业失败可见
+- [x] `/health` 检查数据库连通性
+- [x] 有 Dockerfile / 部署产物，不依赖 `--reload`
+- [x] 保密说明内容不依赖运行时能找到仓库源文件
+- [x] 提取超时、重试次数、作业并发度可配置；作业队列有上界
+- [x] `InMemoryExtractionCostCounter` 的 `events` 有上界
 
 ## Comments
+
+- **部署形态：单进程。** MVP 一家工厂几个报价员，不引入锁/租约。写在 `docs/deploy.md`、根 README、`backend/README.md`、`backend/Dockerfile`、`backend/scripts/run-production.sh`。回收 sweep 仍假定「本进程启动时没有别人在跑作业」；禁止 `uvicorn --workers N` 和第二副本。回收扫描失败只记日志，不阻止启动。
+- **同一进程内的后台线程 vs 重试**仍可能并发：`get_for_tenant(..., for_update=True)` + 把「分级中 / 提取中」在引擎调用前 commit，让后到的一方看到进行中并 409。`next_sequence` 也锁零件图行。已有的 `(part_drawing_id, sequence_no)` 唯一约束仍是最后防线。
+- 缝 1 仍固定 `inline`（ASGI 客户端不跨进程）。`thread` 另有测试。`part_drawing_processor` 未知值改为抛错，与 `normalize_extraction_engine` 对齐——这是有意打破「静默回落 thread」的旧假设。
+- 速率限制只在非本地启用（登录 / 上传滑动窗口），避免打爆缝 1。请求体上限看 `Content-Length`，不是完整 WAF。
+- 票 17 的「单张调用成本可观测」仍不成立：`estimated_cost` 仍是 `None`，计数器不持久化。本票只给 `events` 加上界。
+- 本地缝 1：`174 passed, 1 deselected`（`vendor_contract`）。Alembic `fileConfig` 改为 `disable_existing_loggers=False`，否则同进程跑迁移会把后台 LOGGER 静音。

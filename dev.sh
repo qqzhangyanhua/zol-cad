@@ -16,6 +16,8 @@ need uv
 need pnpm
 
 export QA_DATABASE_URL="${QA_DATABASE_URL:-postgresql+psycopg://quote:quote@127.0.0.1:5432/quote_assistant}"
+export QA_APP_ENV="${QA_APP_ENV:-local}"
+export QA_SESSION_COOKIE_SECURE="${QA_SESSION_COOKIE_SECURE:-false}"
 export QA_SEED_DEMO_DATA="${QA_SEED_DEMO_DATA:-true}"
 export QA_OBJECT_STORE_BACKEND="${QA_OBJECT_STORE_BACKEND:-local}"
 export QA_LOCAL_OBJECT_DIR="${QA_LOCAL_OBJECT_DIR:-/tmp/quote-assistant-objects}"
