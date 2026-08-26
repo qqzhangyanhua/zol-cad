@@ -1,3 +1,4 @@
+import { presentRiskRuleDescription } from "@/lib/confidentiality-copy";
 import type { RiskRule } from "@/lib/types";
 
 type RiskRuleCatalogProps = {
@@ -26,7 +27,9 @@ export function RiskRuleCatalog({ items }: RiskRuleCatalogProps) {
               <td className="py-2.5 font-mono text-xs text-stone-600">{rule.rule_id}</td>
               <td className="py-2.5">
                 <p className="text-stone-800">{rule.threshold}</p>
-                <p className="mt-1 text-xs leading-5 text-stone-500">{rule.description}</p>
+                <p className="mt-1 text-xs leading-5 text-stone-500">
+                  {presentRiskRuleDescription(rule.description)}
+                </p>
               </td>
             </tr>
           ))}

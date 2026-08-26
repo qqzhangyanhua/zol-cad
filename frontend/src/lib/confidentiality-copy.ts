@@ -92,6 +92,14 @@ function caveatCopy(item: string): string | null {
   return cleaned === "" ? null : cleaned;
 }
 
+export function presentRiskRuleDescription(description: string): string {
+  if (/票\s*0*\d+|ADR-\d+|\.scratch/i.test(description)) {
+    const main = description.replace(/（[^）]*）/g, "").trim();
+    return `${main}（暂定规则，待本厂真实样本核定）`;
+  }
+  return stripInternalTrackerIds(description);
+}
+
 export function presentConfidentialityNotice(notice: ConfidentialityNotice): ConfidentialityNoticeView {
   const caveats = notice.caveats
     .map(caveatCopy)

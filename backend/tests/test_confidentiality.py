@@ -132,6 +132,7 @@ def test_面向客户的保密与风险文案不暴露内部追踪标识() -> No
         assert "adr_path" not in blob, name
         assert "research_notes_path" not in blob, name
     assert "presentConfidentialityNotice" in notice
+    assert "presentRiskRuleDescription" in catalog
     assert "阈值仍是暂定值" in catalog
 
 
