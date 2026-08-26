@@ -25,6 +25,10 @@ class IllegalPartDrawingTransition(DomainError):
 class ExtractionValidationFailed(DomainError):
     """Adapter-boundary schema rejected the engine payload. Dirty data must not enter the domain."""
 
+    def __init__(self, message: str, diagnostic: str | None = None) -> None:
+        super().__init__(message)
+        self.diagnostic = diagnostic
+
 
 class ExtractionEngineFailed(DomainError):
     """Adapter-mapped 提取引擎 failure. Use-case maps this to 提取失败 and keeps the retry path."""

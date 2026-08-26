@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from quote_assistant.domain.engine_output_contract import engine_output_contract_text
 from quote_assistant.domain.part_family import (
     PROVISIONAL_OTHER_PART_FAMILY_ID,
     TARGET_PART_FAMILY_ID,
@@ -11,22 +12,27 @@ from quote_assistant.domain.part_family import (
 
 @dataclass(frozen=True)
 class PromptTemplate:
-    """One 读图取数 prompt, keyed by 零件族. Bodies are placeholders until ticket 01."""
+    """One 读图取数 prompt, keyed by 零件族. Family-specific strategy waits on ticket 01."""
 
     id: str
     family_id: str
     body: str
 
 
-# Dedicated template for the provisional target. Body is a structural placeholder —
-# not a researched turning/milling prompt. Ticket 01 will replace the text.
+# Shared adapter-boundary contract. Field key / label / category come from
+# CANONICAL_FIELD_BY_KEY — do not hand-copy a second list into the bodies.
+_OUTPUT_CONTRACT = engine_output_contract_text()
+
+# Dedicated template for the provisional target. Body prefix is a structural
+# placeholder — not a researched turning/milling prompt. Ticket 01 will replace it.
 _TARGET_FAMILY_PROMPT = PromptTemplate(
     id="prompt.provisional-target-family",
     family_id=TARGET_PART_FAMILY_ID,
     body=(
         "【专用模板·暂定】票 01 尚未用真实样本选定目标零件族。"
         "本模板仅占位，供机制把目标族专用提示与通用提示分开。"
-        "选定后替换正文。请提取标题栏、关键尺寸与技术要求；图上没有的字段留空。"
+        "选定后替换正文。请提取标题栏、关键尺寸与技术要求。\n\n"
+        f"{_OUTPUT_CONTRACT}"
     ),
 )
 
@@ -35,8 +41,9 @@ _GENERIC_EXPERIMENTAL_PROMPT = PromptTemplate(
     family_id=UNKNOWN_PART_FAMILY_ID,
     body=(
         "【通用模板·实验性】本图不属于当前暂定目标零件族（或族类未知）。"
-        "请提取标题栏、关键尺寸与技术要求；图上没有的字段留空。"
-        "结果须按产品规则标注实验性、不保证。"
+        "请提取标题栏、关键尺寸与技术要求。"
+        "结果须按产品规则标注实验性、不保证。\n\n"
+        f"{_OUTPUT_CONTRACT}"
     ),
 )
 
