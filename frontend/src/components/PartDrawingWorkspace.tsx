@@ -28,7 +28,11 @@ export function PartDrawingWorkspace({
         {drawing.status === "已分级" && drawing.auto_prefill_allowed ? (
           <AutoStartExtraction drawingId={drawing.id} />
         ) : null}
-        {drawing.status === "提取中" ? <ExtractionInProgress drawingId={drawing.id} /> : null}
+        {drawing.status === "已上传" ||
+        drawing.status === "分级中" ||
+        drawing.status === "提取中" ? (
+          <ExtractionInProgress drawingId={drawing.id} />
+        ) : null}
         {drawing.status === "提取失败" && drawing.extraction_failure_reason ? (
           <ExtractionFailedPanel
             drawingId={drawing.id}

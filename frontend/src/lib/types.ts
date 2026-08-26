@@ -23,6 +23,16 @@ export const PART_DRAWING_STATUSES = [
 ] as const;
 export type PartDrawingStatus = (typeof PART_DRAWING_STATUSES)[number];
 
+export const IN_FLIGHT_PART_DRAWING_STATUSES: readonly PartDrawingStatus[] = [
+  "已上传",
+  "分级中",
+  "提取中",
+];
+
+export function isInFlightPartDrawingStatus(status: PartDrawingStatus): boolean {
+  return (IN_FLIGHT_PART_DRAWING_STATUSES as readonly string[]).includes(status);
+}
+
 export const FIELD_CATEGORIES = ["标题栏", "关键尺寸", "技术要求"] as const;
 export type FieldCategory = (typeof FIELD_CATEGORIES)[number];
 

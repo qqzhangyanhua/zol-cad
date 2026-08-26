@@ -354,6 +354,24 @@ class SqlPartDrawingRepository:
         row.quote_task_id = drawing.quote_task_id
 
 
+class SqlInFlightPartDrawingRepository(SqlPartDrawingRepository):
+    """Cross-tenant view used only by the startup recovery sweep."""
+
+    _IN_FLIGHT_STATUSES = (
+        PartDrawingStatus.UPLOADED.value,
+        PartDrawingStatus.GRADING.value,
+        PartDrawingStatus.EXTRACTING.value,
+    )
+
+    def list_in_flight(self) -> list[PartDrawing]:
+        rows = self._session.execute(
+            select(PartDrawingRow)
+            .where(PartDrawingRow.status.in_(self._IN_FLIGHT_STATUSES))
+            .order_by(PartDrawingRow.uploaded_at.asc())
+        ).scalars()
+        return [_to_part_drawing(row) for row in rows]
+
+
 class SqlPartDrawingEventRepository:
     def __init__(self, session: Session) -> None:
         self._session = session

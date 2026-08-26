@@ -179,7 +179,7 @@ export function PartDrawingUploadPanel() {
           className="btn-primary-capsule h-9 px-5 text-xs text-white disabled:opacity-50 cursor-pointer"
         >
           {pending
-            ? "上传并读图取数中…"
+            ? "上传中…"
             : staged.length > 1
               ? `上传 ${staged.length} 张零件图`
               : "上传零件图"}

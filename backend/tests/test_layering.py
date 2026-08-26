@@ -14,6 +14,7 @@ FORBIDDEN_IN_DOMAIN = (
     "pwdlib",
     "oss2",
     "pypdf",
+    "pypdfium2",
     "openpyxl",
     "quote_assistant.adapter",
     "quote_assistant.interface",
@@ -29,6 +30,7 @@ FORBIDDEN_IN_USECASE = (
     "pwdlib",
     "oss2",
     "pypdf",
+    "pypdfium2",
     "openpyxl",
     "quote_assistant.adapter",
     "quote_assistant.interface",
@@ -62,6 +64,8 @@ def test_对象存储端口只暴露存取签删() -> None:
 def test_用例层只依赖提取引擎抽象() -> None:
     ports = (SRC / "usecase" / "ports.py").read_text(encoding="utf-8")
     assert "class ExtractionEngine" in ports
+    assert "class PartDrawingProcessor" in ports
+    assert "class DrawingPageRenderer" in ports
     assert "ExtractionRequest" in ports
     assert "ExtractionResult" in ports
     extraction = (SRC / "domain" / "extraction.py").read_text(encoding="utf-8")
@@ -72,25 +76,56 @@ def test_用例层只依赖提取引擎抽象() -> None:
     assert "def prompt_template_for" in prompts
     upload = (SRC / "usecase" / "upload_part_drawings.py").read_text(encoding="utf-8")
     extract = (SRC / "usecase" / "extract_part_drawing.py").read_text(encoding="utf-8")
-    assert "ExtractionEngine" in upload
+    process = (SRC / "usecase" / "process_part_drawing.py").read_text(encoding="utf-8")
+    assert "PartDrawingProcessor" in upload
+    assert "ExtractionEngine" not in upload
     assert "ExtractionEngine" in extract
+    assert "ExtractionEngine" in process
     assert "part_family_id" in upload
     assert "part_family_id" in extract
     assert "FixtureExtractionEngine" not in upload
     assert "FixtureExtractionEngine" not in extract
+    assert "FixtureExtractionEngine" not in process
     assert "VendorExtractionEngine" not in upload
     assert "VendorExtractionEngine" not in extract
+    assert "VendorExtractionEngine" not in process
     assert "quote_assistant.adapter.extraction" not in upload
     assert "quote_assistant.adapter.extraction" not in extract
+    assert "quote_assistant.adapter.extraction" not in process
     factory = (SRC / "adapter" / "extraction" / "factory.py").read_text(encoding="utf-8")
     assert "ENGINE_FIXTURE" in factory
     assert "def build_extraction_engine" in factory
     assert "prompt_template_for" not in upload
     assert "prompt_template_for" not in extract
+    assert "prompt_template_for" not in process
     assert "【专用模板" not in upload
     assert "【专用模板" not in extract
     assert "【通用模板" not in upload
     assert "【通用模板" not in extract
+
+
+def test_送进提取引擎的那一页只能由渲染端口决定() -> None:
+    ports = (SRC / "usecase" / "ports.py").read_text(encoding="utf-8")
+    assert "class DrawingPageRenderer" in ports
+    assert "def render" in ports
+    extract = (SRC / "usecase" / "extract_part_drawing.py").read_text(encoding="utf-8")
+    assert "def build_extraction_request" in extract
+    assert "selected_page" in extract
+    for name in (
+        "extract_part_drawing.py",
+        "continue_despite_poor_quality.py",
+        "process_part_drawing.py",
+    ):
+        assert "DrawingPageRenderer" in (SRC / "usecase" / name).read_text(encoding="utf-8")
+
+    # 分级与取数必须共用同一条渲染通路，任何自己拼 ExtractionRequest 的调用点都会绕过选定页。
+    offenders: list[str] = []
+    for path in (SRC / "usecase").rglob("*.py"):
+        if path.name in {"extract_part_drawing.py", "ports.py"}:
+            continue
+        if "ExtractionRequest(" in path.read_text(encoding="utf-8"):
+            offenders.append(f"{path.relative_to(SRC)} 绕过渲染端口自建 ExtractionRequest")
+    assert offenders == []
 
 
 def test_高风险字段判定表只活在领域层() -> None:

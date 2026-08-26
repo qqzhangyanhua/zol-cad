@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from uuid import UUID
 
-from quote_assistant.domain.entities import Actor, PartDrawing, PartDrawingStatus
+from quote_assistant.domain.entities import PartDrawing, PartDrawingStatus
 from quote_assistant.domain.errors import (
     ExtractionEngineFailed,
     ExtractionValidationFailed,
@@ -12,13 +12,12 @@ from quote_assistant.domain.errors import (
 from quote_assistant.domain.extraction import ExtractionRequest, merge_extraction_preserving_review
 from quote_assistant.domain.part_drawing_state import record_transition
 from quote_assistant.usecase.ports import (
+    DrawingPageRenderer,
     ExtractionEngine,
     ObjectStorage,
     PartDrawingEventRepository,
     PartDrawingRepository,
-    UnitOfWork,
 )
-from quote_assistant.usecase.tenant import TenantBoundUseCase, require_visible_drawing
 
 _RETRYABLE = frozenset(
     {
@@ -31,6 +30,26 @@ _RETRYABLE = frozenset(
 _ENGINE_FAILURE_REASON = "读图取数失败，请重试"
 
 
+def build_extraction_request(
+    drawing: PartDrawing,
+    *,
+    storage: ObjectStorage,
+    renderer: DrawingPageRenderer,
+) -> ExtractionRequest:
+    """Fetch the stored 零件图 and hand the engine only 报价员指定的那一页."""
+    page = renderer.render(
+        storage.fetch(drawing.storage_key),
+        drawing.content_type,
+        drawing.selected_page,
+    )
+    return ExtractionRequest(
+        page_content=page.content,
+        media_type=page.media_type,
+        part_family_id=drawing.part_family_id,
+        input_drawing_id=drawing.original_filename,
+    )
+
+
 def apply_extraction(
     drawing: PartDrawing,
     *,
@@ -38,6 +57,7 @@ def apply_extraction(
     drawings: PartDrawingRepository,
     events: PartDrawingEventRepository,
     storage: ObjectStorage,
+    renderer: DrawingPageRenderer,
     engine: ExtractionEngine,
 ) -> PartDrawing:
     """提取中 → 已提取 / 提取失败. Caller owns the transaction."""
@@ -58,14 +78,8 @@ def apply_extraction(
     events.add(started)
 
     try:
-        page_content = storage.fetch(drawing.storage_key)
         result = engine.extract(
-            ExtractionRequest(
-                page_content=page_content,
-                media_type=drawing.content_type,
-                part_family_id=drawing.part_family_id,
-                input_drawing_id=drawing.original_filename,
-            )
+            build_extraction_request(drawing, storage=storage, renderer=renderer)
         )
         drawing, finished = record_transition(
             drawing,
@@ -110,37 +124,3 @@ def apply_extraction(
     events.add(finished)
     return drawing
 
-
-class ExtractPartDrawing(TenantBoundUseCase):
-    """Start or retry 读图取数 using the already-stored 零件图. No re-upload."""
-
-    def __init__(
-        self,
-        actor: Actor,
-        drawings: PartDrawingRepository,
-        events: PartDrawingEventRepository,
-        storage: ObjectStorage,
-        engine: ExtractionEngine,
-        uow: UnitOfWork,
-    ) -> None:
-        super().__init__(actor)
-        self._drawings = drawings
-        self._events = events
-        self._storage = storage
-        self._engine = engine
-        self._uow = uow
-
-    def execute(self, drawing_id: UUID) -> PartDrawing:
-        drawing = require_visible_drawing(
-            self.actor, self._drawings.get_for_tenant(self.tenant, drawing_id)
-        )
-        updated = apply_extraction(
-            drawing,
-            actor_user_id=self.actor.user_id,
-            drawings=self._drawings,
-            events=self._events,
-            storage=self._storage,
-            engine=self._engine,
-        )
-        self._uow.commit()
-        return updated

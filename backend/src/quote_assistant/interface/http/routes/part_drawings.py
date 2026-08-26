@@ -46,7 +46,7 @@ from quote_assistant.interface.http.schemas import (
     to_part_drawing_response,
 )
 from quote_assistant.usecase.continue_despite_poor_quality import ContinueDespitePoorQuality
-from quote_assistant.usecase.extract_part_drawing import ExtractPartDrawing
+from quote_assistant.usecase.process_part_drawing import ProcessPartDrawing
 from quote_assistant.usecase.get_part_drawing import GetPartDrawing
 from quote_assistant.usecase.issue_original_access_url import IssueOriginalAccessUrl
 from quote_assistant.usecase.list_correction_records import ListCorrectionRecords
@@ -195,7 +195,7 @@ def continue_despite_poor_quality(
 @router.post("/{drawing_id}/extract", response_model=PartDrawingResponse)
 def extract_part_drawing(
     drawing_id: UUID,
-    use_case: ExtractPartDrawing = Depends(get_extract_part_drawing),
+    use_case: ProcessPartDrawing = Depends(get_extract_part_drawing),
     prefs: FactoryPreferences = Depends(get_loaded_factory_preferences),
 ) -> PartDrawingResponse:
     try:

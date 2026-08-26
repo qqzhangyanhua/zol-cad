@@ -29,6 +29,7 @@ from quote_assistant.config import Settings
 from quote_assistant.domain.entities import Actor
 from quote_assistant.domain.errors import Unauthenticated
 from quote_assistant.adapter.pdf.page_counter import PypdfPageCounter
+from quote_assistant.adapter.pdf.renderer import PdfiumDrawingPageRenderer
 from quote_assistant.usecase.assign_part_drawing_to_quote_task import (
     AssignPartDrawingToQuoteTask,
     RemovePartDrawingFromQuoteTask,
@@ -39,7 +40,7 @@ from quote_assistant.usecase.export_quote_sheet import ExportQuoteSheet
 from quote_assistant.usecase.get_quote_task import GetQuoteTask
 from quote_assistant.usecase.list_quote_tasks import ListQuoteTasks
 from quote_assistant.usecase.continue_despite_poor_quality import ContinueDespitePoorQuality
-from quote_assistant.usecase.extract_part_drawing import ExtractPartDrawing
+from quote_assistant.usecase.process_part_drawing import ProcessPartDrawing
 from quote_assistant.usecase.get_current_actor import GetCurrentActor
 from quote_assistant.usecase.get_part_drawing import GetPartDrawing
 from quote_assistant.usecase.issue_original_access_url import IssueOriginalAccessUrl
@@ -148,7 +149,7 @@ def get_upload_part_drawings(
         events=SqlPartDrawingEventRepository(session),
         storage=request.app.state.object_storage,
         pdf_pages=PypdfPageCounter(),
-        engine=request.app.state.extraction_engine,
+        processor=request.app.state.part_drawing_processor,
         uow=SqlAlchemyUnitOfWork(session),
     )
 
@@ -163,6 +164,7 @@ def get_continue_despite_poor_quality(
         drawings=SqlPartDrawingRepository(session),
         events=SqlPartDrawingEventRepository(session),
         storage=request.app.state.object_storage,
+        renderer=PdfiumDrawingPageRenderer(),
         engine=request.app.state.extraction_engine,
         uow=SqlAlchemyUnitOfWork(session),
     )
@@ -172,12 +174,13 @@ def get_extract_part_drawing(
     request: Request,
     actor: Actor = Depends(require_actor),
     session: Session = Depends(get_db),
-) -> ExtractPartDrawing:
-    return ExtractPartDrawing(
+) -> ProcessPartDrawing:
+    return ProcessPartDrawing(
         actor=actor,
         drawings=SqlPartDrawingRepository(session),
         events=SqlPartDrawingEventRepository(session),
         storage=request.app.state.object_storage,
+        renderer=PdfiumDrawingPageRenderer(),
         engine=request.app.state.extraction_engine,
         uow=SqlAlchemyUnitOfWork(session),
     )

@@ -59,6 +59,18 @@ CANONICAL_FIELD_BY_KEY: dict[str, FieldSpec] = {spec.key: spec for spec in CANON
 
 
 @dataclass(frozen=True)
+class RenderedPage:
+    """The single page actually handed to the 提取引擎.
+
+    多页 PDF 只处理报价员指定的那一页，所以引擎收到的必须是那一页渲染出来的图像，
+    而不是整份原始文件。图片原样透传。
+    """
+
+    content: bytes
+    media_type: str
+
+
+@dataclass(frozen=True)
 class ExtractionRequest:
     """Input to the 提取引擎 Port: one image / PDF page plus 零件族标识."""
 

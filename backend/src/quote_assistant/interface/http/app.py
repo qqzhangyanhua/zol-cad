@@ -5,11 +5,21 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from quote_assistant.adapter.db.repositories import (
+    SqlInFlightPartDrawingRepository,
+    SqlPartDrawingEventRepository,
+)
 from quote_assistant.adapter.db.seed import seed_demo_data
-from quote_assistant.adapter.db.session import make_engine, make_session_factory
+from quote_assistant.adapter.db.session import (
+    SqlAlchemyUnitOfWork,
+    make_engine,
+    make_session_factory,
+)
 from quote_assistant.adapter.extraction.factory import build_extraction_engine
 from quote_assistant.adapter.storage.factory import build_object_storage
 from quote_assistant.config import Settings
+from quote_assistant.interface.http.background import build_part_drawing_processor
+from quote_assistant.usecase.recover_stranded_part_drawings import RecoverStrandedPartDrawings
 from quote_assistant.interface.http.routes.admin import router as admin_router
 from quote_assistant.interface.http.routes.auth import router as auth_router
 from quote_assistant.interface.http.routes.correction_stats import router as correction_stats_router
@@ -17,6 +27,18 @@ from quote_assistant.interface.http.routes.object_store import router as object_
 from quote_assistant.interface.http.routes.part_drawings import router as part_drawings_router
 from quote_assistant.interface.http.routes.processing_time import router as processing_time_router
 from quote_assistant.interface.http.routes.quote_tasks import router as quote_tasks_router
+
+
+def _recover_stranded_part_drawings(session_factory) -> None:
+    session = session_factory()
+    try:
+        RecoverStrandedPartDrawings(
+            drawings=SqlInFlightPartDrawingRepository(session),
+            events=SqlPartDrawingEventRepository(session),
+            uow=SqlAlchemyUnitOfWork(session),
+        ).execute()
+    finally:
+        session.close()
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -31,9 +53,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         app.state.session_factory = session_factory
         app.state.object_storage = build_object_storage(resolved)
         app.state.extraction_engine = build_extraction_engine(resolved)
+        app.state.part_drawing_processor = build_part_drawing_processor(resolved, app)
+        _recover_stranded_part_drawings(session_factory)
         if resolved.seed_demo_data:
             seed_demo_data(session_factory, resolved)
         yield
+        shutdown = getattr(app.state.part_drawing_processor, "shutdown", None)
+        if shutdown is not None:
+            shutdown()
         engine.dispose()
 
     app = FastAPI(title="机加工报价辅助", lifespan=lifespan)

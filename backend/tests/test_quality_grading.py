@@ -15,7 +15,7 @@ from quote_assistant.domain.quality import (
     QUALITY_GRADE_DISCLAIMER,
 )
 from quote_assistant.usecase.continue_despite_poor_quality import ContinueDespitePoorQuality
-from quote_assistant.usecase.extract_part_drawing import ExtractPartDrawing
+from quote_assistant.usecase.process_part_drawing import ProcessPartDrawing
 from quote_assistant.usecase.list_part_drawing_events import ListPartDrawingEvents
 from quote_assistant.usecase.upload_part_drawings import UploadPartDrawings
 
@@ -38,7 +38,7 @@ def test_分级用例不接受工厂标识参数() -> None:
     for cls in (
         UploadPartDrawings,
         ContinueDespitePoorQuality,
-        ExtractPartDrawing,
+        ProcessPartDrawing,
         ListPartDrawingEvents,
     ):
         names = list(inspect.signature(cls.execute).parameters)

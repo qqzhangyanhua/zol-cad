@@ -99,6 +99,7 @@ def app(database_url: str, migrated_engine: Engine, object_store_dir: Path):
         public_base_url="",
         object_sign_secret="test-object-sign-secret",
         signed_url_ttl_seconds=300,
+        part_drawing_processor="inline",
     )
     return create_app(settings)
 

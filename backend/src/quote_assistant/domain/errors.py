@@ -46,6 +46,10 @@ class ExtractionVendorNotConfigured(ExtractionEngineFailed):
     """票 02 / ADR-0009 has not selected a vendor. The skeleton must not call a paid API."""
 
 
+class PageRenderFailed(ExtractionEngineFailed):
+    """选定页渲染不出来（页码越界、文件损坏）。走提取失败并保留重试。"""
+
+
 class ExtractedFieldNotFound(DomainError):
     pass
 

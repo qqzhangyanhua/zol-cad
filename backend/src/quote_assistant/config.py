@@ -24,3 +24,8 @@ class Settings(BaseSettings):
 
     # fixture = seam-1 fake engine (default). vendor = unpaid skeleton; no live paid API.
     extraction_engine: str = "fixture"
+
+    # thread = 分级 + 读图取数 run off the upload request (production; a real model takes
+    # tens of seconds per drawing). inline = run before the response; 缝 1 uses this.
+    part_drawing_processor: str = "thread"
+    part_drawing_processor_workers: int = 4

@@ -23,6 +23,10 @@ export function AutoStartExtraction({ drawingId }: AutoStartExtractionProps) {
     void (async () => {
       const response = await fetch(`/api/part-drawings/${drawingId}/extract`, { method: "POST" });
       const payload: unknown = await response.json().catch(() => null);
+      if (response.status === 409) {
+        router.refresh();
+        return;
+      }
       if (!response.ok) {
         setError(readErrorDetail(payload) ?? "无法开始读图取数");
         return;

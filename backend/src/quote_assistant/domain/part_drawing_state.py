@@ -16,9 +16,15 @@ LEGAL_TRANSITIONS: frozenset[tuple[PartDrawingStatus | None, PartDrawingStatus]]
     {
         (None, PartDrawingStatus.UPLOADED),
         (PartDrawingStatus.UPLOADED, PartDrawingStatus.GRADING),
+        # 上传已落库但作业还没跑起来时进程就重启了，回收到提取失败，让报价员能点重试。
+        (PartDrawingStatus.UPLOADED, PartDrawingStatus.EXTRACT_FAILED),
         (PartDrawingStatus.GRADING, PartDrawingStatus.GRADED),
         (PartDrawingStatus.GRADING, PartDrawingStatus.ADVISE_MANUAL),
         (PartDrawingStatus.GRADING, PartDrawingStatus.OUT_OF_SCOPE),
+        # 分级本身失败（渲染不出来、引擎不可用、进程重启把作业丢了）也落到提取失败，
+        # 因为报价员要的是同一个「重试」入口，而不是一个只会转圈的分级中。
+        (PartDrawingStatus.GRADING, PartDrawingStatus.EXTRACT_FAILED),
+        (PartDrawingStatus.EXTRACT_FAILED, PartDrawingStatus.GRADING),
         (PartDrawingStatus.ADVISE_MANUAL, PartDrawingStatus.GRADED),
         (PartDrawingStatus.GRADED, PartDrawingStatus.EXTRACTING),
         (PartDrawingStatus.EXTRACTING, PartDrawingStatus.EXTRACTED),

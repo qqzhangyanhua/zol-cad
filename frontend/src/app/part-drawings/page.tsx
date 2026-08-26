@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { AppHeader } from "@/components/AppHeader";
 import { AppShell } from "@/components/AppShell";
 import { EmptyPartDrawingState } from "@/components/EmptyPartDrawingState";
+import { InFlightRefresh } from "@/components/InFlightRefresh";
 import { PartDrawingList } from "@/components/PartDrawingList";
 import { PartDrawingUploadPanel } from "@/components/PartDrawingUploadPanel";
 import { QualityGradeDisclaimer } from "@/components/QualityGradeDisclaimer";
@@ -43,6 +44,7 @@ export default async function PartDrawingsPage() {
           />
         </div>
         <PartDrawingUploadPanel />
+        <InFlightRefresh statuses={list.items.map((item) => item.status)} />
         {list.items.length === 0 ? (
           <EmptyPartDrawingState />
         ) : (

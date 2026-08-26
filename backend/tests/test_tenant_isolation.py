@@ -15,7 +15,7 @@ from quote_assistant.usecase.create_quote_task import CreateQuoteTask
 from quote_assistant.usecase.export_quote_sheet import ExportQuoteSheet
 from quote_assistant.usecase.get_quote_task import GetQuoteTask
 from quote_assistant.usecase.list_quote_tasks import ListQuoteTasks
-from quote_assistant.usecase.extract_part_drawing import ExtractPartDrawing
+from quote_assistant.usecase.process_part_drawing import ProcessPartDrawing
 from quote_assistant.usecase.get_part_drawing import GetPartDrawing
 from quote_assistant.usecase.issue_original_access_url import IssueOriginalAccessUrl
 from quote_assistant.usecase.list_correction_records import ListCorrectionRecords
@@ -104,7 +104,7 @@ def test_上传与查看原图用例不接受工厂标识参数() -> None:
         GetPartDrawing,
         IssueOriginalAccessUrl,
         ContinueDespitePoorQuality,
-        ExtractPartDrawing,
+        ProcessPartDrawing,
         ListPartDrawingEvents,
         ConfirmExtractedField,
         UpdateExtractedField,

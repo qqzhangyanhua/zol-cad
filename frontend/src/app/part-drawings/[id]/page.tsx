@@ -60,6 +60,8 @@ export default async function PartDrawingDetailPage({ params }: PartDrawingDetai
   const prefs = parseFactoryPreferences(await prefsResponse.json());
   const originalSrc = resolveOriginalSrc(original.url);
   const showWorkspace =
+    drawing.status === "已上传" ||
+    drawing.status === "分级中" ||
     drawing.status === "已分级" ||
     drawing.status === "提取中" ||
     drawing.status === "已提取" ||

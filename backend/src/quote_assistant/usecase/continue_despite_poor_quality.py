@@ -9,6 +9,7 @@ from quote_assistant.domain.part_drawing_state import record_transition
 from quote_assistant.domain.quality import QualityGrade
 from quote_assistant.usecase.extract_part_drawing import apply_extraction
 from quote_assistant.usecase.ports import (
+    DrawingPageRenderer,
     ExtractionEngine,
     ObjectStorage,
     PartDrawingEventRepository,
@@ -27,6 +28,7 @@ class ContinueDespitePoorQuality(TenantBoundUseCase):
         drawings: PartDrawingRepository,
         events: PartDrawingEventRepository,
         storage: ObjectStorage,
+        renderer: DrawingPageRenderer,
         engine: ExtractionEngine,
         uow: UnitOfWork,
     ) -> None:
@@ -34,6 +36,7 @@ class ContinueDespitePoorQuality(TenantBoundUseCase):
         self._drawings = drawings
         self._events = events
         self._storage = storage
+        self._renderer = renderer
         self._engine = engine
         self._uow = uow
 
@@ -65,6 +68,7 @@ class ContinueDespitePoorQuality(TenantBoundUseCase):
             drawings=self._drawings,
             events=self._events,
             storage=self._storage,
+            renderer=self._renderer,
             engine=self._engine,
         )
         self._uow.commit()

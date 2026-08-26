@@ -10,7 +10,7 @@ from quote_assistant.usecase.export_quote_sheet import ExportQuoteSheet
 from quote_assistant.usecase.export_tenant_data import ExportTenantData
 from quote_assistant.usecase.get_quote_task import GetQuoteTask
 from quote_assistant.usecase.list_quote_tasks import ListQuoteTasks
-from quote_assistant.usecase.extract_part_drawing import ExtractPartDrawing
+from quote_assistant.usecase.process_part_drawing import ProcessPartDrawing
 from quote_assistant.usecase.get_current_actor import GetCurrentActor
 from quote_assistant.usecase.get_part_drawing import GetPartDrawing
 from quote_assistant.usecase.issue_original_access_url import IssueOriginalAccessUrl
@@ -54,7 +54,7 @@ __all__ = [
     "ReopenReview",
     "UnignoreExtractedField",
     "ContinueDespitePoorQuality",
-    "ExtractPartDrawing",
+    "ProcessPartDrawing",
     "GetCurrentActor",
     "GetPartDrawing",
     "IssueOriginalAccessUrl",

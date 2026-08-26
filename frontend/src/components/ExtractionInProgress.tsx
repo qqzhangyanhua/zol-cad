@@ -19,9 +19,9 @@ export function ExtractionInProgress({ drawingId }: ExtractionInProgressProps) {
 
   return (
     <div className="rounded-lg border border-stone-200 bg-white px-4 py-6">
-      <p className="text-sm font-medium text-stone-900">正在读图取数</p>
+      <p className="text-sm font-medium text-stone-900">正在处理零件图</p>
       <p className="mt-1 text-xs leading-5 text-stone-500">
-        系统正在从零件图提取标题栏、关键尺寸与技术要求。请稍候，完成后会在左侧预填表单。
+        系统正在做图纸质量分级并读图取数。请稍候，完成后会在左侧预填表单。
       </p>
     </div>
   );

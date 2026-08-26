@@ -5,12 +5,18 @@ from typing import Protocol
 from uuid import UUID
 
 from quote_assistant.domain.correction import CorrectionRecord
-from quote_assistant.domain.entities import IssuedSession, ManualBaseline, PartDrawing, User
+from quote_assistant.domain.entities import (
+    Actor,
+    IssuedSession,
+    ManualBaseline,
+    PartDrawing,
+    User,
+)
 from quote_assistant.domain.factory_preferences import FactoryPreferences
 from quote_assistant.domain.quote_sheet import QuoteSheetFileFormat, QuoteSheetTemplate
 from quote_assistant.domain.quote_task import QuoteTask
 from quote_assistant.domain.confidentiality import ConfidentialityNotice
-from quote_assistant.domain.extraction import ExtractionRequest, ExtractionResult
+from quote_assistant.domain.extraction import ExtractionRequest, ExtractionResult, RenderedPage
 from quote_assistant.domain.part_drawing_state import PartDrawingEvent
 from quote_assistant.domain.tenant_data import TenantArchiveFile, TenantDeleteChallenge
 from quote_assistant.usecase.tenant import TenantScope
@@ -93,6 +99,42 @@ class ObjectStorage(Protocol):
 class PdfPageCounter(Protocol):
     def count_pages(self, content: bytes) -> int:
         """Return the page count of a PDF. Unreadable files raise PdfUnreadable."""
+
+
+class DrawingPageRenderer(Protocol):
+    """Port that turns a stored 零件图 into the one page the 提取引擎 sees.
+
+    Use-case code must not import a PDF library; both the 分级 call and the
+    读图取数 call go through here so 选定页 can never be bypassed on one path.
+    """
+
+    def render(self, content: bytes, media_type: str, selected_page: int) -> RenderedPage:
+        """PDF → 指定页的图像；图片原样返回。渲染不出来时抛 PageRenderFailed。"""
+
+
+class InFlightPartDrawingRepository(Protocol):
+    """Cross-tenant maintenance read. Only the startup recovery sweep may use this.
+
+    Deliberately separate from PartDrawingRepository so the tenant-filtered port keeps
+    having no way to read across factories.
+    """
+
+    def list_in_flight(self) -> list[PartDrawing]:
+        """零件图 stuck in 分级中 / 提取中, any factory."""
+
+    def save(self, drawing: PartDrawing) -> None:
+        """Update one 零件图 without a tenant scope. Recovery only."""
+
+
+class PartDrawingProcessor(Protocol):
+    """Port for 分级 + 读图取数 that must not block the 报价员's upload request.
+
+    Returning the finished 零件图 means the work ran inline; returning None means it was
+    deferred and the caller should report the drawing as-is and let the client poll.
+    """
+
+    def submit(self, actor: Actor, drawing_id: UUID) -> PartDrawing | None:
+        """Process now or later, on behalf of the uploading 报价员."""
 
 
 class PartDrawingEventRepository(Protocol):

@@ -19,18 +19,12 @@ from quote_assistant.domain.entities import (
     UploadPartDrawingsResult,
 )
 from quote_assistant.domain.errors import PdfUnreadable
-from quote_assistant.domain.extraction import ExtractionRequest
 from quote_assistant.domain.part_family import classify_part_family
-from quote_assistant.domain.part_drawing_state import (
-    birth_uploaded,
-    record_transition,
-    status_after_grade,
-)
-from quote_assistant.usecase.extract_part_drawing import apply_extraction
+from quote_assistant.domain.part_drawing_state import birth_uploaded
 from quote_assistant.usecase.ports import (
-    ExtractionEngine,
     ObjectStorage,
     PartDrawingEventRepository,
+    PartDrawingProcessor,
     PartDrawingRepository,
     PdfPageCounter,
     UnitOfWork,
@@ -61,7 +55,12 @@ def _storage_suffix(media_type: str, original_filename: str) -> str:
 
 
 class UploadPartDrawings(TenantBoundUseCase):
-    """Store one or more 零件图 for the authenticated 报价员's factory, then grade them."""
+    """Store one or more 零件图 for the authenticated 报价员's factory, then hand them off.
+
+    分级 and 读图取数 deliberately live outside this transaction: a real multimodal model
+    takes tens of seconds per drawing, so doing them here would turn a ten-file batch into
+    a multi-minute request and let one failure roll back drawings that already landed.
+    """
 
     def __init__(
         self,
@@ -70,7 +69,7 @@ class UploadPartDrawings(TenantBoundUseCase):
         events: PartDrawingEventRepository,
         storage: ObjectStorage,
         pdf_pages: PdfPageCounter,
-        engine: ExtractionEngine,
+        processor: PartDrawingProcessor,
         uow: UnitOfWork,
     ) -> None:
         super().__init__(actor)
@@ -78,45 +77,17 @@ class UploadPartDrawings(TenantBoundUseCase):
         self._events = events
         self._storage = storage
         self._pdf_pages = pdf_pages
-        self._engine = engine
+        self._processor = processor
         self._uow = uow
 
     def execute(self, files: list[IncomingDrawing]) -> UploadPartDrawingsResult:
-        accepted: list[PartDrawing] = []
+        stored: list[PartDrawing] = []
         rejected: list[RejectedUpload] = []
         stored_keys: list[str] = []
         try:
             for incoming in files:
-                page_count: int | None = None
-                if (
-                    detect_media_type(incoming.content) == PDF_MEDIA_TYPE
-                    and len(incoming.content) <= MAX_FILE_BYTES
-                ):
-                    try:
-                        page_count = self._pdf_pages.count_pages(incoming.content)
-                    except PdfUnreadable:
-                        rejected.append(
-                            RejectedUpload(
-                                original_filename=incoming.original_filename or "未命名文件",
-                                detail=(
-                                    f"文件「{incoming.original_filename or '未命名文件'}」无法读取 PDF 页数"
-                                ),
-                            )
-                        )
-                        continue
-                assessed = assess_drawing_upload(
-                    original_filename=incoming.original_filename,
-                    content=incoming.content,
-                    selected_page=incoming.selected_page,
-                    pdf_page_count=page_count,
-                )
-                if isinstance(assessed, str):
-                    rejected.append(
-                        RejectedUpload(
-                            original_filename=incoming.original_filename or "未命名文件",
-                            detail=assessed,
-                        )
-                    )
+                assessed = self._assess(incoming, rejected)
+                if assessed is None:
                     continue
                 drawing_id = uuid4()
                 suffix = _storage_suffix(assessed.media_type, assessed.original_filename)
@@ -126,7 +97,6 @@ class UploadPartDrawings(TenantBoundUseCase):
                 self._storage.store(storage_key, assessed.content, assessed.media_type)
                 stored_keys.append(storage_key)
                 now = datetime.now(UTC)
-                part_family_id = classify_part_family(assessed.original_filename)
                 drawing = PartDrawing(
                     id=drawing_id,
                     factory_id=self.tenant.factory_id,
@@ -144,7 +114,7 @@ class UploadPartDrawings(TenantBoundUseCase):
                     low_quality_unreliable=False,
                     extracted_fields=(),
                     extraction_failure_reason=None,
-                    part_family_id=part_family_id,
+                    part_family_id=classify_part_family(assessed.original_filename),
                     quote_task_id=None,
                 )
                 drawing, born = birth_uploaded(
@@ -152,50 +122,43 @@ class UploadPartDrawings(TenantBoundUseCase):
                 )
                 self._drawings.add(drawing)
                 self._events.add(born)
-                drawing, grading = record_transition(
-                    drawing,
-                    PartDrawingStatus.GRADING,
-                    occurred_at=datetime.now(UTC),
-                    sequence_no=2,
-                    actor_user_id=self.actor.user_id,
-                )
-                self._drawings.save(drawing)
-                self._events.add(grading)
-
-                page_content = self._storage.fetch(storage_key)
-                result = self._engine.extract(
-                    ExtractionRequest(
-                        page_content=page_content,
-                        media_type=assessed.media_type,
-                        part_family_id=part_family_id,
-                        input_drawing_id=assessed.original_filename,
-                    )
-                )
-                next_status = status_after_grade(result)
-                drawing, graded = record_transition(
-                    drawing,
-                    next_status,
-                    occurred_at=datetime.now(UTC),
-                    sequence_no=3,
-                    actor_user_id=self.actor.user_id,
-                    quality_grade=result.quality_grade,
-                    is_assembly_or_exploded=result.is_assembly_or_exploded,
-                )
-                self._drawings.save(drawing)
-                self._events.add(graded)
-                if next_status is PartDrawingStatus.GRADED:
-                    drawing = apply_extraction(
-                        drawing,
-                        actor_user_id=self.actor.user_id,
-                        drawings=self._drawings,
-                        events=self._events,
-                        storage=self._storage,
-                        engine=self._engine,
-                    )
-                accepted.append(drawing)
+                stored.append(drawing)
             self._uow.commit()
         except Exception:
             for key in stored_keys:
                 self._storage.delete(key)
             raise
-        return UploadPartDrawingsResult(items=accepted, rejected=rejected)
+        # Hand off only after the commit — a deferred processor reads these rows from its
+        # own session and would otherwise find nothing.
+        items = [
+            self._processor.submit(self.actor, drawing.id) or drawing for drawing in stored
+        ]
+        return UploadPartDrawingsResult(items=items, rejected=rejected)
+
+    def _assess(self, incoming: IncomingDrawing, rejected: list[RejectedUpload]):
+        display_name = incoming.original_filename or "未命名文件"
+        page_count: int | None = None
+        if (
+            detect_media_type(incoming.content) == PDF_MEDIA_TYPE
+            and len(incoming.content) <= MAX_FILE_BYTES
+        ):
+            try:
+                page_count = self._pdf_pages.count_pages(incoming.content)
+            except PdfUnreadable:
+                rejected.append(
+                    RejectedUpload(
+                        original_filename=display_name,
+                        detail=f"文件「{display_name}」无法读取 PDF 页数",
+                    )
+                )
+                return None
+        assessed = assess_drawing_upload(
+            original_filename=incoming.original_filename,
+            content=incoming.content,
+            selected_page=incoming.selected_page,
+            pdf_page_count=page_count,
+        )
+        if isinstance(assessed, str):
+            rejected.append(RejectedUpload(original_filename=display_name, detail=assessed))
+            return None
+        return assessed
